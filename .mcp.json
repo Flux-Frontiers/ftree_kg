@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "codekg": {
+      "command": "/Users/egs/repos/FTreeKG/.venv/bin/codekg",
+      "args": [
+        "mcp",
+        "--repo", "/Users/egs/repos/FTreeKG"
+      ]
+    },
+    "dockg": {
+      "command": "/Users/egs/repos/FTreeKG/.venv/bin/dockg",
+      "args": [
+        "mcp",
+        "--repo", "/Users/egs/repos/FTreeKG"
+      ]
+    }
+  }
+}
