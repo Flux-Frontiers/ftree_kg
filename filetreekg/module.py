@@ -34,15 +34,16 @@ class FileTreeKG(KGModule):
     ) -> None:
         repo_root = Path(repo_root).resolve()
         db_path = Path(db_path) if db_path else repo_root / ".filetreekg" / "graph.sqlite"
-        lancedb_path = Path(lancedb_path) if lancedb_path else repo_root / ".filetreekg" / "lancedb"
-        super().__init__(repo_root=repo_root, db_path=db_path, lancedb_path=lancedb_path, config=config)
+        lancedb_dir = Path(lancedb_path) if lancedb_path else repo_root / ".filetreekg" / "lancedb"
+        self._config = config or {}
+        super().__init__(repo_root=repo_root, db_path=db_path, lancedb_dir=lancedb_dir)
 
     def make_extractor(self) -> FileTreeKGExtractor:
         """Return the domain extractor for this module.
 
         :return: FileTreeKGExtractor instance.
         """
-        return FileTreeKGExtractor(self.repo_root, self.config)
+        return FileTreeKGExtractor(self.repo_root, self._config)
 
     def kind(self) -> str:
         """Return the KGKind string for this module.
@@ -50,6 +51,14 @@ class FileTreeKG(KGModule):
         :return: "meta"
         """
         return "meta"
+
+    def _kind_priority(self, kind: str) -> int:
+        """Return sort priority for file-tree node kinds (lower = ranked first).
+
+        :param kind: Node kind string.
+        :return: Integer priority.
+        """
+        return {"directory": 0, "module": 1, "file": 2, "symlink": 3}.get(kind, 99)
 
     def analyze(self) -> str:
         """Run full analysis and return a Markdown report.
@@ -61,16 +70,16 @@ class FileTreeKG(KGModule):
             lines = [
                 "# FileTreeKG Analysis",
                 "",
-                f"**Nodes:** {s.node_count}  ",
-                f"**Edges:** {s.edge_count}  ",
+                f"**Nodes:** {s['total_nodes']}  ",
+                f"**Edges:** {s['total_edges']}  ",
                 "",
                 "## Node breakdown",
                 "",
             ]
-            for kind, count in (s.node_counts or {}).items():
+            for kind, count in s.get("node_counts", {}).items():
                 lines.append(f"- `{kind}`: {count}")
             lines += ["", "## Edge breakdown", ""]
-            for rel, count in (s.edge_counts or {}).items():
+            for rel, count in s.get("edge_counts", {}).items():
                 lines.append(f"- `{rel}`: {count}")
             return "\n".join(lines)
         except Exception as exc:  # pylint: disable=broad-exception-caught

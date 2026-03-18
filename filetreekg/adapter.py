@@ -29,7 +29,7 @@ class FileTreeKGAdapter(KGAdapter):
         self._kg = FileTreeKG(
             repo_root=self.entry.repo_path,
             db_path=self.entry.sqlite_path,
-            lancedb_path=self.entry.lancedb_path,
+            lancedb_path=self.entry.lancedb_path,  # FileTreeKG maps this to lancedb_dir
         )
 
     def is_available(self) -> bool:
@@ -52,19 +52,19 @@ class FileTreeKGAdapter(KGAdapter):
         """
         try:
             self._load()
-            result = self._kg.query(q, k=k)
+            result = self._kg.query(q, k=k, max_nodes=k)
             return [
                 CrossHit(
                     kg_name=self.entry.name,
                     kg_kind=KGKind.META,
-                    node_id=n["node_id"],
+                    node_id=n["id"],
                     name=n.get("name", ""),
                     kind=n.get("kind", ""),
-                    score=n.get("score", 0.0),
+                    score=n.get("relevance", {}).get("score", 0.0),
                     summary=n.get("docstring", ""),
-                    source_path=n.get("source_path", ""),
+                    source_path=n.get("module_path", ""),
                 )
-                for n in result.nodes[:k]
+                for n in result.nodes
             ]
         except Exception:  # pylint: disable=broad-exception-caught
             return []
@@ -79,19 +79,19 @@ class FileTreeKGAdapter(KGAdapter):
         """
         try:
             self._load()
-            pack = self._kg.pack(q, k=k, context=context)
+            pack = self._kg.pack(q, k=k, context=context, max_nodes=k)
             return [
                 CrossSnippet(
                     kg_name=self.entry.name,
                     kg_kind=KGKind.META,
-                    node_id=s.node_id,
-                    source_path=s.source_path,
-                    content=s.content,
-                    score=s.score,
-                    lineno=s.lineno,
-                    end_lineno=s.end_lineno,
+                    node_id=n["id"],
+                    source_path=n.get("module_path", ""),
+                    content=(n.get("snippet") or {}).get("text") or n.get("docstring", ""),
+                    score=n.get("relevance", {}).get("score", 0.0),
+                    lineno=n.get("lineno"),
+                    end_lineno=n.get("end_lineno"),
                 )
-                for s in pack.snippets
+                for n in pack.nodes
             ]
         except Exception:  # pylint: disable=broad-exception-caught
             return []
@@ -106,8 +106,10 @@ class FileTreeKGAdapter(KGAdapter):
             s = self._kg.stats()
             return {
                 "kind": "meta",
-                "node_count": s.node_count,
-                "edge_count": s.edge_count,
+                "node_count": s["total_nodes"],
+                "edge_count": s["total_edges"],
+                "node_counts": s.get("node_counts", {}),
+                "edge_counts": s.get("edge_counts", {}),
             }
         except Exception:  # pylint: disable=broad-exception-caught
             return {"kind": "meta", "error": "stats unavailable"}
