@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FileTreeKGAdapter for KGRAG federation (meta kind)
 - Comprehensive test suite for extractor and query operations
 - Full CLI (`ftreekg`) with `build`, `query`, `pack`, `analyze`, and `snapshot` subcommands
+- `src/snapshots.py` — `SnapshotManager` with `capture`, `save_snapshot`, `load_snapshot` (including `"latest"` key), `list_snapshots`, and `diff_snapshots`; filesystem-specific metrics (`total_files`, `total_dirs`, `dir_node_counts` per top-level directory); delta tracking vs. previous and baseline snapshots; degenerate-snapshot guard; git tree hash / branch auto-detection
 - `src/config.py` — reads `[tool.filetreekg]` from `pyproject.toml` for `include`/`exclude` dir lists; ships `DEFAULT_SKIP_DIRS` applied at every walk depth
 - `.claude/` tooling: agents, commands, plugins, and skills for Claude Code integration
 - `examples/query_examples.py` — runnable usage examples
@@ -21,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `.pre-commit-config.yaml` and `.secrets.baseline` for pre-commit quality gates
 
 ### Changed
+- `ftreekg snapshot` promoted from stub to a proper subcommand group (`save`, `list`, `show`, `diff`) backed by `SnapshotManager`; pre-commit hook now captures and stages `.filetreekg/snapshots/` alongside `.codekg/snapshots/`
+- `test_snapshot_round_trip` replaced with three real snapshot tests: round-trip load, list, and diff
 - Restructured source tree: `filetreekg/` → `src/` and renamed package from `filetreekg` to `ftree-kg`
 - `code-kg`, `doc-kg`, and `kg-rag` are now optional extras (`[code-kg]`, `[doc-kg]`, `[kgrag]`) instead of required/group dependencies
 - `kg-rag` moved from a local path dev dependency to an optional git-sourced extra

@@ -65,7 +65,61 @@ def test_analyze_returns_markdown(kg: FileTreeKG) -> None:
     assert "FileTreeKG" in report or "Analysis" in report
 
 
-def test_snapshot_round_trip(kg: FileTreeKG) -> None:
-    # Verify the kg state is valid (snapshot functionality not available in base KGModule)
+def test_snapshot_round_trip(kg: FileTreeKG, tmp_path: Path) -> None:
+    from src.snapshots import SnapshotManager
+
+    snapshots_dir = tmp_path / ".filetreekg" / "snapshots"
+    mgr = SnapshotManager(snapshots_dir, db_path=tmp_path / ".filetreekg" / "graph.sqlite")
+
     stats = kg.stats()
-    assert stats["total_nodes"] > 0, "kg should have nodes after build"
+    snap = mgr.capture(version="0.0.0-test", branch="test", stats_dict=stats)
+    saved = mgr.save_snapshot(snap)
+
+    assert saved.exists(), "snapshot file must be written"
+    assert snap.metrics.total_nodes > 0
+    assert snap.metrics.total_files >= 0
+    assert snap.metrics.total_dirs >= 0
+    assert snap.key != "", "snapshot must have a tree hash key"
+
+    # Round-trip: load back and verify
+    loaded = mgr.load_snapshot(snap.key)
+    assert loaded is not None
+    assert loaded.metrics.total_nodes == snap.metrics.total_nodes
+    assert loaded.metrics.total_edges == snap.metrics.total_edges
+
+    # 'latest' convenience key works
+    latest = mgr.load_snapshot("latest")
+    assert latest is not None
+    assert latest.key == snap.key
+
+
+def test_snapshot_list(kg: FileTreeKG, tmp_path: Path) -> None:
+    from src.snapshots import SnapshotManager
+
+    snapshots_dir = tmp_path / ".filetreekg" / "snapshots"
+    mgr = SnapshotManager(snapshots_dir, db_path=tmp_path / ".filetreekg" / "graph.sqlite")
+
+    stats = kg.stats()
+    snap = mgr.capture(version="0.0.0-test", branch="test", stats_dict=stats)
+    mgr.save_snapshot(snap)
+
+    snaps = mgr.list_snapshots()
+    assert len(snaps) == 1
+    assert snaps[0]["key"] == snap.key
+
+
+def test_snapshot_diff(kg: FileTreeKG, tmp_path: Path) -> None:
+    from src.snapshots import SnapshotManager
+
+    snapshots_dir = tmp_path / ".filetreekg" / "snapshots"
+    mgr = SnapshotManager(snapshots_dir, db_path=tmp_path / ".filetreekg" / "graph.sqlite")
+
+    stats = kg.stats()
+    snap_a = mgr.capture(version="0.0.0-a", branch="test", stats_dict=stats, tree_hash="aaaa")
+    snap_b = mgr.capture(version="0.0.0-b", branch="test", stats_dict=stats, tree_hash="bbbb")
+    mgr.save_snapshot(snap_a)
+    mgr.save_snapshot(snap_b)
+
+    result = mgr.diff_snapshots("aaaa", "bbbb")
+    assert "error" not in result
+    assert result["delta"]["nodes"] == 0  # same stats → zero delta
