@@ -22,7 +22,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = ">3.12,<3.14"
+python = ">=3.12,<3.14"
 code-kg = { git = "https://github.com/Flux-Frontiers/code_kg.git" }
 doc-kg = { git = "https://github.com/Flux-Frontiers/doc_kg.git" }
 
