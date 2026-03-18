@@ -7,13 +7,18 @@ from __future__ import annotations
 
 from typing import Any
 
-from kg_rag.adapters.base import KGAdapter
-from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry, KGKind
+from kg_rag.adapters.base import KGAdapter  # type: ignore[import-untyped]
+from kg_rag.primitives import (  # type: ignore[import-untyped]
+    CrossHit,
+    CrossSnippet,
+    KGEntry,
+    KGKind,
+)
 
-from filetreekg.module import FileTreeKG
+from src.module import FileTreeKG
 
 
-class FileTreeKGAdapter(KGAdapter):
+class FileTreeKGAdapter(KGAdapter):  # type: ignore[misc]
     """KGRAG adapter for FileTreeKG.
 
     :param entry: KGEntry with kind=KGKind.META.
@@ -37,11 +42,7 @@ class FileTreeKGAdapter(KGAdapter):
 
         :return: True if this adapter can serve queries.
         """
-        try:
-            import filetreekg  # noqa: F401  # pylint: disable=import-outside-toplevel
-            return self.entry.is_built
-        except ImportError:
-            return False
+        return bool(self.entry.is_built)
 
     def query(self, q: str, k: int = 8) -> list[CrossHit]:
         """Query FileTreeKG and return ranked hits.
@@ -52,6 +53,7 @@ class FileTreeKGAdapter(KGAdapter):
         """
         try:
             self._load()
+            assert self._kg is not None
             result = self._kg.query(q, k=k)
             return [
                 CrossHit(
@@ -79,6 +81,7 @@ class FileTreeKGAdapter(KGAdapter):
         """
         try:
             self._load()
+            assert self._kg is not None
             pack = self._kg.pack(q, k=k, context=context)
             return [
                 CrossSnippet(
@@ -103,6 +106,7 @@ class FileTreeKGAdapter(KGAdapter):
         """
         try:
             self._load()
+            assert self._kg is not None
             s = self._kg.stats()
             return {
                 "kind": "meta",
@@ -119,6 +123,7 @@ class FileTreeKGAdapter(KGAdapter):
         """
         try:
             self._load()
+            assert self._kg is not None
             return self._kg.analyze()
         except Exception as exc:  # pylint: disable=broad-exception-caught
             return f"# FileTreeKG Analysis\n\nAnalysis failed: {exc}\n"

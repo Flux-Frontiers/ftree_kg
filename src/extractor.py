@@ -6,21 +6,34 @@ FileTreeKGExtractor — KGExtractor for filetreekg.
 from __future__ import annotations
 
 from collections.abc import Iterator
+from datetime import datetime
 from pathlib import Path
+from stat import filemode
 from typing import Any
 
-from code_kg.module import EdgeSpec, KGExtractor, NodeSpec
+from code_kg.module import EdgeSpec, KGExtractor, NodeSpec  # type: ignore[import-untyped]
+
+from src.config import DEFAULT_SKIP_DIRS, load_exclude_dirs, load_include_dirs
 
 
-class FileTreeKGExtractor(KGExtractor):
+class FileTreeKGExtractor(KGExtractor):  # type: ignore[misc]
     """Extract nodes and edges from filetreekg sources.
 
     :param repo_path: Absolute path to the repository or corpus root.
     :param config: Optional domain-specific configuration dict.
     """
 
-    def __init__(self, repo_path: Path, config: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self,
+        repo_path: Path,
+        config: dict[str, Any] | None = None,
+        include_dirs: set[str] | None = None,
+        exclude_dirs: set[str] | None = None,
+    ) -> None:
         super().__init__(repo_path, config)
+        # Load include/exclude from config or use provided values
+        self.include_dirs = include_dirs or load_include_dirs(repo_path)
+        self.exclude_dirs = (exclude_dirs or load_exclude_dirs(repo_path)) | DEFAULT_SKIP_DIRS
 
     def node_kinds(self) -> list[str]:
         """Return canonical node kind names.
@@ -45,6 +58,32 @@ class FileTreeKGExtractor(KGExtractor):
         """
         return self.node_kinds()
 
+    def _get_metadata(self, path: Path) -> str:
+        """Extract filesystem metadata as a formatted docstring.
+
+        :param path: Path to file or directory.
+        :return: Formatted metadata string.
+        """
+        try:
+            stat = path.stat()
+            size = stat.st_size
+            mtime = datetime.fromtimestamp(stat.st_mtime).isoformat()
+            mode = filemode(stat.st_mode)
+
+            lines = [
+                f"**Size:** {size} bytes",
+                f"**Modified:** {mtime}",
+                f"**Mode:** {mode}",
+            ]
+
+            if path.is_symlink():
+                target = path.readlink()
+                lines.append(f"**Target:** {target}")
+
+            return "\n".join(lines)
+        except Exception:
+            return ""
+
     def coverage_metric(self, nodes: list[NodeSpec]) -> float:
         """Compute a domain coverage quality metric for snapshots.
 
@@ -63,6 +102,9 @@ class FileTreeKGExtractor(KGExtractor):
     def extract(self) -> Iterator[NodeSpec | EdgeSpec]:
         """Traverse the source and yield NodeSpec / EdgeSpec objects.
 
+        Respects [tool.filetreekg] include/exclude directives from pyproject.toml
+        in addition to DEFAULT_SKIP_DIRS.
+
         node_id format: '<kind>:<source_path>:<qualname>'
 
         :return: Iterator of NodeSpec and EdgeSpec objects.
@@ -70,6 +112,16 @@ class FileTreeKGExtractor(KGExtractor):
         # Walk the filesystem tree starting from repo_path
         for path in self.repo_path.rglob("*"):
             rel_path = path.relative_to(self.repo_path)
+            parts = rel_path.parts
+
+            # Skip excluded directories and DEFAULT_SKIP_DIRS
+            if any(part in self.exclude_dirs for part in parts):
+                continue
+
+            # If include_dirs specified, only keep paths under those directories
+            if self.include_dirs:
+                if not any(part in self.include_dirs for part in parts):
+                    continue
 
             # Determine node kind
             if path.is_symlink():
@@ -79,14 +131,14 @@ class FileTreeKGExtractor(KGExtractor):
             else:
                 kind = "file"
 
-            # Create node
+            # Create node with filesystem metadata
             yield NodeSpec(
                 node_id=f"{kind}:{rel_path}:{rel_path.name}",
                 kind=kind,
                 name=path.name,
                 qualname=str(rel_path),
                 source_path=str(rel_path),
-                docstring="",
+                docstring=self._get_metadata(path),
             )
 
             # Create CONTAINS edge from parent directory
@@ -101,7 +153,7 @@ class FileTreeKGExtractor(KGExtractor):
                 # Root level items contained by repo root
                 if path != self.repo_path:
                     yield EdgeSpec(
-                        source_id=f"directory:.:",
+                        source_id="directory:.:",
                         target_id=f"{kind}:{rel_path}:{rel_path.name}",
                         relation="CONTAINS",
                     )

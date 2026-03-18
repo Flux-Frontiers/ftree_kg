@@ -1,6 +1,7 @@
-"""tests/test_query.py
+"""
+tests/test_query.py
 
-Tests for FileTreeKG query and pack.
+Tests for {{ClassName}} query and pack.
 """
 
 from __future__ import annotations
@@ -8,21 +9,16 @@ from __future__ import annotations
 import pytest
 from pathlib import Path
 
-from filetreekg.module import FileTreeKG
+from {{name}}.module import {{ClassName}}
 
 
 @pytest.fixture
-def kg(tmp_path: Path) -> FileTreeKG:
-    # Create a simple filesystem structure for testing
-    (tmp_path / "dir1").mkdir()
-    (tmp_path / "dir1" / "file1.txt").touch()
-    (tmp_path / "dir2").mkdir()
-    (tmp_path / "file2.txt").touch()
-
-    instance = FileTreeKG(
+def kg(tmp_path: Path) -> {{ClassName}}:
+    # TODO: populate tmp_path with representative sample source files
+    instance = {{ClassName}}(
         repo_root=tmp_path,
-        db_path=tmp_path / ".filetreekg" / "graph.sqlite",
-        lancedb_path=tmp_path / ".filetreekg" / "lancedb",
+        db_path=tmp_path / ".{{name}}" / "graph.sqlite",
+        lancedb_path=tmp_path / ".{{name}}" / "lancedb",
     )
     instance.build(wipe=True)
     return instance
@@ -35,25 +31,25 @@ def test_build_produces_nodes(kg):
 
 def test_query_returns_results(kg):
     # Use a term likely to match something in the fixture corpus
-    result = kg.query("directory", k=5)
+    result = kg.query("TODO: replace with domain-relevant query term", k=5)
     assert result is not None
     assert isinstance(result.nodes, list)
 
 
 def test_query_scores_in_range(kg):
-    result = kg.query("directory", k=5)
+    result = kg.query("TODO: replace with domain-relevant query term", k=5)
     for node in result.nodes:
         assert 0.0 <= node.get("score", 0.0) <= 1.0
 
 
 def test_pack_returns_snippets(kg):
-    pack = kg.pack("file", k=3)
+    pack = kg.pack("TODO: replace with domain-relevant query term", k=3)
     assert pack is not None
     assert isinstance(pack.snippets, list)
 
 
 def test_pack_snippets_have_content(kg):
-    pack = kg.pack("file", k=3)
+    pack = kg.pack("TODO: replace with domain-relevant query term", k=3)
     for snippet in pack.snippets:
         assert snippet.content, "each snippet should have non-empty content"
         assert snippet.node_id, "each snippet must have a node_id"
@@ -62,7 +58,7 @@ def test_pack_snippets_have_content(kg):
 def test_analyze_returns_markdown(kg):
     report = kg.analyze()
     assert report.startswith("#"), "analyze() must return Markdown starting with a heading"
-    assert "FileTreeKG" in report or "Analysis" in report
+    assert "{{ClassName}}" in report or "Analysis" in report
 
 
 def test_snapshot_round_trip(kg):

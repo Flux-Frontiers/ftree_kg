@@ -3,14 +3,14 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "filetreekg"
+name = "ftree-kg"
 version = "0.1.0"
 description = "KGModule for file tree knowledge graphs"
 authors = ["Flux Frontiers <dev@flux-frontiers.ai>"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/flux-frontiers/FTreeKG"
-packages = [{include = "filetreekg"}]
+packages = [{include = "src"}]
 keywords = ["knowledge-graph", "filesystem", "semantic-search", "kgmodule"]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -21,10 +21,25 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 
+[tool.poetry.scripts]
+ftreekg           = "filetreekg.cli:cli"
+ftreekg-build     = "filetreekg.cli.cmd_build:build"
+ftreekg-query     = "filetreekg.cli.cmd_query:query"
+ftreekg-pack      = "filetreekg.cli.cmd_query:pack"
+ftreekg-analyze   = "filetreekg.cli.cmd_analyze:analyze"
+ftreekg-snapshot  = "filetreekg.cli.cmd_snapshot:snapshot"
+
 [tool.poetry.dependencies]
 python = ">3.12,<3.14"
-code-kg = { git = "https://github.com/Flux-Frontiers/code_kg.git" }
-doc-kg = { git = "https://github.com/Flux-Frontiers/doc_kg.git" }
+click = "^8.1.0"
+kg-rag = { git = "https://github.com/Flux-Frontiers/KGRAG.git", optional = true }
+code-kg = { git = "https://github.com/Flux-Frontiers/code_kg.git", optional = true }
+doc-kg = { git = "https://github.com/Flux-Frontiers/doc_kg.git", optional = true }
+
+[tool.poetry.extras]
+code-kg = ["code-kg"]
+doc-kg = ["doc-kg"]
+kgrag = ["kg-rag", "code-kg", "doc-kg"]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
@@ -33,8 +48,6 @@ black = ">=22.0"
 ruff = ">=0.4.0"
 mypy = ">=1.10.0"
 
-[tool.poetry.group.kgrag.dependencies]
-kg-rag = { path = "../kgrag", develop = true }
 
 [tool.black]
 line-length = 100
@@ -49,3 +62,29 @@ python_version = "3.12"
 strict = true
 warn_unused_ignores = true
 disallow_untyped_defs = true
+
+[tool.pylint.MASTER]
+ignored-modules = ["code_kg", "code_kg.module", "code_kg.module.types", "kg_rag", "kg_rag.adapters.base", "kg_rag.primitives", "click", "pytest"]
+
+[tool.pylint."MESSAGES CONTROL"]
+disable = [
+    "too-many-arguments",
+    "too-many-positional-arguments",
+    "too-many-locals",
+    "duplicate-code",
+    "missing-function-docstring",
+    "redefined-outer-name",
+    "wrong-import-order",
+    "import-outside-toplevel",
+    "unused-argument",
+    "redefined-builtin",
+    "broad-exception-caught",
+    "unspecified-encoding",
+]
+
+[tool.filetreekg]
+# Directories to include in indexing (empty = include all)
+# include = ["src", "docs"]
+
+# Directories to exclude at every depth (in addition to DEFAULT_SKIP_DIRS)
+# exclude = ["archives", "backups"]
