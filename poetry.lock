@@ -879,10 +879,10 @@ referencing = ">=0.31.0"
 
 [[package]]
 name = "kg-rag"
-version = "0.3.0"
+version = "0.3.1"
 description = "Orchestration layer for the KGRAG(tm) components."
 optional = true
-python-versions = ">3.12,<3.14"
+python-versions = ">=3.12,<3.14"
 groups = ["main"]
 markers = "extra == \"kgrag\""
 files = []
@@ -903,16 +903,17 @@ sentence-transformers = ">=2.7.0"
 diary-kg = []
 doc-kg = ["doc-kg @ git+https://github.com/Flux-Frontiers/doc_kg.git"]
 ftree-kg = []
-meta-kg = []
+metabo-kg = []
 qt = ["PyQt5 (>=5.15.0)"]
 viz = ["plotly (>=5.14.0)", "pyvis (>=0.3.2)", "streamlit (>=1.35.0)"]
+viz2d = ["PyQt5 (>=5.15.0)"]
 viz3d = ["PyQt5 (>=5.15.0)", "markdown (>=3.6)", "param (>=2.0.0)", "pyvista[jupyter] (>=0.44.0)", "pyvistaqt (>=0.11.0)", "trame-vtk (>=2.0.0)"]
 
 [package.source]
 type = "git"
 url = "https://github.com/Flux-Frontiers/KGRAG.git"
 reference = "HEAD"
-resolved_reference = "6a4935233ecd8c09e18c10e0eb02bc36f62435d0"
+resolved_reference = "45a1841d72be613e053767048499f2830b1bf1b4"
 
 [[package]]
 name = "lance-namespace"
@@ -3392,5 +3393,5 @@ kgrag = ["code-kg", "doc-kg", "kg-rag"]
 
 [metadata]
 lock-version = "2.1"
-python-versions = ">3.12,<3.14"
-content-hash = "b2981446dd021bd4db7527fc9587342f6b0bd7f13993142c030f29a85988bafe"
+python-versions = ">=3.12,<3.14"
+content-hash = "96d72fcab91802e713cdb8d721dc86b36f7598cdb70040219bd7a1e37995f92d"
