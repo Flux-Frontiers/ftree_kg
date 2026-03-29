@@ -1,21 +1,6 @@
-# Changelog
+# Release Notes — v0.4.0
 
-All notable changes to this project will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [Unreleased]
-
-### Added
-
-### Changed
-
-### Fixed
-
-### Removed
-
-## [0.4.0] - 2026-03-29
+> Released: 2026-03-29
 
 ### Added
 - `src/ftree_kg/` — proper Python package namespace replacing the flat `src/` layout; Poetry now builds and installs the `ftree_kg` distribution correctly
@@ -58,7 +43,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Guarded `from kg_rag.snapshots import ...` with `try/except ImportError` so the module loads cleanly when `kg_rag` is absent
 - CI type-check job now installs all extras so mypy can resolve `code_kg` and `kg_rag` imports
 
-## [0.1.0] - 2026-03-15
+---
 
-### Added
-- Initial release of FileTreeKG
+_Full changelog: [CHANGELOG.md](CHANGELOG.md)_
