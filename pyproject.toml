@@ -94,8 +94,8 @@ warn_unused_ignores = true
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
-# Optional kgdeps (pycode-kg, doc-kg) — treated as Any whether installed or not.
-module = ["pycode_kg.*", "kg_rag.*", "ftree_kg.*"]
+# Optional kgdeps — treated as Any whether installed or not.
+module = ["kg_rag.*", "ftree_kg.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]

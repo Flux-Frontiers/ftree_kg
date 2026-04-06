@@ -35,6 +35,55 @@ CREATE TABLE edges (
 """
 
 
+def _ascii_tree(
+    rows: list[tuple[str, str]],
+    max_depth: int = 3,
+    max_children: int = 12,
+) -> list[str]:
+    """Render an ASCII tree from (source_path, kind) rows.
+
+    :param rows: List of (source_path, kind) tuples from the nodes table.
+    :param max_depth: Maximum directory depth to display.
+    :param max_children: Max children shown per directory before truncating.
+    :return: Lines of the ASCII tree (no trailing newlines).
+    """
+    # Build a nested dict tree: {name: {"_kind": kind, "_children": {...}}}
+    root: dict[str, dict[str, Any]] = {}
+    for source_path, kind in sorted(rows):
+        parts = Path(source_path).parts
+        if len(parts) > max_depth:
+            continue
+        node = root
+        for part in parts[:-1]:
+            node = node.setdefault(part, {}).setdefault("_children", {})
+        leaf = parts[-1]
+        entry = node.setdefault(leaf, {})
+        entry["_kind"] = kind
+
+    lines: list[str] = []
+
+    def render(tree: dict[str, dict[str, Any]], prefix: str) -> None:
+        items = [(k, v) for k, v in sorted(tree.items()) if not k.startswith("_")]
+        truncated = len(items) > max_children
+        if truncated:
+            items = items[:max_children]
+        for idx, (name, subtree) in enumerate(items):
+            is_last = idx == len(items) - 1 and not truncated
+            connector = "└── " if is_last else "├── "
+            kind = subtree.get("_kind", "directory")
+            suffix = "/" if kind == "directory" else ""
+            lines.append(f"{prefix}{connector}{name}{suffix}")
+            children = subtree.get("_children", {})
+            if children:
+                extension = "    " if is_last else "│   "
+                render(children, prefix + extension)
+        if truncated:
+            lines.append(f"{prefix}└── … ({len(tree) - max_children} more)")
+
+    render(root, "")
+    return lines
+
+
 def _fmt_size(n: int) -> str:
     """Human-readable byte size."""
     for unit in ("B", "KB", "MB", "GB"):
@@ -262,6 +311,12 @@ class FileTreeKG(KGModule):
             node_counts: dict[str, int] = s.get("node_counts", {})
             edge_counts: dict[str, int] = s.get("edge_counts", {})
 
+            assert self.db_path is not None
+            with sqlite3.connect(self.db_path) as conn:
+                tree_rows: list[tuple[str, str]] = conn.execute(
+                    "SELECT source_path, kind FROM nodes ORDER BY source_path"
+                ).fetchall()
+
             lines = [
                 "# FileTreeKG Analysis",
                 "",
@@ -269,8 +324,8 @@ class FileTreeKG(KGModule):
                 "",
                 "| Metric | Value |",
                 "|--------|-------|",
-                f"| Total nodes | {s['total_nodes']:,} |",
-                f"| Total edges | {s['total_edges']:,} |",
+                f"| Total paths | {s['total_nodes']:,} |",
+                f"| Total links | {s['total_edges']:,} |",
                 f"| Files | {node_counts.get('file', 0):,} |",
                 f"| Directories | {node_counts.get('directory', 0):,} |",
                 f"| Symlinks | {node_counts.get('symlink', 0):,} |",
@@ -290,9 +345,15 @@ class FileTreeKG(KGModule):
             else:
                 lines.append("_No file size data available._")
 
+            tree_lines = _ascii_tree(tree_rows)
+            if tree_lines:
+                lines += ["", "## Directory tree (depth ≤ 3)", "", "```"]
+                lines.extend(tree_lines)
+                lines.append("```")
+
             lines += [
                 "",
-                "## Node breakdown",
+                "## Path breakdown",
                 "",
                 "| Kind | Count |",
                 "|------|-------|",
@@ -302,7 +363,7 @@ class FileTreeKG(KGModule):
 
             lines += [
                 "",
-                "## Edge breakdown",
+                "## Link breakdown",
                 "",
                 "| Relation | Count |",
                 "|----------|-------|",

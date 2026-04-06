@@ -138,7 +138,5 @@ dmypy.json
 .dockg/lancedb-*
 .dockg/graph.sqlite
 .dockg/graph.sqlite*
-.agentkg/lancedb/
-.agentkg/lancedb-*
-.agentkg/graph.sqlite
-.agentkg/graph.sqlite*
+.agentkg/
+.claude/plugins/marketplaces/
