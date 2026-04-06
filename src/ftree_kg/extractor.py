@@ -16,7 +16,7 @@ from pycode_kg.module import EdgeSpec, KGExtractor, NodeSpec
 from ftree_kg.config import DEFAULT_SKIP_DIRS, load_exclude_dirs, load_include_dirs
 
 
-class FileTreeKGExtractor(KGExtractor):
+class FileTreeKGExtractor(KGExtractor):  # type: ignore[misc]
     """Extract nodes and edges from filetreekg sources.
 
     :param repo_path: Absolute path to the repository or corpus root.

@@ -87,10 +87,15 @@ warn_unused_ignores = true
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
-# Third-party packages without py.typed markers or bundled stubs.
-# ignore_missing_imports suppresses [import-not-found];
-# follow_untyped_imports suppresses [import-untyped] (mypy >= 1.1).
-module = ["pycode_kg.*", "kg_rag.*", "ftree_kg.*", "kg_snapshot.*"]
+# Optional kgdeps (pycode-kg, doc-kg) — treated as Any whether installed or not.
+# ignore_missing_imports: no error when absent (CI); ignore_untyped_imports: no
+# [import-untyped] error when present (local dev with kgdeps).
+module = ["pycode_kg.*", "kg_rag.*", "ftree_kg.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# kg-snapshot is a required runtime dep — always installed, so follow its types.
+module = ["kg_snapshot.*"]
 ignore_missing_imports = true
 follow_untyped_imports = true
 

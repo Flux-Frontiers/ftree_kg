@@ -14,7 +14,7 @@ from ftree_kg.config import load_exclude_dirs, load_include_dirs
 from ftree_kg.extractor import FileTreeKGExtractor
 
 
-class FileTreeKG(KGModule):
+class FileTreeKG(KGModule):  # type: ignore[misc]
     """Knowledge graph module for filetreekg.
 
     Provides build, query, pack, analyze, and snapshot operations
@@ -60,7 +60,7 @@ class FileTreeKG(KGModule):
         """
         return "meta"
 
-    def pack(  # type: ignore[override]
+    def pack(
         self,
         q: str,
         k: int = 8,
