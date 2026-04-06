@@ -1,0 +1,56 @@
+# pyproject.toml — kg-types: shared base types for the KGModule SDK
+#
+# This is a minimal, zero-dependency package that defines the core
+# dataclasses and abstract base classes used by all KG modules
+# (pycode-kg, ftree-kg, doc-kg, agent-kg, etc.).
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[project]
+name = "kg-types"
+version = "0.1.0"
+description = "Shared base types for the KGModule SDK"
+readme = "README.md"
+license = { text = "Elastic-2.0" }
+authors = [
+    { name = "Eric G. Suchanek, PhD", email = "suchanek@mac.com" }
+]
+keywords = ["knowledge-graph", "kgmodule", "sdk", "types"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+requires-python = ">=3.12,<3.14"
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/Flux-Frontiers/kg_types"
+
+[tool.poetry.group.dev]
+optional = true
+
+[tool.poetry.group.dev.dependencies]
+pytest     = "^8.0.0"
+pytest-cov = "^5.0.0"
+black      = ">=22.0"
+ruff       = ">=0.4.0"
+mypy       = ">=1.10.0"
+
+[tool.black]
+line-length    = 100
+target-version = ["py312", "py313"]
+
+[tool.ruff]
+line-length    = 100
+target-version = "py312"
+
+[tool.mypy]
+python_version     = "3.12"
+strict             = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
