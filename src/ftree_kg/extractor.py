@@ -11,7 +11,7 @@ from pathlib import Path
 from stat import filemode
 from typing import Any
 
-from code_kg.module import EdgeSpec, KGExtractor, NodeSpec
+from pycode_kg.module import EdgeSpec, KGExtractor, NodeSpec
 
 from ftree_kg.config import DEFAULT_SKIP_DIRS, load_exclude_dirs, load_include_dirs
 

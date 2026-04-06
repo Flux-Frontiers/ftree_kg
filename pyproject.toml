@@ -39,7 +39,7 @@ pytest-cov = "^5.0.0"
 black = ">=22.0"
 ruff = ">=0.4.0"
 mypy = ">=1.10.0"
-code-kg = { git = "https://github.com/Flux-Frontiers/code_kg.git"}
+pycode-kg = { git = "https://github.com/Flux-Frontiers/pycode_kg.git"}
 doc-kg = { git = "https://github.com/Flux-Frontiers/doc_kg.git"}
 
 
@@ -58,11 +58,11 @@ warn_unused_ignores = true
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = ["code_kg.*", "kg_rag.*", "ftree_kg.*"]
+module = ["pycode_kg.*", "kg_rag.*", "ftree_kg.*"]
 ignore_missing_imports = true
 
 [tool.pylint.MASTER]
-ignored-modules = ["code_kg", "code_kg.module", "code_kg.module.types", "kg_rag", "kg_rag.adapters.base", "kg_rag.primitives", "click", "pytest"]
+ignored-modules = ["pycode_kg", "pycode_kg.module", "pycode_kg.module.types", "kg_rag", "kg_rag.adapters.base", "kg_rag.primitives", "click", "pytest"]
 
 [tool.pylint."MESSAGES CONTROL"]
 disable = [
