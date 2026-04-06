@@ -63,7 +63,7 @@ jobs:
           key: typecheck-${{ runner.os }}-${{ hashFiles('poetry.lock') }}
 
       - name: Install dependencies
-        run: poetry install --all-extras --no-interaction
+        run: poetry install --with dev --no-interaction
 
       - name: Run mypy
         run: poetry run mypy src/

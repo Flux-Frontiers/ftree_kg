@@ -59,8 +59,15 @@ pytest-cov = "^5.0.0"
 black      = ">=22.0"
 ruff       = ">=0.4.0"
 mypy       = ">=1.10.0"
-pycode-kg  = { git = "https://github.com/Flux-Frontiers/pycode_kg.git" }
-doc-kg     = { git = "https://github.com/Flux-Frontiers/doc_kg.git" }
+
+[tool.poetry.group.kgdeps]
+# Local development only — not installed in CI.
+# Install with: poetry install --with kgdeps
+optional = true
+
+[tool.poetry.group.kgdeps.dependencies]
+pycode-kg = { git = "https://github.com/Flux-Frontiers/pycode_kg.git" }
+doc-kg    = { git = "https://github.com/Flux-Frontiers/doc_kg.git" }
 
 # ---------------------------------------------------------------------------
 # Tool configuration
