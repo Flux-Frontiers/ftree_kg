@@ -1,12 +1,12 @@
-"""kg_types/module.py — Abstract base class for KG modules."""
+"""kg_utils/types/module.py — Abstract base class for KG modules."""
 
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
 
-from kg_types.extractor import KGExtractor
-from kg_types.specs import QueryResult, SnippetPack
+from kg_utils.types.extractor import KGExtractor
+from kg_utils.types.specs import QueryResult, SnippetPack
 
 
 class KGModule:

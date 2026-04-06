@@ -1,4 +1,4 @@
-"""kg_types/extractor.py — Abstract base class for KG extractors."""
+"""kg_utils/types/extractor.py — Abstract base class for KG extractors."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
-from kg_types.specs import EdgeSpec, NodeSpec
+from kg_utils.types.specs import EdgeSpec, NodeSpec
 
 
 class KGExtractor:

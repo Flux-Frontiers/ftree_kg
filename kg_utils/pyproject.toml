@@ -1,23 +1,23 @@
-# pyproject.toml — kg-types: shared base types for the KGModule SDK
+# pyproject.toml — kg-utils: shared types and snapshot infrastructure for KG modules
 #
-# This is a minimal, zero-dependency package that defines the core
-# dataclasses and abstract base classes used by all KG modules
-# (pycode-kg, ftree-kg, doc-kg, agent-kg, etc.).
+# Zero-dependency (stdlib-only) package providing:
+#   kg_utils.types    — NodeSpec, EdgeSpec, KGExtractor, KGModule, etc.
+#   kg_utils.snapshots — Snapshot, SnapshotManager, SnapshotManifest, etc.
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [project]
-name = "kg-types"
+name = "kg-utils"
 version = "0.1.0"
-description = "Shared base types for the KGModule SDK"
+description = "Shared types and snapshot infrastructure for the KGModule SDK"
 readme = "README.md"
 license = { text = "Elastic-2.0" }
 authors = [
     { name = "Eric G. Suchanek, PhD", email = "suchanek@mac.com" }
 ]
-keywords = ["knowledge-graph", "kgmodule", "sdk", "types"]
+keywords = ["knowledge-graph", "kgmodule", "sdk", "types", "snapshots"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -29,7 +29,7 @@ requires-python = ">=3.12,<3.14"
 dependencies = []
 
 [project.urls]
-Repository = "https://github.com/Flux-Frontiers/kg_types"
+Repository = "https://github.com/Flux-Frontiers/kg_utils"
 
 [tool.poetry.group.dev]
 optional = true

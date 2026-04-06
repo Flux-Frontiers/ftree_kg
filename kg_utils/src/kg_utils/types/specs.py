@@ -1,4 +1,4 @@
-"""kg_types/specs.py — Core dataclasses shared by all KG modules."""
+"""kg_utils/types/specs.py — Core dataclasses shared by all KG modules."""
 
 from __future__ import annotations
 
