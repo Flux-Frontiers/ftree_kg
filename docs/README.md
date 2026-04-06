@@ -86,4 +86,4 @@ FTreeKG/
 
 ## Development
 
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for development guidelines and [`CLAUDE.md`](../.claude/CLAUDE.md) for project-specific instructions.
+See [`CLAUDE.md`](../.claude/CLAUDE.md) for project-specific instructions.
