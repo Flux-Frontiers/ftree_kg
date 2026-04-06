@@ -94,5 +94,6 @@ jobs:
 
       - name: Install dependencies
         run: poetry install --with dev --no-interaction
+
       - name: Run tests
         run: poetry run pytest
