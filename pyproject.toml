@@ -34,6 +34,10 @@ dependencies = [
     "kg-snapshot @ git+https://github.com/Flux-Frontiers/kg_snapshot.git",
 ]
 
+[project.optional-dependencies]
+dockg = ["doc-kg @ git+https://github.com/Flux-Frontiers/doc_kg.git"]
+agentkg = ["agent-kg @ git+https://github.com/Flux-Frontiers/agent_kg.git"]
+
 [project.urls]
 Repository = "https://github.com/flux-frontiers/FTreeKG"
 
@@ -68,6 +72,7 @@ optional = true
 [tool.poetry.group.kgdeps.dependencies]
 pycode-kg = { git = "https://github.com/Flux-Frontiers/pycode_kg.git" }
 doc-kg    = { git = "https://github.com/Flux-Frontiers/doc_kg.git" }
+agent-kg  = { git = "https://github.com/Flux-Frontiers/agent_kg.git" }
 
 # ---------------------------------------------------------------------------
 # Tool configuration
@@ -88,8 +93,6 @@ disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
 # Optional kgdeps (pycode-kg, doc-kg) — treated as Any whether installed or not.
-# ignore_missing_imports: no error when absent (CI); ignore_untyped_imports: no
-# [import-untyped] error when present (local dev with kgdeps).
 module = ["pycode_kg.*", "kg_rag.*", "ftree_kg.*"]
 ignore_missing_imports = true
 
@@ -131,7 +134,7 @@ disable = [
 include = ["src", "docs"]
 # exclude = ["archives", "backups"]  # additional dirs beyond DEFAULT_SKIP_DIRS
 
-[tool.codekg]
+[tool.pycodekg]
 # Directories included in the CodeKG knowledge graph build and analysis
 include = ["src"]
 
