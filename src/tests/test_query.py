@@ -12,8 +12,8 @@ from typing import cast
 
 pycode_kg = pytest.importorskip("pycode_kg", reason="pycode_kg required for integration tests")
 
-from ftree_kg.module import FileTreeKG
-from ftree_kg.snapshots import SnapshotMetrics
+from ftree_kg.module import FileTreeKG  # noqa: E402
+from ftree_kg.snapshots import SnapshotMetrics  # noqa: E402
 
 
 @pytest.fixture
