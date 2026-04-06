@@ -123,3 +123,6 @@ class KGModule:
 
     def analyze(self) -> str:
         raise NotImplementedError
+
+    def close(self) -> None:
+        """Release any resources held by the module."""

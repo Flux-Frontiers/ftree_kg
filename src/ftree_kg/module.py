@@ -14,7 +14,7 @@ from ftree_kg.config import load_exclude_dirs, load_include_dirs
 from ftree_kg.extractor import FileTreeKGExtractor
 
 
-class FileTreeKG(KGModule):  # type: ignore[misc]
+class FileTreeKG(KGModule):
     """Knowledge graph module for filetreekg.
 
     Provides build, query, pack, analyze, and snapshot operations
@@ -60,21 +60,7 @@ class FileTreeKG(KGModule):  # type: ignore[misc]
         """
         return "meta"
 
-    def pack(
-        self,
-        q: str,
-        k: int = 8,
-        hop: int = 0,
-        rels: str = "",
-        include_symbols: bool = False,
-        context: int = 5,
-        max_lines: int = 60,
-        max_nodes: int = 15,
-        min_score: float = 0.0,
-        max_per_module: int = 0,
-        missing_lineno_policy: str = "cap_or_skip",
-        include_edge_provenance: bool = False,
-    ) -> Any:
+    def pack(self, q: str, **kwargs: Any) -> Any:
         """Pack metadata snippets for filesystem nodes.
 
         For filesystem trees, we return node metadata (size, timestamps, permissions)
@@ -86,6 +72,9 @@ class FileTreeKG(KGModule):  # type: ignore[misc]
         :return: SnippetPack with metadata in nodes field.
         """
         from ftree_kg.types import SnippetPack
+
+        k: int = kwargs.get("k", 8)
+        max_nodes: int = kwargs.get("max_nodes", 15)
 
         qresult = self.query(q, k=k)
 
