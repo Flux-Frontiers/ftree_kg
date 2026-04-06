@@ -10,7 +10,7 @@ from pathlib import Path
 
 from typing import cast
 
-pycode_kg = pytest.importorskip("pycode_kg", reason="pycode_kg required for integration tests")
+pytest.importorskip("kg_utils", reason="kg_utils required for integration tests")
 
 from ftree_kg.module import FileTreeKG  # noqa: E402
 from ftree_kg.snapshots import SnapshotMetrics  # noqa: E402
@@ -71,7 +71,7 @@ def test_analyze_returns_markdown(kg: FileTreeKG) -> None:
 
 
 def test_snapshot_round_trip(kg: FileTreeKG, tmp_path: Path) -> None:
-    pytest.importorskip("kg_rag.snapshots")
+    pytest.importorskip("kg_snapshot")
     from ftree_kg.snapshots import SnapshotManager
 
     snapshots_dir = tmp_path / ".filetreekg" / "snapshots"
@@ -102,7 +102,7 @@ def test_snapshot_round_trip(kg: FileTreeKG, tmp_path: Path) -> None:
 
 
 def test_snapshot_list(kg: FileTreeKG, tmp_path: Path) -> None:
-    pytest.importorskip("kg_rag.snapshots")
+    pytest.importorskip("kg_snapshot")
     from ftree_kg.snapshots import SnapshotManager
 
     snapshots_dir = tmp_path / ".filetreekg" / "snapshots"
@@ -118,7 +118,7 @@ def test_snapshot_list(kg: FileTreeKG, tmp_path: Path) -> None:
 
 
 def test_snapshot_diff(kg: FileTreeKG, tmp_path: Path) -> None:
-    pytest.importorskip("kg_rag.snapshots")
+    pytest.importorskip("kg_snapshot")
     from ftree_kg.snapshots import SnapshotManager
 
     snapshots_dir = tmp_path / ".filetreekg" / "snapshots"

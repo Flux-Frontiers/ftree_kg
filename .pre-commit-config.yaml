@@ -12,13 +12,15 @@ repos:
         exclude: '^(src|docs|article)/.*\.(png|jpg|jpeg|gif|pdf)$|^\.codekg/'
       - id: debug-statements
 
-  # Pylint code quality checking
-  - repo: https://github.com/PyCQA/pylint
-    rev: v4.0.4
+  # Pylint code quality checking (runs via poetry so project deps are visible)
+  - repo: local
     hooks:
       - id: pylint
-        args: ['--rcfile=pyproject.toml']
-        files: '^src/'
+        name: pylint
+        entry: poetry run pylint src/
+        language: system
+        pass_filenames: false
+        always_run: true
 
   - repo: local
     hooks:
@@ -30,7 +32,7 @@ repos:
         always_run: true
       - id: mypy
         name: mypy
-        entry: poetry run mypy src/
+        entry: poetry run mypy src/ tests/
         language: system
         pass_filenames: false
         always_run: true

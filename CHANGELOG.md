@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `FileTreeKG.build()` — SQLite-backed graph build pipeline using the extractor; creates `nodes` and `edges` tables, wipes on request
+- `FileTreeKG.query()` — text-match query over qualname, kind, and docstring; returns `kg_utils.types.QueryResult`
+- `FileTreeKG.stats()` — SQLite aggregation returning `total_nodes`, `total_edges`, `node_counts`, `edge_counts`
+
+### Changed
+- `extractor.py`: replaced local-stub import (`ftree_kg.types`) with `from kg_utils.types import EdgeSpec, KGExtractor, NodeSpec`
+- `module.py`: replaced broken try/except import block with `from kg_utils.types import KGModule, QueryResult, SnippetPack, NodeSpec, EdgeSpec`; `FileTreeKG` now inherits from the installed `kg_utils` SDK rather than the local stub
+- `tests/test_query.py`: updated `importorskip` guard from `pycode_kg` → `kg_utils`; updated snapshot test guards from `kg_rag.snapshots` → `kg_snapshot`
+- `.pre-commit-config.yaml`: mypy hook now covers `tests/` in addition to `src/`
+- `pytest.ini`: `testpaths` updated to `./tests` (top-level); `pythonpath` set to `src`
+
+### Removed
+- `kg_utils/` local subpackage — promoted to a standalone installed package (`kg-utils`); all source, tests, and configuration deleted from this repo
+- `src/tests/` — tests consolidated under top-level `tests/` directory
+
 ## [0.4.1] - 2026-04-06
 
 ### Added
