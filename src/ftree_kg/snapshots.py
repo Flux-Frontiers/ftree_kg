@@ -38,6 +38,7 @@ from typing import Any, cast
 # ---------------------------------------------------------------------------
 # Re-export shared models for backwards compatibility
 # ---------------------------------------------------------------------------
+from kg_snapshot.snapshots import PruneResult  # noqa: F401  re-exported
 from kg_snapshot.snapshots import Snapshot, SnapshotManifest
 from kg_snapshot.snapshots import SnapshotManager as _BaseSnapshotManager
 
@@ -47,6 +48,7 @@ __all__ = [
     "SnapshotManager",
     "SnapshotMetrics",
     "SnapshotDelta",
+    "PruneResult",
     "metrics_to_dict",
     "metrics_from_dict",
     "delta_to_dict",

@@ -1,0 +1,56 @@
+{
+  "key": "c0074ebfdb0b4566909369b6f301ea9976c46f37",
+  "branch": "main",
+  "timestamp": "2026-04-24T01:35:43.264569+00:00",
+  "version": "0.4.1",
+  "metrics": {
+    "total_nodes": 1565,
+    "total_edges": 1565,
+    "node_counts": {
+      "directory": 199,
+      "file": 1366
+    },
+    "edge_counts": {
+      "CONTAINS": 1565
+    },
+    "total_files": 1366,
+    "total_dirs": 199,
+    "dir_node_counts": {
+      ".agentkg": 1002,
+      ".claude": 484,
+      ".mcp.json": 1,
+      ".pre-commit-config.yaml": 1,
+      ".pycodekg": 28,
+      ".secrets.baseline": 1,
+      "CHANGELOG.md": 1,
+      "FTreeKG.code-workspace": 1,
+      "LICENSE": 1,
+      "Makefile": 1,
+      "README.md": 1,
+      "analysis": 3,
+      "codekg_pyproject.toml": 1,
+      "commit.txt": 1,
+      "conftest.py": 1,
+      "docs": 3,
+      "examples": 2,
+      "poetry.lock": 1,
+      "poetry.toml": 1,
+      "py.typed": 1,
+      "pyproject.toml": 1,
+      "pytest.ini": 1,
+      "release-notes.md": 1,
+      "scripts": 2,
+      "src": 20,
+      "tests": 4
+    }
+  },
+  "hotspots": [],
+  "issues": [],
+  "vs_previous": null,
+  "vs_baseline": {
+    "nodes": 1024,
+    "edges": 1024,
+    "files_delta": 1010,
+    "dirs_delta": 14
+  }
+}

@@ -3,6 +3,7 @@
 [![Version](https://img.shields.io/badge/version-0.5.0-blue.svg)](https://github.com/Flux-Frontiers/FTreeKG/releases)
 [![CI](https://github.com/Flux-Frontiers/FTreeKG/actions/workflows/ci.yml/badge.svg)](https://github.com/Flux-Frontiers/FTreeKG/actions/workflows/ci.yml)
 [![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
+[![DOI](https://zenodo.org/badge/1182124358.svg)](https://zenodo.org/badge/latestdoi/1182124358)
 
 # FTreeKG
 

@@ -1,0 +1,26 @@
+cff-version: "1.2.0"
+message: "If you use this software, please cite it using the metadata below."
+type: software
+title: "FTreeKG: File Tree Knowledge Graph"
+abstract: >
+  FTreeKG is a KGModule that builds a semantic knowledge graph from file tree
+  structures. It indexes directories, files, and their relationships, enabling
+  semantic search, structural navigation, and MCP-based AI integration over
+  file system hierarchies.
+authors:
+  - family-names: Suchanek
+    given-names: "Eric G., PhD"
+    orcid: "https://orcid.org/0009-0009-0891-1507"
+    email: suchanek@flux-frontiers.com
+    affiliation: "Flux-Frontiers"
+version: "0.5.0"
+date-released: "2026-04-24"
+license-url: "https://www.elastic.co/licensing/elastic-license"
+repository-code: "https://github.com/Flux-Frontiers/ftree_kg"
+url: "https://github.com/Flux-Frontiers/ftree_kg"
+keywords:
+  - knowledge-graph
+  - file-tree
+  - semantic-search
+  - mcp
+  - kgrag
