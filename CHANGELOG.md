@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+### Removed
+
+## [0.6.0] - 2026-04-24
+
+### Added
 - `_ascii_tree()` — renders a depth-limited, child-truncated ASCII directory tree from SQLite path rows; shown in `analyze()` under "Directory tree (depth ≤ 3)"
 - `analyze()` — "Directory tree" section added after the size chart
 - `pylint` added to dev dependencies so `poetry run pylint` uses the project venv

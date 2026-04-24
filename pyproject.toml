@@ -42,7 +42,7 @@ build-backend = "poetry.core.masonry.api"
 # ---------------------------------------------------------------------------
 [project]
 name = "ftree-kg"
-version = "0.5.0"
+version = "0.6.0"
 description = "KGModule for file tree knowledge graphs"
 readme = "README.md"
 license = { text = "Elastic-2.0" }
