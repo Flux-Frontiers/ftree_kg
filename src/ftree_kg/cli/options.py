@@ -11,6 +11,7 @@ Click command to provide consistent option names, defaults, and help text::
 """
 
 import click
+from kg_utils.embed import DEFAULT_MODEL
 
 repo_option = click.option(
     "--repo",
@@ -38,7 +39,7 @@ lancedb_option = click.option(
 
 model_option = click.option(
     "--model",
-    default="BAAI/bge-small-en-v1.5",
+    default=DEFAULT_MODEL,
     show_default=True,
     help="Sentence-transformer model name.",
 )

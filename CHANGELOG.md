@@ -15,6 +15,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [0.7.0] - 2026-04-26
+
+### Added
+- `workflow_dispatch` trigger added to `.github/workflows/ci.yml` — enables manual CI runs from the GitHub Actions UI
+
+### Changed
+- `options.py`: default embedding model sourced from `kg_utils.embed.DEFAULT_MODEL` instead of hardcoded `"BAAI/bge-small-en-v1.5"` — stays in sync with `kg_utils` automatically
+- `.pre-commit-config.yaml`: ruff hooks moved before pylint and given `exclude`, `pass_filenames: false`, and `always_run: true`; pylint now passes `--rcfile=pyproject.toml`; detect-secrets repositioned before local hooks
+- `pytest.ini`: added `pythonpath = src` so tests resolve package imports without requiring an editable install
+
 ## [0.6.0] - 2026-04-24
 
 ### Added

@@ -124,6 +124,7 @@ dmypy.json
 *.swp
 *.swo
 *~
+*.code-workspace
 
 # KGModule indices — exclude DBs/vectors, keep snapshots/
 .filetreekg/lancedb/
@@ -140,3 +141,4 @@ dmypy.json
 .dockg/graph.sqlite*
 .agentkg/
 .claude/plugins/marketplaces/
+commit.txt

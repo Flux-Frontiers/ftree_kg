@@ -42,7 +42,7 @@ build-backend = "poetry.core.masonry.api"
 # ---------------------------------------------------------------------------
 [project]
 name = "ftree-kg"
-version = "0.6.0"
+version = "0.7.0"
 description = "KGModule for file tree knowledge graphs"
 readme = "README.md"
 license = { text = "Elastic-2.0" }
@@ -61,7 +61,7 @@ requires-python = ">=3.12,<3.14"
 dependencies = [
     "click>=8.1.0,<9",
     "kg-snapshot @ git+https://github.com/Flux-Frontiers/kg_snapshot.git",
-    "kg-utils @ git+https://github.com/Flux-Frontiers/kg_utils.git",
+    "kg-utils @ git+https://github.com/Flux-Frontiers/KG_utils.git",
 ]
 
 [project.optional-dependencies]

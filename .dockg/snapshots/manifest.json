@@ -1,6 +1,6 @@
 {
   "format": "1.0",
-  "last_update": "2026-04-24T19:05:06.933964+00:00",
+  "last_update": "2026-04-26T17:42:56.371008+00:00",
   "snapshots": [
     {
       "key": "540f6b313c71d4409140c4167c0b8e04666be50f",
@@ -126,11 +126,54 @@
       }
     },
     {
-      "key": "7a301d8a8dc445cbf457b8bc921ca36a382b1335",
+      "key": "8a7fb41089ea50669d374ea60cee56331731fa98",
       "branch": "main",
-      "timestamp": "2026-04-24T19:05:06.933563+00:00",
+      "timestamp": "2026-04-26T17:37:08.401564+00:00",
       "version": "0.10.0",
-      "file": "7a301d8a8dc445cbf457b8bc921ca36a382b1335.json",
+      "file": "8a7fb41089ea50669d374ea60cee56331731fa98.json",
+      "metrics": {
+        "db_path": "/Users/egs/repos/ftree_kg/.dockg/graph.sqlite",
+        "total_nodes": 1836,
+        "total_edges": 10682,
+        "node_counts": {
+          "chunk": 373,
+          "document": 18,
+          "entity": 439,
+          "keyword": 435,
+          "section": 308,
+          "topic": 263
+        },
+        "edge_counts": {
+          "CONTAINS": 681,
+          "CO_OCCURS_WITH": 6914,
+          "HAS_KEYWORD": 1343,
+          "HAS_TOPIC": 373,
+          "MENTIONS_ENTITY": 1188,
+          "NEXT": 52,
+          "REFERENCES": 9,
+          "SIMILAR_TO": 122
+        },
+        "meaningful_nodes": 1818,
+        "coverage_score": 0.8802502234137624,
+        "issues_count": 1,
+        "complexity_median": 16.0
+      },
+      "deltas": {
+        "vs_previous": null,
+        "vs_baseline": {
+          "nodes": 1568,
+          "edges": 9905,
+          "coverage_delta": 0.028398371561910607,
+          "issues_delta": 1
+        }
+      }
+    },
+    {
+      "key": "991ac3dfd60f5d5f47c6df3995df049d7b75155d",
+      "branch": "main",
+      "timestamp": "2026-04-26T17:42:56.370472+00:00",
+      "version": "0.12.0",
+      "file": "991ac3dfd60f5d5f47c6df3995df049d7b75155d.json",
       "metrics": {
         "db_path": "/Users/egs/repos/ftree_kg/.dockg/graph.sqlite",
         "total_nodes": 1836,

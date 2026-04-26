@@ -1,7 +1,7 @@
 {
-  "key": "7a301d8a8dc445cbf457b8bc921ca36a382b1335",
+  "key": "8a7fb41089ea50669d374ea60cee56331731fa98",
   "branch": "main",
-  "timestamp": "2026-04-24T19:05:06.933563+00:00",
+  "timestamp": "2026-04-26T17:37:08.401564+00:00",
   "version": "0.10.0",
   "metrics": {
     "db_path": "/Users/egs/repos/ftree_kg/.dockg/graph.sqlite",

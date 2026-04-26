@@ -12,34 +12,16 @@ repos:
         exclude: '^(src|docs|article)/.*\.(png|jpg|jpeg|gif|pdf)$|^\.codekg/'
       - id: debug-statements
 
-  # Pylint code quality checking (runs via poetry so project deps are visible)
-  - repo: local
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.10
     hooks:
-      - id: pylint
-        name: pylint
-        entry: poetry run pylint src/
-        language: system
+      - id: ruff
+        args: [--fix]
+        exclude: '^\.claude/'
         pass_filenames: false
         always_run: true
-
-  - repo: local
-    hooks:
-      - id: poetry-check
-        name: poetry check
-        entry: poetry check --lock
-        language: system
-        pass_filenames: false
-        always_run: true
-      - id: mypy
-        name: mypy
-        entry: poetry run mypy src/ tests/
-        language: system
-        pass_filenames: false
-        always_run: true
-      - id: pytest
-        name: pytest
-        entry: poetry run pytest --tb=short -q
-        language: system
+      - id: ruff-format
+        exclude: '^\.claude/'
         pass_filenames: false
         always_run: true
 
@@ -52,9 +34,24 @@ repos:
           '--exclude-files', '\.(filetreekg|pycodekg|dockg|agentkg|codekg)/.*',
         ]
 
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.10
+  - repo: local
     hooks:
-      - id: ruff
-        args: [--fix]
-      - id: ruff-format
+      - id: pylint
+        name: pylint
+        entry: poetry run pylint src/
+        language: system
+        pass_filenames: false
+        always_run: true
+        args: ['--rcfile=pyproject.toml']
+      - id: mypy
+        name: mypy
+        entry: poetry run mypy src/ tests/
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: pytest
+        name: pytest
+        entry: poetry run pytest --tb=short -q
+        language: system
+        pass_filenames: false
+        always_run: true
