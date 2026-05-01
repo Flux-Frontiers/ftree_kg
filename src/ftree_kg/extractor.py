@@ -1,6 +1,10 @@
 """filetreekg/extractor.py
 
 FileTreeKGExtractor — KGExtractor for filetreekg.
+
+Author: Eric G. Suchanek, PhD
+Last Revision: 2026-04-30 23:41:26
+License: Elastic 2.0
 """
 
 from __future__ import annotations

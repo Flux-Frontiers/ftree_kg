@@ -1,12 +1,12 @@
-"""
-cmd_hooks.py
+"""cmd_hooks.py
 
 CLI command for installing FTreeKG git hooks:
 
   install-hooks — install the pre-commit snapshot hook into .git/hooks/
 
-  Author: Eric G. Suchanek, PhD
-  Last Revision: 2026-03-18
+Author: Eric G. Suchanek, PhD
+Last Revision: 2026-04-30 23:41:26
+License: Elastic 2.0
 """
 
 from __future__ import annotations

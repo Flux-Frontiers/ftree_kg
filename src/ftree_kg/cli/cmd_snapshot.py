@@ -6,6 +6,10 @@ Click subcommands for managing temporal snapshots of filesystem tree metrics:
     snapshot list   — show all snapshots with key metrics
     snapshot show   — display full snapshot details
     snapshot diff   — compare two snapshots side-by-side
+
+Author: Eric G. Suchanek, PhD
+Last Revision: 2026-04-30 23:41:26
+License: Elastic 2.0
 """
 
 from __future__ import annotations

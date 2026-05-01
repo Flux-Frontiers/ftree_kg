@@ -1,6 +1,6 @@
 {
   "format": "1.0",
-  "last_update": "2026-05-01T03:37:52.117071+00:00",
+  "last_update": "2026-05-01T04:21:13.185152+00:00",
   "snapshots": [
     {
       "key": "571bc8512ac3aacad037cf6603cba748f3e38a49",
@@ -635,6 +635,59 @@
           "nodes": -487,
           "edges": -487,
           "files_delta": -311,
+          "dirs_delta": -176
+        }
+      }
+    },
+    {
+      "key": "92c1d022389fcc2cf251f132c3653801e8c29460",
+      "branch": "main",
+      "timestamp": "2026-05-01T04:21:13.184216+00:00",
+      "version": "0.8.0",
+      "file": "92c1d022389fcc2cf251f132c3653801e8c29460.json",
+      "metrics": {
+        "total_nodes": 56,
+        "total_edges": 56,
+        "node_counts": {
+          "directory": 9,
+          "file": 47
+        },
+        "edge_counts": {
+          "CONTAINS": 56
+        },
+        "total_files": 47,
+        "total_dirs": 9,
+        "dir_node_counts": {
+          "CHANGELOG.md": 1,
+          "CITATION.cff": 1,
+          "FTreeKG.code-workspace": 1,
+          "LICENSE": 1,
+          "Makefile": 1,
+          "README.md": 1,
+          "analysis": 3,
+          "codekg_pyproject.toml": 1,
+          "commit.txt": 1,
+          "conftest.py": 1,
+          "docs": 5,
+          "examples": 2,
+          "ftree_kg.code-workspace": 1,
+          "poetry.lock": 1,
+          "poetry.toml": 1,
+          "py.typed": 1,
+          "pyproject.toml": 1,
+          "pytest.ini": 1,
+          "release-notes.md": 1,
+          "scripts": 2,
+          "src": 22,
+          "tests": 6
+        }
+      },
+      "deltas": {
+        "vs_previous": null,
+        "vs_baseline": {
+          "nodes": -485,
+          "edges": -485,
+          "files_delta": -309,
           "dirs_delta": -176
         }
       }

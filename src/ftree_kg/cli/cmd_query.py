@@ -4,6 +4,10 @@ Click subcommands for querying the FileTreeKG knowledge graph:
 
     query   - semantic search over filesystem nodes
     pack    - get metadata snippets for query results
+
+Author: Eric G. Suchanek, PhD
+Last Revision: 2026-04-30 23:41:26
+License: Elastic 2.0
 """
 
 from __future__ import annotations

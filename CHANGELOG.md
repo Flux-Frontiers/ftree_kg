@@ -18,12 +18,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `tests/test_metadata.py` — EXIF extraction tests including GPS DMS → decimal round-trip
 - `tests/test_snapshots.py` — coverage for the FtreeSnapshotManager subclass
 - Expanded `tests/test_query.py` — image-metadata embed-text and pack-snippet coverage
+- `docs/CHEATSHEET.md` — query patterns and recipes (orient with `status`, build / incremental build, semantic search, EXIF-based image queries, `pack` for LLM context, snapshots, schema reference, exclusion rules) modeled on `doc_kg/docs/CHEATSHEET.md`
+- `docs/CLI.md` — full flag reference for every subcommand (`build`, `query`, `pack`, `status`, `analyze`, `snapshot {save,list,show,diff,prune}`, `install-hooks`) with shared-options table, `pyproject.toml` config, storage layout, embedding-model notes, and a Python API mapping
+- `docs/pipeline.md` — flowing-prose architecture and data-flow document modeled on `pycode_kg/docs/Architecture-plain.md`; suitable as input to PaperBanana / diagram generators (includes a "Diagram Hints" section specifying suggested layout, color coding, and arrow styles)
+- Author / Last Revision / License headers added to every module under `src/ftree_kg/` and `src/ftree_kg/cli/`
 
 ### Changed
 - `FileTreeKG.query()` — now performs semantic vector search first (LanceDB + embedder), with the lexical LIKE search as a graceful fallback when the vector index is missing or the embedder cannot load
-- `pyproject.toml` — `lancedb>=0.29.0` and `pillow>=10.0.0` added as core dependencies (semantic search and EXIF are now first-class); `kg-snapshot` git dep removed in favour of `kg_utils.snapshots`; `kgmodule-utils` bumped to `>=0.2.1`; `kgdeps` extra now resolves `pycode-kg` and `doc-kg` from PyPI; `black` removed (ruff handles formatting); `[tool.ruff.lint]` and `[tool.pytest.ini_options]` blocks added; pylint config switched to disable-all-then-enable to surface only the rules we care about
+- `pyproject.toml` — `lancedb>=0.29.0` and `pillow>=10.0.0` added as core dependencies (semantic search and EXIF are now first-class); `kg-snapshot` git dep removed in favour of `kg_utils.snapshots`; `kgmodule-utils` bumped to `>=0.2.1`; `kgdeps` extra now resolves `pycode-kg` and `doc-kg` from PyPI; `all` extra bumped to `pycode-kg>=0.17.0` and `doc-kg>=0.12.0`; `[tool.dockg].exclude` list trimmed (built-in skips no longer need to be enumerated); `black` removed (ruff handles formatting); `[tool.ruff.lint]` and `[tool.pytest.ini_options]` blocks added; pylint config switched to disable-all-then-enable to surface only the rules we care about
 - `ftree_kg.snapshots` — imports `Snapshot`, `SnapshotManifest`, `SnapshotManager`, and `PruneResult` from `kg_utils.snapshots` (was `kg_snapshot.snapshots`); `import importlib.metadata` lifted to module top
 - `cmd_status.py` — `datetime.timezone` import replaced with `datetime.UTC`
+- `README.md` — rewritten in the pycode_kg / doc_kg style: Overview cross-links sister repos (PyCodeKG, DocKG, KGRAG), Features list expanded with EXIF/semantic-search/lexical-fallback bullets, Quick Start now demos `"iPhone photos from 2023"`, inline detail moved to the new `docs/CHEATSHEET.md`, `docs/CLI.md`, and `docs/pipeline.md`
+- `.github/workflows/ci.yml` — `pytest` invocation now passes `-m "not integration"` so CI skips tests that require a real embedder / LanceDB
 
 ### Fixed
 - mypy: `_embed_text(row: tuple)` annotated as `tuple[Any, ...]` to satisfy `type-arg`
@@ -33,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - pylint: `extract_image_metadata` outer `except Exception` annotated `# pylint: disable=broad-exception-caught`
 
 ### Removed
+- `docs/ftreekg_packaging_fix.md` — stale packaging-fix note superseded by current `pyproject.toml` and `docs/CLI.md`
 
 ## [0.8.0] - 2026-04-29
 

@@ -6,6 +6,10 @@ The root Click group is importable from either location::
 
     from filetreekg.cli import cli
     from filetreekg.cli.main import cli
+
+Author: Eric G. Suchanek, PhD
+Last Revision: 2026-04-30 23:41:26
+License: Elastic 2.0
 """
 
 from ftree_kg.cli import (

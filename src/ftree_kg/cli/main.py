@@ -5,6 +5,10 @@ Usage::
     ftreekg --help
     ftreekg --version
     ftreekg build --help
+
+Author: Eric G. Suchanek, PhD
+Last Revision: 2026-04-30 23:41:26
+License: Elastic 2.0
 """
 
 import ftree_kg.cli.cmd_analyze  # noqa: F401  # pylint: disable=unused-import

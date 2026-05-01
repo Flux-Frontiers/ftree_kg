@@ -8,6 +8,10 @@ Click command to provide consistent option names, defaults, and help text::
     @db_option
     def my_command(repo, db):
         ...
+
+Author: Eric G. Suchanek, PhD
+Last Revision: 2026-04-30 23:41:26
+License: Elastic 2.0
 """
 
 import click

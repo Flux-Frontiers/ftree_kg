@@ -1,6 +1,10 @@
 """filetreekg/module.py
 
 FileTreeKG — KGModule for filetreekg.
+
+Author: Eric G. Suchanek, PhD
+Last Revision: 2026-04-30 23:41:26
+License: Elastic 2.0
 """
 
 from __future__ import annotations
@@ -360,15 +364,19 @@ class FileTreeKG(KGModule):
 
         records: list[dict[str, Any]] = []
         for (
-            node_id,
-            kind,
-            name,
-            qualname,
-            source_path,
-            _docstring,
-            _size,
-            _metadata,
-        ), text, vec in zip(rows, texts, vectors, strict=True):
+            (
+                node_id,
+                kind,
+                name,
+                qualname,
+                source_path,
+                _docstring,
+                _size,
+                _metadata,
+            ),
+            text,
+            vec,
+        ) in zip(rows, texts, vectors, strict=True):
             records.append(
                 {
                     "id": node_id,
