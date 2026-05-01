@@ -4628,4 +4628,4 @@ kgdeps = ["doc-kg", "pycode-kg"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "50766be3f5ce1ff1c85e035d2968b821779c00a4a0da130f4c691ff1a4b471db"
+content-hash = "35db9f93a7a106f08015e5719962d26faece181f811974a08bc3ba517c7352e1"
