@@ -240,7 +240,7 @@ Installs a `pre-commit` hook that, on every commit:
 2. Rebuilds the local FTreeKG index (`ftreekg build --repo <root>`)
 3. Captures a metrics snapshot keyed by the tree hash
 4. Stages `.filetreekg/snapshots/` so the snapshot is committed atomically
-5. Runs the `pre-commit` framework (ruff, mypy, etc.) if installed
+5. Runs the `pre-commit` framework (ruff, ty, etc.) if installed
 
 Skip for a single commit:
 

@@ -81,7 +81,7 @@ ftreekg status renders a Rich-formatted terminal panel summarizing live graph st
 
 GIT HOOK
 
-ftreekg install-hooks writes a pre-commit hook to .git/hooks/pre-commit. On every commit the hook captures the tree hash of the staged index via git write-tree, rebuilds the FTreeKG index, captures a metrics snapshot keyed by that tree hash, stages .filetreekg/snapshots/, then runs the pre-commit framework if installed (ruff, mypy, etc.). Skip with FTREEKG_SKIP_SNAPSHOT=1. The hook keeps the index and snapshot history atomically synchronized with committed source.
+ftreekg install-hooks writes a pre-commit hook to .git/hooks/pre-commit. On every commit the hook captures the tree hash of the staged index via git write-tree, rebuilds the FTreeKG index, captures a metrics snapshot keyed by that tree hash, stages .filetreekg/snapshots/, then runs the pre-commit framework if installed (ruff, ty, etc.). Skip with FTREEKG_SKIP_SNAPSHOT=1. The hook keeps the index and snapshot history atomically synchronized with committed source.
 
 NODE ID FORMAT
 
