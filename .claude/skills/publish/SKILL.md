@@ -1,9 +1,9 @@
 ---
 name: publish
-description: Step-by-step release workflow for publishing code-kg to PyPI using Poetry. Use this skill when the user wants to cut a release, bump the version, update the CHANGELOG, tag a commit, build and publish to PyPI, or run any part of the release pipeline for the code-kg project.
+description: Step-by-step release workflow for publishing ftree-kg to PyPI using Poetry. Use this skill when the user wants to cut a release, bump the version, update the CHANGELOG, tag a commit, build and publish to PyPI, or run any part of the release pipeline for the ftree-kg project.
 ---
 
-# Publish Skill — code-kg Release Workflow
+# Publish Skill — ftree-kg Release Workflow
 
 ## Prerequisites
 
@@ -48,10 +48,10 @@ Verify: `grep '^version' pyproject.toml`
 
 ```bash
 git add pyproject.toml CHANGELOG.md
-CODEKG_SKIP_SNAPSHOT=1 git commit -m "chore: release vX.Y.Z"
+FTREEKG_SKIP_SNAPSHOT=1 git commit -m "chore: release vX.Y.Z"
 ```
 
-> Use `CODEKG_SKIP_SNAPSHOT=1` to prevent the post-commit hook from creating a snapshot on a release commit.
+> Use `FTREEKG_SKIP_SNAPSHOT=1` to prevent the post-commit hook from creating a snapshot on a release commit.
 
 ### 5. Tag the release
 
@@ -93,8 +93,8 @@ git push origin main --tags
 
 ## After Release
 
-- Update `.claude/skills/codekg/SKILL.md` if the install command or version references changed
-- Save a snapshot: `codekg snapshot save X.Y.Z --repo . --commit $(git rev-parse HEAD) --branch main`
+- Update any docs referencing the install command or version if they changed
+- Save a snapshot: `ftreekg snapshot save X.Y.Z --repo . --commit $(git rev-parse HEAD) --branch main`
 
 ---
 
@@ -102,6 +102,6 @@ git push origin main --tags
 
 If something went wrong after `poetry publish`:
 
-- PyPI releases cannot be deleted (only yanked): `poetry run twine yank code-kg X.Y.Z`
+- PyPI releases cannot be deleted (only yanked): `poetry run twine yank ftree-kg X.Y.Z`
 - Revert the commit: `git revert HEAD` then `git push`
 - Delete the tag: `git tag -d vX.Y.Z && git push origin :refs/tags/vX.Y.Z`
