@@ -15,7 +15,8 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
-from kg_utils.types import EdgeSpec, KGModule, NodeSpec, QueryResult, SnippetPack
+from kg_utils.pipeline import KGModule
+from kg_utils.specs import BuildStats, EdgeSpec, NodeSpec, QueryResult, SnippetPack
 
 from ftree_kg.config import load_exclude_dirs, load_include_dirs
 from ftree_kg.extractor import FileTreeKGExtractor
@@ -212,8 +213,16 @@ class FileTreeKG(KGModule):
         """
         return "filetree"
 
-    def build(self, wipe: bool = True, embed: bool = True, metadata: bool = True) -> None:
+    def build(self, wipe: bool = True, embed: bool = True, metadata: bool = True) -> BuildStats:
         """Build the SQLite graph index and (optionally) the LanceDB vector index.
+
+        FileTreeKG predates kgmodule-utils 0.4's GraphStore/SemanticIndex-based
+        pipeline and keeps its own raw-SQL schema (``size_bytes``, ``metadata``
+        columns GraphStore's canonical node schema has no room for), so this
+        override drives its own passes rather than delegating to
+        :meth:`KGModule.build_graph`/:meth:`KGModule.build_index`. It still
+        returns :class:`~kg_utils.specs.BuildStats` to satisfy the base
+        contract.
 
         Pass 1   — extract nodes/edges from the filesystem.
         Pass 2   — re-stat each file node to populate ``size_bytes``.
@@ -227,6 +236,7 @@ class FileTreeKG(KGModule):
         :param metadata: If True, extract per-format metadata (image EXIF, etc.)
             for each file node.  Cheap — the dispatcher returns immediately
             for files outside the supported extension set.
+        :return: :class:`~kg_utils.specs.BuildStats` for this build.
         """
         assert self.db_path is not None
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -282,8 +292,22 @@ class FileTreeKG(KGModule):
             self._extract_node_metadata()
 
         # Pass 3: embed nodes into LanceDB
+        indexed_rows: int | None = None
+        index_dim: int | None = None
         if embed:
-            self._embed_nodes(wipe=wipe)
+            indexed_rows, index_dim = self._embed_nodes(wipe=wipe)
+
+        s = self.stats()
+        return BuildStats(
+            repo_root=str(self.repo_root),
+            db_path=str(self.db_path),
+            total_nodes=s["total_nodes"],
+            total_edges=s["total_edges"],
+            node_counts=s["node_counts"],
+            edge_counts=s["edge_counts"],
+            indexed_rows=indexed_rows,
+            index_dim=index_dim,
+        )
 
     def _extract_node_metadata(self) -> None:
         """Walk every file node, run :func:`extract_metadata`, persist as JSON.
@@ -309,7 +333,7 @@ class FileTreeKG(KGModule):
             conn.executemany("UPDATE nodes SET metadata = ? WHERE node_id = ?", updates)
             conn.commit()
 
-    def _embed_nodes(self, wipe: bool = True) -> None:
+    def _embed_nodes(self, wipe: bool = True) -> tuple[int | None, int | None]:
         """Embed every node into LanceDB at ``self.lancedb_dir / kg_nodes.lance``.
 
         Builds a canonical text document per node (kind, name, qualname, source
@@ -324,9 +348,11 @@ class FileTreeKG(KGModule):
         the build.
 
         :param wipe: If True, drop and recreate the table; if False, append.
+        :return: ``(indexed_rows, index_dim)``, both ``None`` if the pass was
+            skipped or no nodes were embedded.
         """
         if self.lancedb_dir is None:
-            return
+            return None, None
         try:
             import lancedb  # pylint: disable=import-outside-toplevel
             from kg_utils.embedder import get_embedder  # pylint: disable=import-outside-toplevel
@@ -337,7 +363,7 @@ class FileTreeKG(KGModule):
                 f"[FileTreeKG] embedding pass skipped — {exc}",
                 file=sys.stderr,
             )
-            return
+            return None, None
 
         assert self.db_path is not None
         with sqlite3.connect(self.db_path) as conn:
@@ -346,7 +372,7 @@ class FileTreeKG(KGModule):
                 " size_bytes, metadata FROM nodes"
             ).fetchall()
         if not rows:
-            return
+            return None, None
 
         try:
             embedder = get_embedder()
@@ -357,7 +383,7 @@ class FileTreeKG(KGModule):
                 f"[FileTreeKG] embedding pass skipped — embedder load failed: {exc}",
                 file=sys.stderr,
             )
-            return
+            return None, None
 
         texts = [_embed_text(r) for r in rows]
         vectors = embedder.embed_texts(texts)
@@ -399,6 +425,8 @@ class FileTreeKG(KGModule):
                 db.open_table("kg_nodes").add(records)
         else:
             db.create_table("kg_nodes", data=records)
+
+        return len(records), (len(vectors[0]) if vectors else None)
 
     def stats(self) -> dict[str, Any]:
         """Return statistics about the knowledge graph.

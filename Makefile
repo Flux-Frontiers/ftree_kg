@@ -8,9 +8,9 @@ help:
 	@echo "  make install        Install in editable mode"
 	@echo "  make test           Run pytest suite"
 	@echo "  make lint           Lint with ruff"
-	@echo "  make format         Format with black"
-	@echo "  make type           Type check with mypy"
-	@echo "  make build-kg       Build CodeKG + DocKG indices"
+	@echo "  make format         Format with ruff"
+	@echo "  make type           Type check with ty"
+	@echo "  make build-kg       Build PyCodeKG + DocKG indices"
 	@echo "  make clean          Remove build artifacts"
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
@@ -24,28 +24,27 @@ shell:
 	poetry shell
 
 test:
-	poetry run pytest ./filetreekg/tests -v --cov=filetreekg
+	poetry run pytest tests -v --cov=ftree_kg
 
 lint:
-	poetry run ruff check filetreekg tests conftest.py
+	poetry run ruff check src tests conftest.py
 
 format:
-	poetry run black filetreekg tests conftest.py
+	poetry run ruff format src tests conftest.py
 
 type:
-	poetry run mypy filetreekg tests conftest.py
+	poetry run ty check src
 
 build-kg:
-	@echo "Building CodeKG index..."
-	poetry run codekg build --repo . --wipe
+	@echo "Building PyCodeKG index..."
+	poetry run pycodekg build --repo . --wipe
 	@echo "Building DocKG index..."
 	poetry run dockg build --repo . --wipe
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name .pytest_cache -exec rm -rf {} + 2>/dev/null || true
-	find . -type d -name .mypy_cache -exec rm -rf {} + 2>/dev/null || true
-	find . -type d -name .codekg -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name .pycodekg -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name .dockg -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name .filetreekg -exec rm -rf {} + 2>/dev/null || true
 	rm -rf dist/ build/ *.egg-info

@@ -166,11 +166,11 @@ def _hydrate_snapshot(snap: Snapshot) -> Snapshot:
     Returns the same Snapshot object for convenience.
     """
     if isinstance(snap.metrics, dict):
-        snap.metrics = metrics_from_dict(snap.metrics)  # type: ignore[assignment]
+        snap.metrics = metrics_from_dict(snap.metrics)  # ty: ignore[invalid-assignment]
     if isinstance(snap.vs_previous, dict):
-        snap.vs_previous = delta_from_dict(snap.vs_previous)  # type: ignore[assignment]
+        snap.vs_previous = delta_from_dict(snap.vs_previous)  # ty: ignore[invalid-assignment]
     if isinstance(snap.vs_baseline, dict):
-        snap.vs_baseline = delta_from_dict(snap.vs_baseline)  # type: ignore[assignment]
+        snap.vs_baseline = delta_from_dict(snap.vs_baseline)  # ty: ignore[invalid-assignment]
     return snap
 
 

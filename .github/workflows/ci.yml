@@ -32,7 +32,7 @@ jobs:
           key: lint-${{ runner.os }}-${{ hashFiles('poetry.lock') }}
 
       - name: Install dev dependencies
-        run: poetry install --only dev --no-interaction
+        run: poetry install --no-interaction --extras dev
 
       - name: Check formatting
         run: poetry run ruff format --check .
@@ -64,10 +64,10 @@ jobs:
           key: typecheck-${{ runner.os }}-${{ hashFiles('poetry.lock') }}
 
       - name: Install dependencies
-        run: poetry install --no-interaction
+        run: poetry install --no-interaction --extras dev
 
-      - name: Run mypy
-        run: poetry run mypy src/
+      - name: Run ty
+        run: poetry run ty check src/
 
   test:
     name: Test
@@ -94,7 +94,7 @@ jobs:
           key: test-${{ runner.os }}-${{ hashFiles('poetry.lock') }}
 
       - name: Install dependencies
-        run: poetry install --no-interaction
+        run: poetry install --no-interaction --extras dev
 
       - name: Run tests
         run: poetry run pytest -m "not integration"

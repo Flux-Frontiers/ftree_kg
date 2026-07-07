@@ -24,7 +24,7 @@ Set up the MCP servers for the FTreeKG repository and configure them for use wit
 All artifact paths default relative to `REPO_ROOT`:
 - `FILETREEKG_DB` → `$REPO_ROOT/.filetreekg/graph.sqlite`
 - `FILETREEKG_LANCEDB` → `$REPO_ROOT/.filetreekg/lancedb`
-- `CODEKG_DB` → `$REPO_ROOT/.codekg/graph.sqlite`
+- `PYCODEKG_DB` → `$REPO_ROOT/.pycodekg/graph.sqlite`
 - `DOCKG_DB` → `$REPO_ROOT/.dockg/graph.sqlite`
 
 ---
@@ -81,15 +81,15 @@ Build the filesystem tree knowledge graph (SQLite + LanceDB) under `.filetreekg/
 
 ## Step 3: Build the PyCodeKG Index
 
-Build the Python code knowledge graph under `.codekg/`.
+Build the Python code knowledge graph under `.pycodekg/`.
 
 1. Check whether the index exists:
    ```bash
-   ls -lh "$REPO_ROOT/.codekg/graph.sqlite" 2>/dev/null
+   ls -lh "$REPO_ROOT/.pycodekg/graph.sqlite" 2>/dev/null
    ```
 
 2. If it exists and the user chose to keep the FTreeKG index (Step 2), ask:
-   > "A CodeKG index already exists at `$REPO_ROOT/.codekg/graph.sqlite`. Rebuild it?"
+   > "A PyCodeKG index already exists at `$REPO_ROOT/.pycodekg/graph.sqlite`. Rebuild it?"
    - **Yes**: proceed
    - **No**: skip to Step 4
 
@@ -100,7 +100,7 @@ Build the Python code knowledge graph under `.codekg/`.
 
 4. Verify:
    ```bash
-   sqlite3 "$REPO_ROOT/.codekg/graph.sqlite" "SELECT COUNT(*) FROM nodes; SELECT COUNT(*) FROM edges;"
+   sqlite3 "$REPO_ROOT/.pycodekg/graph.sqlite" "SELECT COUNT(*) FROM nodes; SELECT COUNT(*) FROM edges;"
    ```
 
 5. Report the node and edge counts.
@@ -299,7 +299,7 @@ Claude Desktop does not have Poetry on its PATH. Use the absolute venv binary pa
 
 ```
 ✓ FTreeKG index:    $REPO_ROOT/.filetreekg/graph.sqlite  (<N> nodes, <M> edges)
-✓ PyCodeKG index:   $REPO_ROOT/.codekg/graph.sqlite       (<N> nodes, <M> edges)
+✓ PyCodeKG index:   $REPO_ROOT/.pycodekg/graph.sqlite       (<N> nodes, <M> edges)
 ✓ DocKG index:      $REPO_ROOT/.dockg/graph.sqlite        (<N> nodes, <M> edges)
 ✓ Smoke test:       passed
 ✓ .mcp.json:        $REPO_ROOT/.mcp.json  (pycodekg + dockg entries)

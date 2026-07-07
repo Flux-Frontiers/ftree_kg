@@ -130,7 +130,11 @@ def extract_image_metadata(path: Path) -> dict[str, Any] | None:
         out[canonical] = _stringify(value)
 
     if gps_ifd:
-        gps = {GPSTAGS.get(k, k): v for k, v in gps_ifd.items()}
+        gps: dict[str, Any] = {}
+        for k, v in gps_ifd.items():
+            name = GPSTAGS.get(k, k)
+            if isinstance(name, str):
+                gps[name] = v
         latlon = _gps_to_decimal(gps)
         if latlon is not None:
             out["gps"] = {"lat": latlon[0], "lon": latlon[1]}

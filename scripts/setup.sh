@@ -27,7 +27,7 @@ fi
 echo "📦 Installing dependencies with Poetry..."
 if [ "$WITH_KGRAG" = true ]; then
     echo "   (including KGRAG integration)"
-    poetry install --with kgrag
+    poetry install --extras kgdeps
 else
     echo "   (standalone mode; use --with-kgrag for KGRAG integration)"
     poetry install
@@ -38,7 +38,7 @@ echo
 # Run poetry show to display versions
 echo "📋 Installed packages:"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-poetry show | grep -E "^(filetreekg|code-kg|kg-rag|pytest|black|ruff|mypy)" || echo "   (main packages shown above)"
+poetry show | grep -E "^(ftree-kg|pycode-kg|doc-kg|pytest|ruff|ty)" || echo "   (main packages shown above)"
 echo
 
 # Get Python version
@@ -46,9 +46,9 @@ PYTHON_VERSION=$(poetry run python --version)
 echo "🐍 $PYTHON_VERSION"
 echo
 
-# Verify filetreekg installation
+# Verify ftree_kg installation
 echo "✨ Verifying FileTreeKG installation..."
-poetry run python -c "import filetreekg; print(f'  ✓ filetreekg: {filetreekg.__all__}')"
+poetry run python -c "import ftree_kg; print(f'  ✓ ftree_kg: {ftree_kg.__all__}')"
 echo
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -70,10 +70,10 @@ echo "  2. Run tests:"
 echo "     poetry run pytest"
 echo
 echo "  3. Format code:"
-echo "     poetry run black filetreekg tests conftest.py"
+echo "     poetry run ruff format src tests conftest.py"
 echo
 echo "  4. Build knowledge graphs:"
-echo "     poetry run codekg build --repo . --wipe"
+echo "     poetry run pycodekg build --repo . --wipe"
 echo "     poetry run dockg build --repo . --wipe"
 echo
 echo "Quick command reference:"

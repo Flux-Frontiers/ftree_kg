@@ -191,7 +191,7 @@ exclude = ["archives"]      # skip in addition to the built-in skip list
 the listed directories are indexed. `exclude` is additive on top of
 the always-skipped names (`venv`, `env`, `__pycache__`, `build`,
 `dist`, `egg-info`, `node_modules`). All dotdirs (`.git`, `.venv`,
-`.codekg`, …) are skipped automatically unless you explicitly list them
+`.pycodekg`, …) are skipped automatically unless you explicitly list them
 in `include`.
 
 CLI flags `--include-dir` and `--exclude-dir` override the config when

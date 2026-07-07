@@ -240,7 +240,7 @@ Installs a `pre-commit` hook that, on every commit:
 2. Rebuilds the local FTreeKG index (`ftreekg build --repo <root>`)
 3. Captures a metrics snapshot keyed by the tree hash
 4. Stages `.filetreekg/snapshots/` so the snapshot is committed atomically
-5. Runs the `pre-commit` framework (ruff, mypy, etc.) if installed
+5. Runs the `pre-commit` framework (ruff, ty, etc.) if installed
 
 Skip for a single commit:
 
@@ -267,7 +267,7 @@ exclude = ["archives", "backups"]   # additional skips beyond built-in defaults
 | `exclude` | list of strings | `[]`    | Directory names to skip at every depth (in addition to built-ins)   |
 
 Built-in skip list (always applied): `venv`, `env`, `__pycache__`, `build`,
-`dist`, `egg-info`, `node_modules`. All dotdirs (`.git`, `.venv`, `.codekg`,
+`dist`, `egg-info`, `node_modules`. All dotdirs (`.git`, `.venv`, `.pycodekg`,
 …) are skipped unless explicitly listed in `include`.
 
 CLI flags `--include-dir` / `--exclude-dir` **replace** the config values

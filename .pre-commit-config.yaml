@@ -9,7 +9,7 @@ repos:
       - id: check-merge-conflict
       - id: check-added-large-files
         args: [--maxkb=1000]
-        exclude: '^(src|docs|article)/.*\.(png|jpg|jpeg|gif|pdf)$|^\.codekg/'
+        exclude: '^(src|docs|article)/.*\.(png|jpg|jpeg|gif|pdf)$|^\.pycodekg/'
       - id: debug-statements
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -31,7 +31,7 @@ repos:
       - id: detect-secrets
         args: [
           '--baseline', '.secrets.baseline',
-          '--exclude-files', '\.(filetreekg|pycodekg|dockg|agentkg|codekg)/.*',
+          '--exclude-files', '\.(filetreekg|pycodekg|dockg|agentkg)/.*',
         ]
 
   - repo: local
@@ -43,9 +43,9 @@ repos:
         pass_filenames: false
         always_run: true
         args: ['--rcfile=pyproject.toml']
-      - id: mypy
-        name: mypy
-        entry: poetry run mypy src/ tests/
+      - id: ty
+        name: ty
+        entry: poetry run ty check src/
         language: system
         pass_filenames: false
         always_run: true

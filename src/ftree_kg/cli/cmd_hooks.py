@@ -54,7 +54,7 @@ BRANCH=$(git rev-parse --abbrev-ref HEAD)
 # Stage snapshot directory so it is included in the commit.
 git add .filetreekg/snapshots/ 2>/dev/null || true
 
-# Run pre-commit framework checks (ruff, mypy, detect-secrets, etc.) AFTER
+# Run pre-commit framework checks (ruff, ty, detect-secrets, etc.) AFTER
 # snapshots are captured and staged. Delegates to .pre-commit-config.yaml so
 # quality checks stay in one place.
 PRECOMMIT="$REPO_ROOT/.venv/bin/pre-commit"
@@ -88,7 +88,7 @@ def install_hooks(repo: str, force: bool) -> None:
       1. Rebuilds local FTreeKG index (full wipe-and-rebuild by default)
       2. Captures a metrics snapshot keyed by git tree hash
       3. Stages .filetreekg/snapshots/ atomically
-      4. Runs pre-commit framework checks (ruff, mypy, etc.)
+      4. Runs pre-commit framework checks (ruff, ty, etc.)
 
     Skip with: FTREEKG_SKIP_SNAPSHOT=1 git commit ...
 

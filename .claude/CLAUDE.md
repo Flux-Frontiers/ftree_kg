@@ -25,29 +25,29 @@ Then activate and build indices:
 
 ```bash
 poetry shell
-poetry run codekg build --repo . --wipe
+poetry run pycodekg build --repo . --wipe
 poetry run dockg build --repo .
 ```
 
 ### Code Style
 
 - Use `:param:` docstring style (Google format)
-- Format with black
+- Format with ruff
 - Lint with ruff
-- Type check with mypy
+- Type check with ty
 
 ### Before Committing
 
 ```bash
-black filetreekg tests conftest.py
-ruff check --fix filetreekg tests
-mypy filetreekg
-pytest --cov=filetreekg
+ruff format src tests conftest.py
+ruff check --fix src tests
+ty check src
+pytest --cov=ftree_kg
 ```
 
 ## Testing
 
-- Tests live in `filetreekg/tests/`
+- Tests live in `tests/`
 - Use `sample_filesystem` fixture from `conftest.py` for filesystem tests
 - All extraction must be deterministic (node IDs stable across runs)
 - Coverage target: >80%
@@ -57,7 +57,7 @@ pytest --cov=filetreekg
 The module itself should be indexed:
 
 ```bash
-codekg build --repo . --wipe
+pycodekg build --repo . --wipe
 dockg build --repo .
 ```
 
@@ -75,9 +75,9 @@ poetry publish
 
 ## Architecture Notes
 
-- **FileTreeKGExtractor** (`filetreekg/extractor.py`) — walks filesystem, yields NodeSpec/EdgeSpec
-- **FileTreeKG** (`filetreekg/module.py`) — KGModule (build, query, pack, analyze)
-- **FileTreeKGAdapter** (`filetreekg/adapter.py`) — KGRAG integration (kind="meta")
+- **FileTreeKGExtractor** (`src/ftree_kg/extractor.py`) — walks filesystem, yields NodeSpec/EdgeSpec
+- **FileTreeKG** (`src/ftree_kg/module.py`) — KGModule (build, query, pack, analyze)
+- **FileTreeKGAdapter** (`src/ftree_kg/adapter.py`) — KGRAG integration (kind="meta")
 
 ### Node ID Format
 
@@ -89,5 +89,5 @@ Example: `file:src/modules/core.py:core.py`
 
 - SQLite DB: `.filetreekg/graph.sqlite`
 - Vector Index: `.filetreekg/lancedb/`
-- CodeKG Index: `.codekg/` (auto-built by codekg)
+- PyCodeKG Index: `.pycodekg/` (auto-built by pycodekg)
 - DocKG Index: `.dockg/` (auto-built by dockg)
