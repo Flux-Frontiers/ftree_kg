@@ -1,0 +1,125 @@
+{
+  "key": "dddf0f358e0d303d1447b8c731096c23f1c7d8eb",
+  "branch": "main",
+  "timestamp": "2026-07-07T16:40:38.835619+00:00",
+  "version": "0.12.0",
+  "metrics": {
+    "db_path": "/Users/egs/repos/ftree_kg/.dockg/graph.sqlite",
+    "total_nodes": 1517,
+    "total_edges": 11231,
+    "node_counts": {
+      "chunk": 287,
+      "document": 12,
+      "entity": 416,
+      "keyword": 434,
+      "section": 145,
+      "topic": 223
+    },
+    "edge_counts": {
+      "CONTAINS": 432,
+      "CO_OCCURS_WITH": 7168,
+      "HAS_KEYWORD": 1127,
+      "HAS_TOPIC": 299,
+      "MENTIONS_ENTITY": 1256,
+      "NEXT": 120,
+      "REFERENCES": 25,
+      "SIMILAR_TO": 804
+    },
+    "meaningful_nodes": 1505,
+    "coverage_score": 0.9744483159117304,
+    "issues_count": 1,
+    "complexity_median": 26.0
+  },
+  "hotspots": [
+    {
+      "id": "chunk:docs/CLI.md:0002",
+      "file_path": "docs/CLI.md",
+      "label": "Unified CLI",
+      "references": 0,
+      "semantic_links": 31,
+      "total_links": 32
+    },
+    {
+      "id": "chunk:README.md:0018",
+      "file_path": "README.md",
+      "label": "Python API",
+      "references": 0,
+      "semantic_links": 28,
+      "total_links": 29
+    },
+    {
+      "id": "chunk:analysis/FTreeKG_analysis_20260321.md:0032",
+      "file_path": "analysis/FTreeKG_analysis_20260321.md",
+      "label": "Data Persistence Storage Database",
+      "references": 0,
+      "semantic_links": 27,
+      "total_links": 27
+    },
+    {
+      "id": "chunk:docs/CLI.md:0011",
+      "file_path": "docs/CLI.md",
+      "label": "`ftreekg query` \u2014 Semantic search",
+      "references": 0,
+      "semantic_links": 26,
+      "total_links": 27
+    },
+    {
+      "id": "chunk:docs/CLI.md:0014",
+      "file_path": "docs/CLI.md",
+      "label": "`ftreekg pack` \u2014 Metadata snippet pack",
+      "references": 0,
+      "semantic_links": 26,
+      "total_links": 27
+    },
+    {
+      "id": "chunk:docs/CHEATSHEET.md:0037",
+      "file_path": "docs/CHEATSHEET.md",
+      "label": "12. KGRAG Integration",
+      "references": 0,
+      "semantic_links": 26,
+      "total_links": 26
+    },
+    {
+      "id": "chunk:README.md:0026",
+      "file_path": "README.md",
+      "label": "KGRAG federation",
+      "references": 0,
+      "semantic_links": 25,
+      "total_links": 26
+    },
+    {
+      "id": "chunk:CHANGELOG.md:0014",
+      "file_path": "CHANGELOG.md",
+      "label": "Added",
+      "references": 0,
+      "semantic_links": 25,
+      "total_links": 25
+    },
+    {
+      "id": "chunk:analysis/FTreeKG_analysis_20260321.md:0000",
+      "file_path": "analysis/FTreeKG_analysis_20260321.md",
+      "label": "chunk:0001",
+      "references": 0,
+      "semantic_links": 25,
+      "total_links": 25
+    },
+    {
+      "id": "chunk:analysis/FTreeKG_analysis_20260321.md:0031",
+      "file_path": "analysis/FTreeKG_analysis_20260321.md",
+      "label": "Configuration Loading Initialization Setup",
+      "references": 0,
+      "semantic_links": 25,
+      "total_links": 25
+    }
+  ],
+  "issues": [
+    "Chunk density appears low; consider reducing --chunk-size or reviewing corpus content."
+  ],
+  "vs_previous": null,
+  "vs_baseline": {
+    "nodes": 1249,
+    "edges": 10454,
+    "coverage_delta": 0.12259646405987867,
+    "issues_delta": 1
+  }
+}

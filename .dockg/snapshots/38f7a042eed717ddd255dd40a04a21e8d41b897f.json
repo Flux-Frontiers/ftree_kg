@@ -1,0 +1,125 @@
+{
+  "key": "38f7a042eed717ddd255dd40a04a21e8d41b897f",
+  "branch": "main",
+  "timestamp": "2026-07-07T16:39:02.138764+00:00",
+  "version": "0.12.0",
+  "metrics": {
+    "db_path": "/Users/egs/repos/ftree_kg/.dockg/graph.sqlite",
+    "total_nodes": 1604,
+    "total_edges": 12246,
+    "node_counts": {
+      "chunk": 322,
+      "document": 13,
+      "entity": 425,
+      "keyword": 443,
+      "section": 169,
+      "topic": 232
+    },
+    "edge_counts": {
+      "CONTAINS": 491,
+      "CO_OCCURS_WITH": 7408,
+      "HAS_KEYWORD": 1261,
+      "HAS_TOPIC": 333,
+      "MENTIONS_ENTITY": 1424,
+      "NEXT": 130,
+      "REFERENCES": 25,
+      "SIMILAR_TO": 1174
+    },
+    "meaningful_nodes": 1591,
+    "coverage_score": 0.9741200828157351,
+    "issues_count": 1,
+    "complexity_median": 32.0
+  },
+  "hotspots": [
+    {
+      "id": "chunk:analysis/FTreeKG_analysis_20260321.md:0032",
+      "file_path": "analysis/FTreeKG_analysis_20260321.md",
+      "label": "Data Persistence Storage Database",
+      "references": 0,
+      "semantic_links": 39,
+      "total_links": 39
+    },
+    {
+      "id": "chunk:analysis/FTreeKG_analysis_20260321.md:0034",
+      "file_path": "analysis/FTreeKG_analysis_20260321.md",
+      "label": "Graph Traversal Node Edge",
+      "references": 0,
+      "semantic_links": 35,
+      "total_links": 36
+    },
+    {
+      "id": "chunk:analysis/FTreeKG_analysis_20260321.md:0000",
+      "file_path": "analysis/FTreeKG_analysis_20260321.md",
+      "label": "chunk:0001",
+      "references": 0,
+      "semantic_links": 33,
+      "total_links": 33
+    },
+    {
+      "id": "chunk:analysis/FTreeKG_analysis_20260321.md:0031",
+      "file_path": "analysis/FTreeKG_analysis_20260321.md",
+      "label": "Configuration Loading Initialization Setup",
+      "references": 0,
+      "semantic_links": 33,
+      "total_links": 33
+    },
+    {
+      "id": "chunk:analysis/FTreeKG_analysis_20260321.md:0013",
+      "file_path": "analysis/FTreeKG_analysis_20260321.md",
+      "label": "Public API Surface",
+      "references": 0,
+      "semantic_links": 32,
+      "total_links": 32
+    },
+    {
+      "id": "chunk:README.md:0018",
+      "file_path": "README.md",
+      "label": "Python API",
+      "references": 0,
+      "semantic_links": 31,
+      "total_links": 32
+    },
+    {
+      "id": "chunk:docs/CLI.md:0002",
+      "file_path": "docs/CLI.md",
+      "label": "Unified CLI",
+      "references": 0,
+      "semantic_links": 31,
+      "total_links": 32
+    },
+    {
+      "id": "chunk:analysis/FTreeKG_analysis_20260321.md:0033",
+      "file_path": "analysis/FTreeKG_analysis_20260321.md",
+      "label": "Query Search Retrieval Semantic",
+      "references": 0,
+      "semantic_links": 31,
+      "total_links": 31
+    },
+    {
+      "id": "chunk:analysis/filetreekg_analysis.md:0002",
+      "file_path": "analysis/filetreekg_analysis.md",
+      "label": "Directory tree (depth \u2264 3)",
+      "references": 0,
+      "semantic_links": 31,
+      "total_links": 31
+    },
+    {
+      "id": "chunk:analysis/filetreekg_analysis.md:0000",
+      "file_path": "analysis/filetreekg_analysis.md",
+      "label": "Summary",
+      "references": 0,
+      "semantic_links": 30,
+      "total_links": 30
+    }
+  ],
+  "issues": [
+    "Chunk density appears low; consider reducing --chunk-size or reviewing corpus content."
+  ],
+  "vs_previous": null,
+  "vs_baseline": {
+    "nodes": 1336,
+    "edges": 11469,
+    "coverage_delta": 0.1222682309638834,
+    "issues_delta": 1
+  }
+}

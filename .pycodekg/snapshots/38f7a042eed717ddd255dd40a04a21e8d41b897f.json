@@ -1,0 +1,125 @@
+{
+  "key": "38f7a042eed717ddd255dd40a04a21e8d41b897f",
+  "branch": "main",
+  "timestamp": "2026-07-07T16:39:01.744439+00:00",
+  "version": "0.17.0",
+  "metrics": {
+    "db_path": ".pycodekg/graph.sqlite",
+    "total_nodes": 1300,
+    "meaningful_nodes": 94,
+    "total_edges": 1183,
+    "node_counts": {
+      "class": 6,
+      "function": 36,
+      "method": 34,
+      "module": 18,
+      "symbol": 1206
+    },
+    "edge_counts": {
+      "ATTR_ACCESS": 325,
+      "CALLS": 456,
+      "CONTAINS": 76,
+      "IMPORTS": 143,
+      "INHERITS": 4,
+      "RESOLVES_TO": 179
+    },
+    "module_count": 18,
+    "class_count": 6,
+    "function_count": 36,
+    "method_count": 34,
+    "docstring_coverage": 0.915,
+    "snapshot_count": 9,
+    "critical_issues": 0,
+    "complexity_median": 4,
+    "module_node_counts": {
+      "src/ftree_kg/__init__.py": 3,
+      "src/ftree_kg/adapter.py": 55,
+      "src/ftree_kg/cli/__init__.py": 2,
+      "src/ftree_kg/cli/__main__.py": 1,
+      "src/ftree_kg/cli/cmd_analyze.py": 21,
+      "src/ftree_kg/cli/cmd_build.py": 28,
+      "src/ftree_kg/cli/cmd_hooks.py": 22,
+      "src/ftree_kg/cli/cmd_query.py": 51,
+      "src/ftree_kg/cli/cmd_snapshot.py": 151,
+      "src/ftree_kg/cli/cmd_status.py": 89,
+      "src/ftree_kg/cli/group.py": 2,
+      "src/ftree_kg/cli/main.py": 1,
+      "src/ftree_kg/cli/options.py": 13,
+      "src/ftree_kg/config.py": 22,
+      "src/ftree_kg/extractor.py": 59,
+      "src/ftree_kg/metadata.py": 78,
+      "src/ftree_kg/module.py": 317,
+      "src/ftree_kg/snapshots.py": 120
+    }
+  },
+  "hotspots": [
+    {
+      "name": "cls:src/ftree_kg/module.py:FileTreeKG",
+      "callers": 7,
+      "callees": 0,
+      "risk_level": "low"
+    },
+    {
+      "name": "m:src/ftree_kg/module.py:FileTreeKG.stats",
+      "callers": 6,
+      "callees": 10,
+      "risk_level": "low"
+    },
+    {
+      "name": "m:src/ftree_kg/adapter.py:FileTreeKGAdapter._load",
+      "callers": 4,
+      "callees": 1,
+      "risk_level": "low"
+    },
+    {
+      "name": "m:src/ftree_kg/adapter.py:FileTreeKGAdapter.__init__",
+      "callers": 4,
+      "callees": 2,
+      "risk_level": "low"
+    },
+    {
+      "name": "m:src/ftree_kg/adapter.py:FileTreeKGAdapter.stats",
+      "callers": 4,
+      "callees": 3,
+      "risk_level": "low"
+    },
+    {
+      "name": "fn:src/ftree_kg/config.py:load_exclude_dirs",
+      "callers": 4,
+      "callees": 1,
+      "risk_level": "low"
+    },
+    {
+      "name": "fn:src/ftree_kg/config.py:load_include_dirs",
+      "callers": 4,
+      "callees": 1,
+      "risk_level": "low"
+    },
+    {
+      "name": "m:src/ftree_kg/extractor.py:FileTreeKGExtractor.__init__",
+      "callers": 4,
+      "callees": 4,
+      "risk_level": "low"
+    },
+    {
+      "name": "m:src/ftree_kg/module.py:FileTreeKG.__init__",
+      "callers": 4,
+      "callees": 4,
+      "risk_level": "low"
+    },
+    {
+      "name": "m:src/ftree_kg/snapshots.py:FtreeSnapshotManager.__init__",
+      "callers": 4,
+      "callees": 3,
+      "risk_level": "low"
+    }
+  ],
+  "issues": [],
+  "vs_previous": null,
+  "vs_baseline": {
+    "nodes": 341,
+    "edges": 154,
+    "coverage_delta": 0.16800000000000004,
+    "critical_issues_delta": -2
+  }
+}
