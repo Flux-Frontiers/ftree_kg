@@ -8,7 +8,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from kg_utils.types import EdgeSpec, NodeSpec
+from kg_utils.specs import EdgeSpec, NodeSpec
 
 from ftree_kg.extractor import FileTreeKGExtractor
 

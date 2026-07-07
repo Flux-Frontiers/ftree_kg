@@ -15,7 +15,8 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
-from kg_utils.types import EdgeSpec, KGModule, NodeSpec, QueryResult, SnippetPack
+from kg_utils.pipeline import KGModule
+from kg_utils.specs import EdgeSpec, NodeSpec, QueryResult, SnippetPack
 
 from ftree_kg.config import load_exclude_dirs, load_include_dirs
 from ftree_kg.extractor import FileTreeKGExtractor
