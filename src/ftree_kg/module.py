@@ -213,7 +213,12 @@ class FileTreeKG(KGModule):
         """
         return "filetree"
 
-    def build(self, wipe: bool = True, embed: bool = True, metadata: bool = True) -> None:
+    # FileTreeKG predates kgmodule-utils 0.4's GraphStore/BuildStats-based
+    # build() contract and uses its own raw-SQL schema/pipeline; migrating to
+    # the new base contract is a separate decision, not made here.
+    def build(  # ty: ignore[invalid-method-override]
+        self, wipe: bool = True, embed: bool = True, metadata: bool = True
+    ) -> None:
         """Build the SQLite graph index and (optionally) the LanceDB vector index.
 
         Pass 1   — extract nodes/edges from the filesystem.
