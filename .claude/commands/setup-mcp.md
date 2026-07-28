@@ -23,7 +23,7 @@ Set up the MCP servers for the FTreeKG repository and configure them for use wit
 
 All artifact paths default relative to `REPO_ROOT`:
 - `FILETREEKG_DB` → `$REPO_ROOT/.filetreekg/graph.sqlite`
-- `FILETREEKG_LANCEDB` → `$REPO_ROOT/.filetreekg/lancedb`
+- `FILETREEKG_VECTORS` → `$REPO_ROOT/.filetreekg/vectors.sqlite`
 - `PYCODEKG_DB` → `$REPO_ROOT/.pycodekg/graph.sqlite`
 - `DOCKG_DB` → `$REPO_ROOT/.dockg/graph.sqlite`
 
@@ -49,7 +49,7 @@ If any command fails:
 
 ## Step 2: Build the FTreeKG Index
 
-Build the filesystem tree knowledge graph (SQLite + LanceDB) under `.filetreekg/`.
+Build the filesystem tree knowledge graph (SQLite + sqlite-vec) under `.filetreekg/`.
 
 1. Check whether the index already exists:
    ```bash

@@ -3,7 +3,7 @@
 FileTreeKGAdapter — KGAdapter shim wiring FileTreeKG into the KGRAG federation layer.
 
 Author: Eric G. Suchanek, PhD
-Last Revision: 2026-04-30 23:41:26
+Last Revision: 2026-07-28 08:58:00
 License: Elastic 2.0
 """
 

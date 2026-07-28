@@ -22,7 +22,7 @@ aliases — useful for shell scripts, Makefiles, and CI pipelines with no
 
 | Script alias        | Subcommand          | Description                                    |
 |---------------------|---------------------|------------------------------------------------|
-| `ftreekg-build`     | `ftreekg build`     | Walk the tree → SQLite + LanceDB + metadata    |
+| `ftreekg-build`     | `ftreekg build`     | Walk the tree → SQLite + sqlite-vec + metadata |
 | `ftreekg-query`     | `ftreekg query`     | Semantic search                                |
 | `ftreekg-pack`      | `ftreekg pack`      | Metadata snippet pack                          |
 | `ftreekg-analyze`   | `ftreekg analyze`   | Full Markdown analysis report                  |
@@ -41,7 +41,7 @@ The following options are reused across most subcommands:
 |----------------|--------------------------------------|---------------------------------------------------------------------|
 | `--repo`       | `.`                                  | Repository or filesystem root                                        |
 | `--db`         | `<repo>/.filetreekg/graph.sqlite`    | SQLite database path                                                 |
-| `--lancedb`    | `<repo>/.filetreekg/lancedb`         | LanceDB index directory                                              |
+| `--vectors`    | `<repo>/.filetreekg/vectors.sqlite`  | sqlite-vec vector store path                                         |
 | `--model`      | `BAAI/bge-small-en-v1.5`             | Sentence-transformer model (used by the embedder via `kg_utils`)     |
 | `-k`, `--k`    | `8`                                  | Number of top results to return                                      |
 | `--include-dir`| —                                    | Top-level directory to include (repeatable; replaces config)         |
@@ -57,13 +57,13 @@ ftreekg build [OPTIONS]
 
 Walks the filesystem, extracts nodes (files, directories, symlinks), populates
 sizes and per-format metadata (EXIF, etc.), and embeds canonical text into
-LanceDB. Wipes existing data by default.
+sqlite-vec. Wipes existing data by default.
 
 | Option          | Default                              | Description                                              |
 |-----------------|--------------------------------------|----------------------------------------------------------|
 | `--repo`        | `.`                                  | Tree root                                                |
 | `--db`          | `<repo>/.filetreekg/graph.sqlite`    | SQLite path                                              |
-| `--lancedb`     | `<repo>/.filetreekg/lancedb`         | LanceDB path                                             |
+| `--vectors`     | `<repo>/.filetreekg/vectors.sqlite`  | sqlite-vec store path                                    |
 | `--model`       | `BAAI/bge-small-en-v1.5`             | Embedding model                                          |
 | `--include-dir` | —                                    | Restrict to these tops (repeatable)                      |
 | `--exclude-dir` | —                                    | Skip these names at every depth (repeatable)             |
@@ -86,11 +86,11 @@ ftreekg query QUERY [OPTIONS]
 | `QUERY`      | required                             | Natural-language search string       |
 | `--repo`     | `.`                                  | Tree root                            |
 | `--db`       | `<repo>/.filetreekg/graph.sqlite`    | SQLite path                          |
-| `--lancedb`  | `<repo>/.filetreekg/lancedb`         | LanceDB path                         |
+| `--vectors`  | `<repo>/.filetreekg/vectors.sqlite`  | sqlite-vec store path                |
 | `-k`, `--k`  | `8`                                  | Top-K results                        |
 
-Vector search is primary; if LanceDB is missing or empty, falls back to
-substring `LIKE` over `qualname`, `kind`, `docstring`, and `metadata`.
+Vector search is primary; if the vector store is missing or empty, falls back
+to substring `LIKE` over `qualname`, `kind`, `docstring`, and `metadata`.
 
 ---
 
@@ -105,7 +105,7 @@ ftreekg pack QUERY [OPTIONS]
 | `QUERY`      | required                             | Natural-language search string       |
 | `--repo`     | `.`                                  | Tree root                            |
 | `--db`       | `<repo>/.filetreekg/graph.sqlite`    | SQLite path                          |
-| `--lancedb`  | `<repo>/.filetreekg/lancedb`         | LanceDB path                         |
+| `--vectors`  | `<repo>/.filetreekg/vectors.sqlite`  | sqlite-vec store path                |
 | `-k`, `--k`  | `8`                                  | Top-K results                        |
 
 Returns the same ranked nodes as `query` but emits per-node metadata blocks
@@ -126,7 +126,7 @@ ftreekg status [OPTIONS]
 | `--db`   | `<repo>/.filetreekg/graph.sqlite`    | SQLite path     |
 
 Exits 1 if the graph store is missing. Renders a Rich-formatted panel showing
-version, build timestamp, DB path/size, LanceDB presence, include/exclude
+version, build timestamp, DB path/size, vector store presence, include/exclude
 config, node/edge count tables, total indexed size, and a size-by-top-level
 directory bar chart.
 
@@ -142,7 +142,7 @@ ftreekg analyze [OPTIONS]
 |----------------|---------------------------------------------|--------------------------------------|
 | `--repo`       | `.`                                         | Tree root                            |
 | `--db`         | `<repo>/.filetreekg/graph.sqlite`           | SQLite path                          |
-| `--lancedb`    | `<repo>/.filetreekg/lancedb`                | LanceDB path                         |
+| `--vectors`    | `<repo>/.filetreekg/vectors.sqlite`         | sqlite-vec store path                |
 | `-o`, `--output` | `<repo>/analysis/filetreekg_analysis.md`  | Markdown output path                 |
 
 Writes a Markdown report with summary table, size-by-top-dir ASCII chart,
@@ -171,7 +171,7 @@ when not provided.
 | `VERSION`         | —                                    | Optional version tag (e.g. `0.8.0`)            |
 | `--repo`          | `.`                                  | Tree root                                      |
 | `--db`            | `<repo>/.filetreekg/graph.sqlite`    | SQLite path                                    |
-| `--lancedb`       | `<repo>/.filetreekg/lancedb`         | LanceDB path                                   |
+| `--vectors`       | `<repo>/.filetreekg/vectors.sqlite`  | sqlite-vec store path                          |
 | `--snapshots-dir` | `<repo>/.filetreekg/snapshots`       | Snapshots directory                            |
 | `--branch`        | auto-detect from git                 | Branch name override                           |
 | `--tree-hash`     | auto-detect via `git write-tree`     | Tree hash override                             |
@@ -280,15 +280,16 @@ CLI flags `--include-dir` / `--exclude-dir` **replace** the config values
 ```
 <repo>/.filetreekg/
   graph.sqlite      # SQLite knowledge graph
-  lancedb/          # LanceDB vector index
-    kg_nodes.lance  # one table: kg_nodes (id, kind, name, qualname, module_path, text, vector)
+  vectors.sqlite    # sqlite-vec vector store
+                    #   vec_meta  (id, kind, name, qualname, module_path, text)
+                    #   vec_nodes (embedding float[384], cosine)
   snapshots/
     manifest.json
     <tree-hash>.json
 ```
 
-The SQLite store is **canonical**; LanceDB is derived and disposable —
-`ftreekg build` rebuilds it from SQLite. Drop `.filetreekg/lancedb` and
+The SQLite store is **canonical**; the vector store is derived and disposable —
+`ftreekg build` rebuilds it from SQLite. Drop `.filetreekg/vectors.sqlite` and
 re-run `build` to regenerate without re-walking the tree.
 
 ---

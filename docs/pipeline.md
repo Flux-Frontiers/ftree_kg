@@ -1,11 +1,11 @@
 FTreeKG Pipeline - A Knowledge Graph for Filesystem Hierarchies
 
-Version: 0.8.0
+Version: 0.9.0
 Author: Eric G. Suchanek, PhD
 
 OVERVIEW
 
-FTreeKG constructs a deterministic, queryable knowledge graph from a filesystem tree. It walks a directory, classifies every entry as a file, directory, or symlink, captures filesystem stat (size, mtime, mode, symlink target) and per-format metadata (image EXIF: camera, date, GPS, dimensions), persists the result to SQLite, and embeds canonical text per node into LanceDB for natural-language retrieval. Structure is treated as ground truth; semantic search is an acceleration layer. Every node maps to a concrete relative path under the repository root.
+FTreeKG constructs a deterministic, queryable knowledge graph from a filesystem tree. It walks a directory, classifies every entry as a file, directory, or symlink, captures filesystem stat (size, mtime, mode, symlink target) and per-format metadata (image EXIF: camera, date, GPS, dimensions), persists the result to SQLite, and embeds canonical text per node into sqlite-vec for natural-language retrieval. Structure is treated as ground truth; semantic search is an acceleration layer. Every node maps to a concrete relative path under the repository root.
 
 The system ships as: a Python library with a single FileTreeKG orchestrator, a Click-based CLI (ftreekg) with subcommands for build, query, pack, status, analyze, snapshot, and install-hooks, and a KGRAG adapter (FileTreeKGAdapter) that registers as kind="filetree" alongside PyCodeKG (kind="code") and DocKG (kind="doc").
 
@@ -35,7 +35,7 @@ load_include_dirs(repo_root) and load_exclude_dirs(repo_root) read [tool.filetre
 
 LAYER 4 - ORCHESTRATOR (module.py)
 
-FileTreeKG subclasses kg_utils.types.KGModule. It owns the SQLite database path (default <repo>/.filetreekg/graph.sqlite) and the LanceDB directory path (default <repo>/.filetreekg/lancedb). The kind() method returns "filetree" (KGKind.FILETREE), classifying it as a filesystem-tree knowledge graph in the KGRAG taxonomy — distinct from "code", "doc", "diary", "memory", and "agent".
+FileTreeKG subclasses kg_utils.types.KGModule. It owns the SQLite database path (default <repo>/.filetreekg/graph.sqlite) and the sqlite-vec store path (default <repo>/.filetreekg/vectors.sqlite). The kind() method returns "filetree" (KGKind.FILETREE), classifying it as a filesystem-tree knowledge graph in the KGRAG taxonomy — distinct from "code", "doc", "diary", "memory", and "agent".
 
 Methods: build(wipe=True, embed=True, metadata=True) for the full pipeline, stats() returning a dict with total_nodes, total_edges, node_counts, edge_counts, total_size_bytes, and size_by_top_dir, query(q, k=8) returning a QueryResult of ranked nodes, pack(q, k=8, max_nodes=15) returning a SnippetPack with per-node metadata blocks, analyze() returning a Markdown report, close() to release any resources.
 
@@ -57,13 +57,13 @@ Pass 2 - Size collection. The orchestrator queries all file nodes from SQLite, c
 
 Pass 2.5 - Per-format metadata extraction. For each file node, extract_metadata is called with the absolute path. Results are JSON-serialized and stored in the metadata column. The dispatcher returns immediately for files outside the supported extension set, so the pass is cheap on non-image trees. Per-file failures are silently swallowed - one bad image cannot abort the build.
 
-Pass 3 - Embedding. For every node (file, directory, symlink), the orchestrator builds a canonical text document of the form: "{kind} {basename} at {source_path}\nkeywords: {tokens}". Tokens include path components, the filename stem, the stem split on _/-/., the extension, and any metadata-projected keywords (camera_make, camera_model, year, year-month, description, gps coordinates). Texts are embedded in batches via kg_utils.embedder.get_embedder() (default model: BAAI/bge-small-en-v1.5, 384-dim) and written to LanceDB as a kg_nodes table with columns id, kind, name, qualname, module_path, text, vector. If the embedder or LanceDB is unavailable, the pass prints a warning to stderr and is skipped; SQLite remains complete and queries fall back to lexical matching.
+Pass 3 - Embedding. For every node (file, directory, symlink), the orchestrator builds a canonical text document of the form: "{kind} {basename} at {source_path}\nkeywords: {tokens}". Tokens include path components, the filename stem, the stem split on _/-/., the extension, and any metadata-projected keywords (camera_make, camera_model, year, year-month, description, gps coordinates). Texts are embedded in batches via kg_utils.embedder.get_embedder() (default model: BAAI/bge-small-en-v1.5, 384-dim) and written to sqlite-vec as a vec_meta table (id, kind, name, qualname, module_path, text) paired with a vec_nodes vec0 virtual table (embedding float[384], distance_metric=cosine). If the embedder or the vector store is unavailable, the pass prints a warning to stderr and is skipped; SQLite remains complete and queries fall back to lexical matching.
 
 QUERY PIPELINE
 
-Phase 1 - Semantic seeding. FileTreeKG.query(q, k) embeds the query string via the same embedder used at build time, opens the kg_nodes LanceDB table, and runs a vector search limited to the top k hits. Each hit is converted into a node dict with id, kind, name, qualname, source_path, docstring, and a score derived from the LanceDB cosine distance (score = max(0, 1 - distance / 2)).
+Phase 1 - Semantic seeding. FileTreeKG.query(q, k) embeds the query string via the same embedder used at build time, opens the sqlite-vec store, and runs a vector search limited to the top k hits. Each hit is converted into a node dict with id, kind, name, qualname, source_path, docstring, and a score derived from the cosine distance (score = max(0, 1 - distance)).
 
-Phase 2 - Lexical fallback. When the LanceDB table is missing, empty, or the embedder fails to load, _lexical_query runs a substring LIKE match over qualname, kind, docstring, and metadata in SQLite. This guarantees query() always returns something useful, even on a freshly-extracted tree with no embeddings.
+Phase 2 - Lexical fallback. When the vector store is missing, empty, or the embedder fails to load, _lexical_query runs a substring LIKE match over qualname, kind, docstring, and metadata in SQLite. This guarantees query() always returns something useful, even on a freshly-extracted tree with no embeddings.
 
 There is no graph expansion phase. Filesystem nodes have only one edge type (CONTAINS), which is purely structural and not semantically meaningful for hop-style retrieval. Results are returned as-is, ranked by vector score (or LIKE match order in the fallback path).
 
@@ -77,7 +77,7 @@ FileTreeKG.analyze() pulls stats() and the full nodes table, then renders a Mark
 
 STATUS DASHBOARD
 
-ftreekg status renders a Rich-formatted terminal panel summarizing live graph state. It shows the package version, build timestamp from the SQLite mtime, DB path and size in MB, LanceDB presence (kg_nodes.lance file existence), include/exclude config, total nodes and edges with per-kind/per-relation breakdown tables side-by-side, total indexed file size, and a size-by-top-level directory bar chart. Exits 1 with a "run ftreekg build" hint when the graph is missing.
+ftreekg status renders a Rich-formatted terminal panel summarizing live graph state. It shows the package version, build timestamp from the SQLite mtime, DB path and size in MB, vector store presence (vectors.sqlite file existence), include/exclude config, total nodes and edges with per-kind/per-relation breakdown tables side-by-side, total indexed file size, and a size-by-top-level directory bar chart. Exits 1 with a "run ftreekg build" hint when the graph is missing.
 
 GIT HOOK
 
@@ -89,13 +89,13 @@ Every node has a stable, deterministic ID: <kind>:<relative_path>:<basename>. Ex
 
 EDGE FORMAT
 
-Edges are minimal three-tuples: source_id, target_id, relation. The only relation in v0.8 is CONTAINS, emitted from each parent directory to each immediate child. The repository root itself is referenced as the synthetic node "directory:.:" when needed for top-level CONTAINS edges.
+Edges are minimal three-tuples: source_id, target_id, relation. The only relation in v0.9 is CONTAINS, emitted from each parent directory to each immediate child. The repository root itself is referenced as the synthetic node "directory:.:" when needed for top-level CONTAINS edges.
 
 PER-NODE COLUMNS (SQLite)
 
 The nodes table has columns: node_id (TEXT PRIMARY KEY), kind (file / directory / symlink), name (basename), qualname (relative path), source_path (same as qualname), docstring (filesystem stat as Markdown bullets), size_bytes (INTEGER), metadata (TEXT, JSON-serialized per-format dict or NULL).
 
-PER-NODE COLUMNS (LanceDB)
+PER-NODE COLUMNS (sqlite-vec)
 
 The kg_nodes table has columns: id (matches node_id), kind, name, qualname, module_path (matches source_path), text (the embedded canonical document), vector (384-dim embedding).
 
@@ -108,9 +108,9 @@ to size_bytes population by re-statting each file (Pass 2 via UPDATE executemany
 to per-format metadata extraction via extract_metadata, JSON-serialized into the metadata column (Pass 2.5)
 to canonical embed-text construction per node (kind + basename + path components + extension + metadata keywords)
 to kg_utils.embedder.get_embedder().embed_texts() producing 384-dim vectors
-to LanceDB kg_nodes table (Pass 3, derived and disposable)
+to sqlite-vec vec_meta + vec_nodes tables (Pass 3, derived and disposable)
 to FileTreeKG.query() embedding the query, vector-searching kg_nodes, ranking by cosine distance
-or to FileTreeKG._lexical_query() running substring LIKE over qualname/kind/docstring/metadata when LanceDB is unavailable
+or to FileTreeKG._lexical_query() running substring LIKE over qualname/kind/docstring/metadata when the vector store is unavailable
 to QueryResult ranked node list
 to FileTreeKG.pack() producing per-node metadata blocks (kind + path + size + docstring + prose-rendered metadata)
 or to FileTreeKG.analyze() producing a Markdown report (summary, size chart, directory tree, breakdowns)
@@ -121,7 +121,7 @@ CLI ENTRY POINTS
 
 Primary interface: ftreekg (the main Click CLI). Five subcommands also ship as standalone script aliases.
 
-ftreekg build (alias: ftreekg-build): full pipeline (filesystem walk + SQLite + metadata + LanceDB), wipes by default.
+ftreekg build (alias: ftreekg-build): full pipeline (filesystem walk + SQLite + metadata + sqlite-vec), wipes by default.
 ftreekg query (alias: ftreekg-query): semantic query, formatted text output.
 ftreekg pack (alias: ftreekg-pack): metadata snippet pack.
 ftreekg analyze (alias: ftreekg-analyze): Markdown analysis report.
@@ -129,7 +129,7 @@ ftreekg snapshot (alias: ftreekg-snapshot): save / list / show / diff / prune te
 ftreekg status: live Rich dashboard (no script alias).
 ftreekg install-hooks: install the pre-commit auto-snapshot hook (no script alias).
 
-All subcommands live in src/ftree_kg/cli/. Shared options (repo, db, lancedb, model, k, include-dir, exclude-dir) live in cli/options.py; the root Click group is defined in cli/group.py.
+All subcommands live in src/ftree_kg/cli/. Shared options (repo, db, vectors, model, k, include-dir, exclude-dir) live in cli/options.py; the root Click group is defined in cli/group.py.
 
 INTERFACES
 
@@ -141,7 +141,7 @@ KGRAG: FileTreeKGAdapter registers as kind="filetree". Federated queries via kgr
 
 DEPENDENCIES
 
-Core (required): click 8.1.0+, kgmodule-utils 0.2.1+, lancedb 0.29.0+, pillow 10.0.0+, rich 13.0.0+. Embedding model retrieval is brokered by kg_utils.embedder.get_embedder() (default: BAAI/bge-small-en-v1.5 from sentence-transformers).
+Core (required): click 8.1.0+, kgmodule-utils[semantic,sqlite-vec] 0.8.0+, pillow 10.0.0+, rich 13.0.0+. Embedding model retrieval is brokered by kg_utils.embedder.get_embedder() (default: BAAI/bge-small-en-v1.5 from sentence-transformers).
 
 Optional kgdeps extra: doc-kg 0.11.0+ and pycode-kg 0.16.0+ for KGRAG cross-graph integration.
 
@@ -163,8 +163,8 @@ For a single-image architecture diagram, the canonical layout is left-to-right:
 2. Extractor: the first vertical band - walks the tree, classifies entries (file / directory / symlink), captures stat, applies include/exclude/dotdir rules.
 3. Per-format metadata: a small parallel band feeding off the file branch - Pillow EXIF for images, with stubs for audio/video/PDF.
 4. SQLite (canonical store): center band labeled .filetreekg/graph.sqlite with two tables (nodes, edges). This is authoritative.
-5. LanceDB (derived index): adjacent to SQLite, labeled .filetreekg/lancedb/kg_nodes.lance, with an arrow from SQLite indicating "embedded canonical text + metadata keywords".
+5. sqlite-vec (derived index): adjacent to SQLite, labeled .filetreekg/vectors.sqlite, with an arrow from SQLite indicating "embedded canonical text + metadata keywords".
 6. Query path: right-side band branching into ftreekg query, ftreekg pack, ftreekg analyze, ftreekg status, and the KGRAG adapter (kind="filetree"). Snapshots are a small loop hanging off SQLite.
 7. Time axis: snapshots over commits, captured by the pre-commit hook, keyed by git tree hash.
 
-Color coding: filesystem in green, extractor in blue, metadata extractor in purple (a sub-color of blue), SQLite in orange (canonical), LanceDB in yellow (derived), CLI/API consumers in gray. Arrows from SQLite to LanceDB should be dashed (derived/disposable). Arrows into KGRAG should be a different style (federation). The whole pipeline reads left-to-right with the consumers fanning out on the right.
+Color coding: filesystem in green, extractor in blue, metadata extractor in purple (a sub-color of blue), SQLite in orange (canonical), sqlite-vec in yellow (derived), CLI/API consumers in gray. Arrows from SQLite to sqlite-vec should be dashed (derived/disposable). Arrows into KGRAG should be a different style (federation). The whole pipeline reads left-to-right with the consumers fanning out on the right.

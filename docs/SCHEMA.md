@@ -18,7 +18,7 @@ alongside the structural data, lifting things like image EXIF into a
 JSON blob so semantic search can hit content the path alone never reveals.
 
 The SQLite database (`graph.sqlite`) is **canonical** and self-contained.
-LanceDB (`lancedb/kg_nodes.lance`) is a **derived, disposable** vector
+The sqlite-vec store (`vectors.sqlite`) is a **derived, disposable** vector
 index built from the SQLite rows; deleting it and re-running `ftreekg
 build` reproduces it byte-equivalent up to embedder noise.
 
@@ -26,7 +26,7 @@ build` reproduces it byte-equivalent up to embedder noise.
 
 ## Node kinds
 
-There are exactly three node kinds in v0.8 — one per filesystem
+There are exactly three node kinds in v0.9 — one per filesystem
 classification rule (`Path.is_symlink()` → `Path.is_dir()` → file).
 
 | Kind        | Description                              | Notes                                                          |
@@ -46,7 +46,7 @@ for future logical groupings but is not emitted today.
 |------------|------------------------|------------------------------------------------------|
 | `CONTAINS` | parent → immediate child | Directory contains the file/dir/symlink directly under it |
 
-Only one relation is emitted in v0.8. There is deliberately no `CHILD_OF`
+Only one relation is emitted in v0.9. There is deliberately no `CHILD_OF`
 or `PARENT_OF` — the inverse is recoverable from `CONTAINS` with a
 single SQL flip, and storing it explicitly would double the edge table
 without adding information.
@@ -89,7 +89,7 @@ hold everything:
 | `kind`        | TEXT    | `file`, `directory`, or `symlink`                                       |
 | `name`        | TEXT    | Basename (e.g. `module.py`)                                             |
 | `qualname`    | TEXT    | Repo-relative path (e.g. `src/ftree_kg/module.py`)                      |
-| `source_path` | TEXT    | Same as `qualname` in v0.8 (kept distinct for KGModule API parity)      |
+| `source_path` | TEXT    | Same as `qualname` in v0.9 (kept distinct for KGModule API parity)      |
 | `docstring`   | TEXT    | Filesystem stat as Markdown bullets — size, mtime, mode, symlink target |
 | `size_bytes`  | INTEGER | File size in bytes; `0` for directories and symlinks                    |
 | `metadata`    | TEXT    | JSON blob from per-format extraction, or `NULL`                         |
@@ -109,7 +109,7 @@ file:
 |-------------|------|----------------------------------------------|
 | `source_id` | TEXT | Parent node ID                                |
 | `target_id` | TEXT | Child node ID                                 |
-| `relation`  | TEXT | Always `CONTAINS` in v0.8                    |
+| `relation`  | TEXT | Always `CONTAINS` in v0.9                    |
 
 Edges are emitted in a single pass with no uniqueness constraint — the
 extractor produces one row per (parent, child) pair and never revisits
@@ -162,22 +162,42 @@ that won't alter the schema.
 
 ---
 
-## LanceDB layout
+## sqlite-vec layout
 
-The vector index lives at `<repo>/.filetreekg/lancedb/` (overridable
-with `--lancedb`). It contains a single LanceDB table:
+The vector index lives at `<repo>/.filetreekg/vectors.sqlite` (overridable
+with `--vectors`) — a single SQLite file, not a directory. It holds two
+tables the module reads directly, plus sqlite-vec's own shadow tables.
 
-### `kg_nodes`
+### `vec_meta`
 
-| Column        | Type            | Description                                                                |
-|---------------|-----------------|----------------------------------------------------------------------------|
-| `id`          | string          | Matches `nodes.node_id` 1:1                                                |
-| `kind`        | string          | Mirror of `nodes.kind`                                                     |
-| `name`        | string          | Mirror of `nodes.name`                                                     |
-| `qualname`    | string          | Mirror of `nodes.qualname`                                                 |
-| `module_path` | string          | Mirror of `nodes.source_path`                                              |
-| `text`        | string          | The canonical embed-text document (see below)                              |
-| `vector`      | float32[D]      | Embedding produced by `kg_utils.embedder.get_embedder()` (default D = 384) |
+Per-node metadata, keyed 1:1 against the canonical graph.
+
+| Column        | Type   | Description                                   |
+|---------------|--------|-----------------------------------------------|
+| `id`          | TEXT   | Primary key; matches `nodes.node_id` 1:1      |
+| `kind`        | TEXT   | Mirror of `nodes.kind`                        |
+| `name`        | TEXT   | Mirror of `nodes.name`                        |
+| `qualname`    | TEXT   | Mirror of `nodes.qualname`                    |
+| `module_path` | TEXT   | Mirror of `nodes.source_path`                 |
+| `text`        | TEXT   | The canonical embed-text document (see below) |
+
+`text` is carried beyond the `kg_utils` default column set on purpose:
+`_semantic_query` surfaces it as each result's `docstring`. A filesystem
+node has no real docstring, so this embedded locator line is what callers
+see — dropping the column blanks the query output.
+
+### `vec_nodes`
+
+```sql
+CREATE VIRTUAL TABLE vec_nodes USING vec0(embedding float[384] distance_metric=cosine);
+```
+
+The embedding is produced by `kg_utils.embedder.get_embedder()` (default
+D = 384, `BAAI/bge-small-en-v1.5`). The metric is **cosine**, so
+`query()` derives its score as `1 - distance`. The pre-0.8.0 LanceDB
+table was created without an explicit metric and so defaulted to squared
+L2, which needed `1 - distance / 2`; for normalised embeddings the two
+formulas agree exactly.
 
 ### Embed-text format
 
@@ -253,7 +273,7 @@ result = kgrag.query("how do we ship releases", kinds=["code", "doc", "filetree"
 
 ## Versioning
 
-The schema is at v0.8 and is **not yet stable**. Breaking changes will
+The schema is at v0.9 and is **not yet stable**. Breaking changes will
 bump the minor version and be called out in
 [CHANGELOG.md](../CHANGELOG.md). The two axes most likely to grow:
 

@@ -92,6 +92,6 @@ Example: `file:src/modules/core.py:core.py`
 ### Index Locations
 
 - SQLite DB: `.filetreekg/graph.sqlite`
-- Vector Index: `.filetreekg/lancedb/`
+- Vector Store: `.filetreekg/vectors.sqlite`
 - PyCodeKG Index: `.pycodekg/` (auto-built by pycodekg)
 - DocKG Index: `.dockg/` (auto-built by dockg)

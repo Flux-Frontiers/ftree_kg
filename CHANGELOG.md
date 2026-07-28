@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Removed
+
+### Fixed
+
+## [0.9.0] - 2026-07-28
+
+### Added
 - `ftree_kg.metadata` — per-format metadata extractor with image EXIF support via Pillow (camera make/model, lens, capture timestamp, description, ISO/F-number/exposure/focal length, GPS lat/lon decoded from DMS); stubs in place for audio/video/PDF
 - `nodes.metadata` SQLite column — JSON blob populated by Pass 2.5 of `FileTreeKG.build()` with the canonical metadata dict for each file node
 - `FileTreeKG.build(embed=True, metadata=True)` — Pass 2.5 (per-format metadata) and Pass 3 (LanceDB embedding) added to the build pipeline; both can be disabled
@@ -43,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `docs/CHEATSHEET.md`, `docs/pipeline.md`, `docs/guide.md` — KGRAG examples and prose updated for the `kind="filetree"` rename
 
 ### Fixed
+- **`ImportError` on every entry point when installed from PyPI.** kgmodule-utils 0.8.0 split `kg_utils.types` into `kg_utils.specs` (NodeSpec/EdgeSpec) and `kg_utils.extractor` (KGExtractor), but `ftree_kg.extractor` and `ftree_kg.module` still imported the removed module, and the published 0.8.0 wheel declared only `kgmodule-utils>=0.2.4` — so a fresh install resolved kgmodule-utils 0.8.0 and every `ftreekg` command died with `ModuleNotFoundError: No module named 'kg_utils.types'`. Imports now target the new module paths and the floor is pinned at `kgmodule-utils>=0.8.0`. **Anyone on 0.8.0 from PyPI must upgrade to 0.9.0** — 0.8.0 is unusable against current kgmodule-utils.
 - mypy: `_embed_text(row: tuple)` annotated as `tuple[Any, ...]` to satisfy `type-arg`
 - mypy: `extract_image_metadata` now skips EXIF tags whose id is missing from `PIL.ExifTags.TAGS` instead of falling back to the int id, so `_EXIF_FIELDS.get(tag_name)` always sees a `str`
 - mypy: `tests/test_query.py` asserts `kg.db_path is not None` before passing it to `sqlite3.connect()`

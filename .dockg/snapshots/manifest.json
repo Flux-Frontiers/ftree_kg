@@ -1,6 +1,6 @@
 {
   "format": "1.0",
-  "last_update": "2026-07-28T21:45:16.990554+00:00",
+  "last_update": "2026-07-28T22:17:24.072413+00:00",
   "snapshots": [
     {
       "key": "540f6b313c71d4409140c4167c0b8e04666be50f",
@@ -83,97 +83,11 @@
       }
     },
     {
-      "key": "0e803138e10c095f8fde4d90eaf659372720ddc8",
-      "branch": "main",
-      "timestamp": "2026-04-06T22:19:52.835585+00:00",
-      "version": "0.7.0",
-      "file": "0e803138e10c095f8fde4d90eaf659372720ddc8.json",
-      "metrics": {
-        "db_path": "/Users/egs/repos/ftreekg/.dockg/graph.sqlite",
-        "total_nodes": 1836,
-        "total_edges": 10682,
-        "node_counts": {
-          "chunk": 373,
-          "document": 18,
-          "entity": 439,
-          "keyword": 435,
-          "section": 308,
-          "topic": 263
-        },
-        "edge_counts": {
-          "CONTAINS": 681,
-          "CO_OCCURS_WITH": 6914,
-          "HAS_KEYWORD": 1343,
-          "HAS_TOPIC": 373,
-          "MENTIONS_ENTITY": 1188,
-          "NEXT": 52,
-          "REFERENCES": 9,
-          "SIMILAR_TO": 122
-        },
-        "meaningful_nodes": 1818,
-        "coverage_score": 0.8802502234137624,
-        "issues_count": 0,
-        "complexity_median": 16.0
-      },
-      "deltas": {
-        "vs_previous": null,
-        "vs_baseline": {
-          "nodes": 1568,
-          "edges": 9905,
-          "coverage_delta": 0.028398371561910607,
-          "issues_delta": 0
-        }
-      }
-    },
-    {
       "key": "8a7fb41089ea50669d374ea60cee56331731fa98",
       "branch": "main",
       "timestamp": "2026-04-26T17:37:08.401564+00:00",
       "version": "0.10.0",
       "file": "8a7fb41089ea50669d374ea60cee56331731fa98.json",
-      "metrics": {
-        "db_path": "/Users/egs/repos/ftree_kg/.dockg/graph.sqlite",
-        "total_nodes": 1836,
-        "total_edges": 10682,
-        "node_counts": {
-          "chunk": 373,
-          "document": 18,
-          "entity": 439,
-          "keyword": 435,
-          "section": 308,
-          "topic": 263
-        },
-        "edge_counts": {
-          "CONTAINS": 681,
-          "CO_OCCURS_WITH": 6914,
-          "HAS_KEYWORD": 1343,
-          "HAS_TOPIC": 373,
-          "MENTIONS_ENTITY": 1188,
-          "NEXT": 52,
-          "REFERENCES": 9,
-          "SIMILAR_TO": 122
-        },
-        "meaningful_nodes": 1818,
-        "coverage_score": 0.8802502234137624,
-        "issues_count": 1,
-        "complexity_median": 16.0
-      },
-      "deltas": {
-        "vs_previous": null,
-        "vs_baseline": {
-          "nodes": 1568,
-          "edges": 9905,
-          "coverage_delta": 0.028398371561910607,
-          "issues_delta": 1
-        }
-      }
-    },
-    {
-      "key": "991ac3dfd60f5d5f47c6df3995df049d7b75155d",
-      "branch": "main",
-      "timestamp": "2026-04-26T17:42:56.370472+00:00",
-      "version": "0.12.0",
-      "file": "991ac3dfd60f5d5f47c6df3995df049d7b75155d.json",
       "metrics": {
         "db_path": "/Users/egs/repos/ftree_kg/.dockg/graph.sqlite",
         "total_nodes": 1836,
@@ -384,11 +298,11 @@
       }
     },
     {
-      "key": "2cb23bd2bae72795e16de79dc3d209093d596974",
+      "key": "fdf5ac38be7b7cce73fed815508ac1873a9de18c",
       "branch": "main",
-      "timestamp": "2026-07-28T21:45:16.989653+00:00",
+      "timestamp": "2026-07-28T21:48:26.828895+00:00",
       "version": "0.18.1",
-      "file": "2cb23bd2bae72795e16de79dc3d209093d596974.json",
+      "file": "fdf5ac38be7b7cce73fed815508ac1873a9de18c.json",
       "metrics": {
         "db_path": "/Users/egs/repos/ftree_kg/.dockg/graph.sqlite",
         "total_nodes": 1498,
@@ -422,6 +336,49 @@
           "nodes": 1230,
           "edges": 10155,
           "coverage_delta": 0.133707714935152,
+          "issues_delta": 0
+        }
+      }
+    },
+    {
+      "key": "577c93dff8ff26772e33d44ee72fcee8b986a6ac",
+      "branch": "main",
+      "timestamp": "2026-07-28T22:17:24.072001+00:00",
+      "version": "0.18.1",
+      "file": "577c93dff8ff26772e33d44ee72fcee8b986a6ac.json",
+      "metrics": {
+        "db_path": "/Users/egs/repos/ftree_kg/.dockg/graph.sqlite",
+        "total_nodes": 1542,
+        "total_edges": 11251,
+        "node_counts": {
+          "chunk": 287,
+          "document": 12,
+          "entity": 425,
+          "keyword": 455,
+          "section": 138,
+          "topic": 225
+        },
+        "edge_counts": {
+          "CONTAINS": 425,
+          "CO_OCCURS_WITH": 7418,
+          "HAS_KEYWORD": 1147,
+          "HAS_TOPIC": 304,
+          "MENTIONS_ENTITY": 1282,
+          "NEXT": 128,
+          "REFERENCES": 25,
+          "SIMILAR_TO": 522
+        },
+        "meaningful_nodes": 1530,
+        "coverage_score": 0.9849012775842044,
+        "issues_count": 0,
+        "complexity_median": 20.0
+      },
+      "deltas": {
+        "vs_previous": null,
+        "vs_baseline": {
+          "nodes": 1274,
+          "edges": 10474,
+          "coverage_delta": 0.13304942573235268,
           "issues_delta": 0
         }
       }

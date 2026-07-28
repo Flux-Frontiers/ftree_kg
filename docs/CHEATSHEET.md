@@ -11,7 +11,7 @@ knowledge graph built with `ftreekg build`.
 | Command | Best for | Returns |
 |---|---|---|
 | `ftreekg status` | Orientation — node/edge counts, indexed size, config | Rich dashboard |
-| `ftreekg build` | Index a directory — SQLite + LanceDB + metadata pass | Build summary |
+| `ftreekg build` | Index a directory — SQLite + sqlite-vec + metadata pass | Build summary |
 | `ftreekg query` | Semantic search — *which paths match this description* | Ranked node list |
 | `ftreekg pack` | Metadata snippets — *what's actually in those nodes* | Per-node metadata blocks |
 | `ftreekg analyze` | Full report — summary, size chart, directory tree | Markdown file |
@@ -28,16 +28,16 @@ Always start here when approaching an indexed tree or after a rebuild.
 ftreekg status
 ```
 
-Shows version, build timestamp, DB path and size, LanceDB presence,
+Shows version, build timestamp, DB path and size, vector store presence,
 include/exclude config, and node/edge breakdown alongside a size-by-top-level
 directory bar chart.
 
 ```
 FTreeKG Status — /Users/egs/repos/ftree_kg
-  Version  : ftree-kg 0.8.0
+  Version  : ftree-kg 0.9.0
   Built at : 2026-04-30 23:45:01 UTC
   DB path  : .filetreekg/graph.sqlite  (1.2 MB)
-  LanceDB  : present
+  Vectors  : present
 
   Include dirs  : all (none specified)
   Exclude dirs  : .git, .venv, __pycache__, archives, backups, ...
@@ -50,7 +50,7 @@ FTreeKG Status — /Users/egs/repos/ftree_kg
   total      573
 ```
 
-Run this **before** querying — if `LanceDB: missing`, your queries will fall
+Run this **before** querying — if `Vectors: missing`, your queries will fall
 back to lexical LIKE matching only.
 
 ---
@@ -68,7 +68,7 @@ Wipes any existing index and runs the full three-pass pipeline:
 1. **Pass 1** — walk the tree, emit `NodeSpec`/`EdgeSpec`, persist to SQLite
 2. **Pass 2** — re-stat each file node to populate `size_bytes`
 3. **Pass 2.5** — extract per-format metadata (EXIF for images, etc.)
-4. **Pass 3** — embed canonical text per node, write to LanceDB
+4. **Pass 3** — embed canonical text per node, write to sqlite-vec
 
 ### Incremental build
 
@@ -197,7 +197,7 @@ tracking how a corpus evolves across releases or feature branches.
 
 ```bash
 ftreekg snapshot save                    # auto tree hash + branch
-ftreekg snapshot save 0.8.0              # tag with version
+ftreekg snapshot save 0.9.0              # tag with version
 ftreekg snapshot save --branch feature/x --tree-hash abc1234
 ```
 

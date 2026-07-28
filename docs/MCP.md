@@ -1,6 +1,6 @@
 # MCP Integration
 
-FTreeKG does **not** ship its own MCP server in v0.8 — the index is
+FTreeKG does **not** ship its own MCP server in v0.9 — the index is
 small enough and the query surface narrow enough that the CLI and the
 Python API cover the use cases that would otherwise want one. What this
 repo *does* ship is a `.mcp.json` config that wires the **sister
@@ -78,7 +78,7 @@ tree have two clean options:
 
 1. **Shell out to the CLI** — `ftreekg query "..."` and
    `ftreekg pack "..."` from a Bash tool call. Each invocation opens
-   the SQLite store, runs the LanceDB lookup, and exits. No daemon
+   the SQLite store, runs the sqlite-vec lookup, and exits. No daemon
    required.
 2. **Use the KGRAG federation layer** — register the FTreeKG
    instance with KGRAG and let the federated MCP server (provided by
@@ -111,7 +111,7 @@ Provider configuration would mirror the patterns documented in
 - **Claude Code / Kilo Code** — per-repo `.mcp.json` with a `ftreekg`
   entry pointing at `ftreekg-mcp --repo .`.
 - **GitHub Copilot** — per-repo `.vscode/mcp.json` with an absolute
-  `--db` and `--lancedb` to satisfy Copilot's no-cwd-inheritance
+  `--db` and `--vectors` to satisfy Copilot's no-cwd-inheritance
   behavior.
 - **Claude Desktop** — global `claude_desktop_config.json` with an
   absolute path to the `ftreekg-mcp` venv binary.

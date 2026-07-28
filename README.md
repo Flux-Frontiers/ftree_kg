@@ -1,6 +1,6 @@
 [![Python](https://img.shields.io/badge/python-3.12%20%7C%203.13-blue.svg)](https://www.python.org/)
 [![License: Elastic-2.0](https://img.shields.io/badge/License-Elastic%202.0-blue.svg)](https://www.elastic.co/licensing/elastic-license)
-[![Version](https://img.shields.io/badge/version-0.8.0-blue.svg)](https://github.com/Flux-Frontiers/FTreeKG/releases)
+[![Version](https://img.shields.io/badge/version-0.9.0-blue.svg)](https://github.com/Flux-Frontiers/FTreeKG/releases)
 [![CI](https://github.com/Flux-Frontiers/FTreeKG/actions/workflows/ci.yml/badge.svg)](https://github.com/Flux-Frontiers/FTreeKG/actions/workflows/ci.yml)
 [![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
 [![DOI](https://zenodo.org/badge/1182124358.svg)](https://zenodo.org/badge/latestdoi/1182124358)
@@ -21,7 +21,7 @@ symlink, captures the cheap stat the OS already exposes — size, mtime,
 mode, symlink target — and reaches one step further to lift per-format
 metadata (image EXIF today; audio, video, and PDF reserved) into a
 JSON blob that travels with each node. The skeleton is persisted to
-SQLite; a LanceDB vector index sits on top for semantic search.
+SQLite; a sqlite-vec vector index sits on top for semantic search.
 
 The point is to make a filesystem **askable**. *"Where do we keep
 configuration?" "Which photos came from the iPhone in 2023?" "What
@@ -33,7 +33,7 @@ analysis tool, an LLM context source, and a structural complement to
 codebase- and document-level knowledge graphs in the same workflow.
 
 FTreeKG is a member of the [KGRAG](https://github.com/Flux-Frontiers/kgrag)
-family of knowledge graphs. It uses the same hybrid SQLite-plus-LanceDB
+family of knowledge graphs. It uses the same hybrid SQLite-plus-sqlite-vec
 architecture as its sister projects [PyCodeKG](https://github.com/Flux-Frontiers/pycode_kg)
 (Python source) and [DocKG](https://github.com/Flux-Frontiers/doc_kg)
 (document corpora), exposes itself to KGRAG's federated query layer with
@@ -44,7 +44,7 @@ slots cleanly into the same agents and pipelines.
 The technical reading list:
 
 - **[docs/SCHEMA.md](docs/SCHEMA.md)** — node kinds, edge types, node-ID
-  format, full SQLite and LanceDB column reference, per-format metadata
+  format, full SQLite and sqlite-vec column reference, per-format metadata
   fields.
 - **[docs/CHEATSHEET.md](docs/CHEATSHEET.md)** — query patterns, EXIF
   search recipes, snapshot workflows, common questions answered with
@@ -64,8 +64,8 @@ The technical reading list:
 
 After installing the package, point `ftreekg build` at any directory.
 The first run wipes any existing index and produces a fresh
-`.filetreekg/` folder with the SQLite graph and the LanceDB vector
-index inside it. Subsequent commands operate against that store with no
+`.filetreekg/` folder with the SQLite graph and the sqlite-vec vector
+store inside it. Subsequent commands operate against that store with no
 further setup.
 
 ```bash
@@ -93,7 +93,8 @@ for query recipes see [docs/CHEATSHEET.md](docs/CHEATSHEET.md).
 ## Installation
 
 FTreeKG requires Python 3.12 or 3.13. The core install pulls Click,
-Rich, LanceDB, Pillow, and the shared `kgmodule-utils` package:
+Rich, Pillow, and the shared `kgmodule-utils` package with its
+`[semantic,sqlite-vec]` extras:
 
 ```bash
 pip install ftree-kg                  # core runtime
@@ -123,7 +124,7 @@ two-line text document for each node — `"{kind} {basename} at {path}"`
 plus a keyword line that includes path components, basename token
 splits, the file extension, and projected metadata tokens (camera
 make/model, year, year-month, GPS) — embeds them in batches via
-`kg_utils.embedder`, and writes the vectors to a single LanceDB table.
+`kg_utils.embedder`, and writes the vectors to the sqlite-vec store.
 
 That metadata projection is what makes EXIF-grounded queries work
 without any filename hints. A photo whose path is just
@@ -134,11 +135,11 @@ walks through the embed-text format end-to-end:
 [docs/SCHEMA.md#embed-text-format](docs/SCHEMA.md#embed-text-format).
 
 Querying is intentionally simple: the query string is embedded with the
-same model used at build time, LanceDB returns the top-`k` nodes ranked
+same model used at build time, sqlite-vec returns the top-`k` nodes ranked
 by cosine distance, and that's the answer. There is no graph expansion
 phase — filesystem nodes have only `CONTAINS`, which is structural and
-not semantically informative for hop-style retrieval. When the LanceDB
-table is missing or the embedder fails to load, `query` falls back to a
+not semantically informative for hop-style retrieval. When the vector
+store is missing or the embedder fails to load, `query` falls back to a
 substring `LIKE` search across `qualname`, `kind`, `docstring`, and
 `metadata`, so it always returns something useful even on a freshly
 extracted tree with no embeddings.
@@ -207,14 +208,14 @@ A built tree gets a single hidden directory:
 ```
 .filetreekg/
   graph.sqlite       # canonical knowledge graph (nodes + edges + metadata)
-  lancedb/           # derived vector index (kg_nodes.lance)
+  vectors.sqlite     # derived sqlite-vec store (vec_meta + vec_nodes)
   snapshots/         # temporal metric snapshots, keyed by git tree hash
     manifest.json
     <tree-hash>.json
 ```
 
-SQLite is **canonical** — it is the source of truth. LanceDB is
-**derived and disposable**: deleting `.filetreekg/lancedb/` and
+SQLite is **canonical** — it is the source of truth. The vector store is
+**derived and disposable**: deleting `.filetreekg/vectors.sqlite` and
 re-running `ftreekg build` reproduces it without re-walking the tree
 (the embed pass reads from SQLite). Snapshots are append-only and
 keyed by the git tree hash of the staged index, so they form a
@@ -223,7 +224,7 @@ deterministic timeline you can `diff` between commits or releases.
 snapshot on every commit.
 
 For column-level details — node IDs, every SQLite column, every
-LanceDB column, every per-format metadata field — see
+sqlite-vec column, every per-format metadata field — see
 [docs/SCHEMA.md](docs/SCHEMA.md).
 
 ---
@@ -259,7 +260,7 @@ If you use FTreeKG in research or a project, please cite it:
 
 **APA**
 
-> Suchanek, E. G. (2026). *FTreeKG: Knowledge Graph for Filesystem Hierarchies* (Version 0.8.0) [Software]. Flux-Frontiers. https://doi.org/10.5281/zenodo.1182124358
+> Suchanek, E. G. (2026). *FTreeKG: Knowledge Graph for Filesystem Hierarchies* (Version 0.9.0) [Software]. Flux-Frontiers. https://doi.org/10.5281/zenodo.1182124358
 
 **BibTeX**
 
@@ -267,7 +268,7 @@ If you use FTreeKG in research or a project, please cite it:
 @software{suchanek_ftree_kg,
   author    = {Suchanek, Eric G.},
   title     = {{FTreeKG}: Knowledge Graph for Filesystem Hierarchies},
-  version   = {0.8.0},
+  version   = {0.9.0},
   year      = {2026},
   publisher = {Flux-Frontiers},
   url       = {https://github.com/Flux-Frontiers/FTreeKG},
