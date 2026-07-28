@@ -56,7 +56,7 @@ license = "Elastic-2.0"
 authors = [
     { name = "Eric G. Suchanek, PhD", email = "suchanek@flux-frontiers.com" }
 ]
-keywords = ["knowledge-graph", "filesystem", "lancedb", "sqlite", "semantic-search", "kgmodule"]
+keywords = ["knowledge-graph", "filesystem", "sqlite-vec", "sqlite", "semantic-search", "kgmodule"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -69,8 +69,7 @@ classifiers = [
 requires-python = ">=3.12,<3.14"
 dependencies = [
     "click>=8.1.0,<9",
-    "kgmodule-utils>=0.8.0",
-    "lancedb>=0.29.0",
+    "kgmodule-utils[semantic,sqlite-vec]>=0.8.0",
     "pillow>=10.0.0",
     "rich>=13.0.0",
 ]
@@ -139,7 +138,7 @@ addopts    = "-v --tb=short"
 pythonpath = ["src"]
 markers = [
     "slow: marks tests as slow (deselect with '-m not slow')",
-    "integration: marks tests that exercise real external dependencies (model, LanceDB)",
+    "integration: marks tests that exercise real external dependencies (model, sqlite-vec)",
 ]
 
 [tool.pylint.messages_control]

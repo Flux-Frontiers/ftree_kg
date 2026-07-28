@@ -17,20 +17,20 @@ from pathlib import Path
 import click
 
 from ftree_kg.cli.group import cli
-from ftree_kg.cli.options import db_option, k_option, lancedb_option, repo_option
+from ftree_kg.cli.options import db_option, k_option, repo_option, vectors_option
 from ftree_kg.module import FileTreeKG
 
 
 @cli.command("query")
 @repo_option
 @db_option
-@lancedb_option
+@vectors_option
 @k_option
 @click.argument("query")
 def query(
     repo: str,
     db: str,
-    lancedb: str,
+    vectors: str,
     k: int,
     query: str,
 ) -> None:
@@ -42,13 +42,13 @@ def query(
     """
     repo_root = Path(repo).resolve()
     db_path = Path(db) if db else repo_root / ".filetreekg" / "graph.sqlite"
-    lancedb_path = Path(lancedb) if lancedb else repo_root / ".filetreekg" / "lancedb"
+    vectors_path = Path(vectors) if vectors else repo_root / ".filetreekg" / "vectors.sqlite"
 
     try:
         kg = FileTreeKG(
             repo_root=repo_root,
             db_path=db_path,
-            lancedb_path=lancedb_path,
+            vectors_path=vectors_path,
         )
         result = kg.query(query, k=k)
 
@@ -76,13 +76,13 @@ def query(
 @cli.command("pack")
 @repo_option
 @db_option
-@lancedb_option
+@vectors_option
 @k_option
 @click.argument("query")
 def pack(
     repo: str,
     db: str,
-    lancedb: str,
+    vectors: str,
     k: int,
     query: str,
 ) -> None:
@@ -94,13 +94,13 @@ def pack(
     """
     repo_root = Path(repo).resolve()
     db_path = Path(db) if db else repo_root / ".filetreekg" / "graph.sqlite"
-    lancedb_path = Path(lancedb) if lancedb else repo_root / ".filetreekg" / "lancedb"
+    vectors_path = Path(vectors) if vectors else repo_root / ".filetreekg" / "vectors.sqlite"
 
     try:
         kg = FileTreeKG(
             repo_root=repo_root,
             db_path=db_path,
-            lancedb_path=lancedb_path,
+            vectors_path=vectors_path,
         )
         pack_result = kg.pack(query, k=k)
 
