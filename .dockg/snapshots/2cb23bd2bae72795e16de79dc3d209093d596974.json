@@ -1,7 +1,7 @@
 {
-  "key": "75f1373b44d7ffa9905a665b5f90958244c19533",
-  "branch": "feat/sqlite-vec-migration",
-  "timestamp": "2026-07-28T13:01:09.534499+00:00",
+  "key": "2cb23bd2bae72795e16de79dc3d209093d596974",
+  "branch": "main",
+  "timestamp": "2026-07-28T21:45:16.989653+00:00",
   "version": "0.18.1",
   "metrics": {
     "db_path": "/Users/egs/repos/ftree_kg/.dockg/graph.sqlite",

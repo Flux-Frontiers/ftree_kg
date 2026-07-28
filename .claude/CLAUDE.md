@@ -47,7 +47,7 @@ pytest --cov=ftree_kg
 
 ### Pre-commit Hook
 
-`.git/hooks/pre-commit` is customized locally to run `pycodekg build` and `dockg build` (+ `snapshot save`) instead of the generic `ftreekg build` that `ftreekg install-hooks` installs by default. This repo's own dev workflow cares about the code/docs KGs, not the filetree KG. This customization lives only in the local `.git/hooks/pre-commit` file (not tracked by git) — running `ftreekg install-hooks --force` will overwrite it back to the `ftreekg build` default, so reapply this note's change if that happens.
+`.git/hooks/pre-commit` is customized locally to run quality checks (ruff, ty, pylint, pytest, etc. via `pre-commit run`) first, and only after they pass, run `pycodekg build` and `dockg build` (+ `snapshot save`) — instead of the generic `ftreekg build` that `ftreekg install-hooks` installs by default. This repo's own dev workflow cares about the code/docs KGs, not the filetree KG, and there's no point rebuilding indices for a commit that's about to be rejected. This customization lives only in the local `.git/hooks/pre-commit` file (not tracked by git) — running `ftreekg install-hooks --force` will overwrite it back to the `ftreekg build`-before-checks default, so reapply this note's change if that happens.
 
 ## Testing
 
