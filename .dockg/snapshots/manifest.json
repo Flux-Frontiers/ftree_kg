@@ -1,6 +1,6 @@
 {
   "format": "1.0",
-  "last_update": "2026-07-28T12:58:22.065086+00:00",
+  "last_update": "2026-07-28T13:01:09.535366+00:00",
   "snapshots": [
     {
       "key": "540f6b313c71d4409140c4167c0b8e04666be50f",
@@ -384,11 +384,11 @@
       }
     },
     {
-      "key": "a283cafb6fd0baa6979532209108470c20f97060",
+      "key": "75f1373b44d7ffa9905a665b5f90958244c19533",
       "branch": "feat/sqlite-vec-migration",
-      "timestamp": "2026-07-28T12:58:22.064326+00:00",
+      "timestamp": "2026-07-28T13:01:09.534499+00:00",
       "version": "0.18.1",
-      "file": "a283cafb6fd0baa6979532209108470c20f97060.json",
+      "file": "75f1373b44d7ffa9905a665b5f90958244c19533.json",
       "metrics": {
         "db_path": "/Users/egs/repos/ftree_kg/.dockg/graph.sqlite",
         "total_nodes": 1498,
