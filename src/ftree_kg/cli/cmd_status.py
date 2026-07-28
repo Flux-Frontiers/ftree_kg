@@ -64,7 +64,7 @@ def status(repo: str, db: str) -> None:
     """Show live node/edge counts, filesystem size, and index metadata."""
     repo_root = Path(repo).resolve()
     db_path = Path(db) if db else repo_root / ".filetreekg" / "graph.sqlite"
-    lancedb_path = db_path.parent / "lancedb"
+    vectors_path = db_path.parent / "vectors.sqlite"
 
     if not db_path.exists():
         _console.print(f"[red]Graph store not found:[/red] {db_path}")
@@ -77,14 +77,14 @@ def status(repo: str, db: str) -> None:
         "%Y-%m-%d %H:%M:%S UTC"
     )
 
-    lancedb_ok = (lancedb_path / "kg_nodes.lance").exists()
-    lance_label = (
+    vectors_ok = vectors_path.exists()
+    vectors_label = (
         "[green]present[/green]"
-        if lancedb_ok
+        if vectors_ok
         else "[yellow]missing[/yellow] (run ftreekg build --vector)"
     )
 
-    kg = FileTreeKG(repo_root=repo_root, db_path=db_path, lancedb_path=lancedb_path)
+    kg = FileTreeKG(repo_root=repo_root, db_path=db_path, vectors_path=vectors_path)
     s = kg.stats()
     kg.close()
 
@@ -102,7 +102,7 @@ def status(repo: str, db: str) -> None:
     _console.print(f"  Version  : ftree-kg {version}")
     _console.print(f"  Built at : {built_at}")
     _console.print(f"  DB path  : {db_path}  ({db_size_mb} MB)")
-    _console.print(f"  LanceDB  : {lance_label}")
+    _console.print(f"  Vectors  : {vectors_label}")
     _console.print()
 
     # Config section

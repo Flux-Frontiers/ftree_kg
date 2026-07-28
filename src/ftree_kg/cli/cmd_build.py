@@ -2,7 +2,7 @@
 
 Click subcommands for building the FileTreeKG knowledge graph:
 
-    build   - filesystem tree -> SQLite + LanceDB
+    build   - filesystem tree -> SQLite + sqlite-vec
 
 Author: Eric G. Suchanek, PhD
 Last Revision: 2026-04-30 23:41:26
@@ -20,9 +20,9 @@ from ftree_kg.cli.options import (
     db_option,
     exclude_option,
     include_option,
-    lancedb_option,
     model_option,
     repo_option,
+    vectors_option,
 )
 from ftree_kg.config import load_exclude_dirs, load_include_dirs
 from ftree_kg.module import FileTreeKG
@@ -31,7 +31,7 @@ from ftree_kg.module import FileTreeKG
 @cli.command("build")
 @repo_option
 @db_option
-@lancedb_option
+@vectors_option
 @model_option
 @include_option
 @exclude_option
@@ -41,7 +41,7 @@ from ftree_kg.module import FileTreeKG
 def build(
     repo: str,
     db: str,
-    lancedb: str,
+    vectors: str,
     model: str,
     include_dir: tuple[str, ...],
     exclude_dir: tuple[str, ...],
@@ -50,14 +50,14 @@ def build(
     """Extract a filesystem tree knowledge graph and build indices.
 
     Scans the filesystem tree, extracts nodes (files, directories, symlinks)
-    with metadata, and builds both SQLite and LanceDB indices.
+    with metadata, and builds both SQLite and sqlite-vec indices.
 
     Respects [tool.filetreekg] include/exclude directives in pyproject.toml.
     CLI options override pyproject.toml settings.
     """
     repo_root = Path(repo).resolve()
     db_path = Path(db) if db else repo_root / ".filetreekg" / "graph.sqlite"
-    lancedb_path = Path(lancedb) if lancedb else repo_root / ".filetreekg" / "lancedb"
+    vectors_path = Path(vectors) if vectors else repo_root / ".filetreekg" / "vectors.sqlite"
 
     # Merge CLI options with pyproject.toml config
     include_dirs = set(include_dir) or load_include_dirs(repo_root)
@@ -75,7 +75,7 @@ def build(
         kg = FileTreeKG(
             repo_root=repo_root,
             db_path=db_path,
-            lancedb_path=lancedb_path,
+            vectors_path=vectors_path,
         )
         kg.build(wipe=not no_wipe)
         stats = kg.stats()

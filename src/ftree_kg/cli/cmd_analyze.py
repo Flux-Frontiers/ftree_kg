@@ -16,14 +16,14 @@ from pathlib import Path
 import click
 
 from ftree_kg.cli.group import cli
-from ftree_kg.cli.options import db_option, lancedb_option, repo_option
+from ftree_kg.cli.options import db_option, repo_option, vectors_option
 from ftree_kg.module import FileTreeKG
 
 
 @cli.command("analyze")
 @repo_option
 @db_option
-@lancedb_option
+@vectors_option
 @click.option(
     "--output",
     "-o",
@@ -33,7 +33,7 @@ from ftree_kg.module import FileTreeKG
 def analyze(
     repo: str,
     db: str,
-    lancedb: str,
+    vectors: str,
     output: str | None,
 ) -> None:
     """Generate a full analysis report of the filesystem tree.
@@ -42,13 +42,13 @@ def analyze(
     """
     repo_root = Path(repo).resolve()
     db_path = Path(db) if db else repo_root / ".filetreekg" / "graph.sqlite"
-    lancedb_path = Path(lancedb) if lancedb else repo_root / ".filetreekg" / "lancedb"
+    vectors_path = Path(vectors) if vectors else repo_root / ".filetreekg" / "vectors.sqlite"
 
     try:
         kg = FileTreeKG(
             repo_root=repo_root,
             db_path=db_path,
-            lancedb_path=lancedb_path,
+            vectors_path=vectors_path,
         )
         report = kg.analyze()
 

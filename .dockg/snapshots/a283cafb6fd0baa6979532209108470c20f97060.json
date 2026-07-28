@@ -1,0 +1,123 @@
+{
+  "key": "a283cafb6fd0baa6979532209108470c20f97060",
+  "branch": "feat/sqlite-vec-migration",
+  "timestamp": "2026-07-28T12:58:22.064326+00:00",
+  "version": "0.18.1",
+  "metrics": {
+    "db_path": "/Users/egs/repos/ftree_kg/.dockg/graph.sqlite",
+    "total_nodes": 1498,
+    "total_edges": 10932,
+    "node_counts": {
+      "chunk": 277,
+      "document": 12,
+      "entity": 418,
+      "keyword": 439,
+      "section": 138,
+      "topic": 214
+    },
+    "edge_counts": {
+      "CONTAINS": 415,
+      "CO_OCCURS_WITH": 7216,
+      "HAS_KEYWORD": 1107,
+      "HAS_TOPIC": 293,
+      "MENTIONS_ENTITY": 1257,
+      "NEXT": 118,
+      "REFERENCES": 25,
+      "SIMILAR_TO": 501
+    },
+    "meaningful_nodes": 1486,
+    "coverage_score": 0.9855595667870037,
+    "issues_count": 0,
+    "complexity_median": 19.0
+  },
+  "hotspots": [
+    {
+      "id": "chunk:docs/CLI.md:0002",
+      "file_path": "docs/CLI.md",
+      "label": "Unified CLI",
+      "references": 0,
+      "semantic_links": 24,
+      "total_links": 25
+    },
+    {
+      "id": "chunk:README.md:0006",
+      "file_path": "README.md",
+      "label": "Overview",
+      "references": 5,
+      "semantic_links": 20,
+      "total_links": 25
+    },
+    {
+      "id": "chunk:analysis/FTreeKG_analysis_20260321.md:0003",
+      "file_path": "analysis/FTreeKG_analysis_20260321.md",
+      "label": "Edge Distribution",
+      "references": 0,
+      "semantic_links": 20,
+      "total_links": 20
+    },
+    {
+      "id": "chunk:docs/CHEATSHEET.md:0035",
+      "file_path": "docs/CHEATSHEET.md",
+      "label": "12. KGRAG Integration",
+      "references": 0,
+      "semantic_links": 20,
+      "total_links": 20
+    },
+    {
+      "id": "chunk:docs/CLI.md:0007",
+      "file_path": "docs/CLI.md",
+      "label": "`ftreekg build` \u2014 Index a tree",
+      "references": 0,
+      "semantic_links": 19,
+      "total_links": 20
+    },
+    {
+      "id": "chunk:docs/SCHEMA.md:0012",
+      "file_path": "docs/SCHEMA.md",
+      "label": "`nodes`",
+      "references": 0,
+      "semantic_links": 19,
+      "total_links": 20
+    },
+    {
+      "id": "chunk:CHANGELOG.md:0017",
+      "file_path": "CHANGELOG.md",
+      "label": "Added",
+      "references": 0,
+      "semantic_links": 19,
+      "total_links": 19
+    },
+    {
+      "id": "chunk:docs/CHEATSHEET.md:0001",
+      "file_path": "docs/CHEATSHEET.md",
+      "label": "The CLI at a Glance",
+      "references": 0,
+      "semantic_links": 19,
+      "total_links": 19
+    },
+    {
+      "id": "chunk:docs/CHEATSHEET.md:0028",
+      "file_path": "docs/CHEATSHEET.md",
+      "label": "Nodes",
+      "references": 0,
+      "semantic_links": 19,
+      "total_links": 19
+    },
+    {
+      "id": "chunk:docs/CHEATSHEET.md:0030",
+      "file_path": "docs/CHEATSHEET.md",
+      "label": "Per-node columns (SQLite)",
+      "references": 0,
+      "semantic_links": 19,
+      "total_links": 19
+    }
+  ],
+  "issues": [],
+  "vs_previous": null,
+  "vs_baseline": {
+    "nodes": 1230,
+    "edges": 10155,
+    "coverage_delta": 0.133707714935152,
+    "issues_delta": 0
+  }
+}

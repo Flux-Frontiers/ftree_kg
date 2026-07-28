@@ -28,7 +28,7 @@ def _make_kg(tmp_path: Path, embed: bool = False) -> FileTreeKG:
     instance = FileTreeKG(
         repo_root=tmp_path,
         db_path=tmp_path / ".filetreekg" / "graph.sqlite",
-        lancedb_path=tmp_path / ".filetreekg" / "lancedb",
+        vectors_path=tmp_path / ".filetreekg" / "vectors.sqlite",
     )
     instance.build(wipe=True, embed=embed)
     return instance
@@ -42,8 +42,8 @@ def kg(tmp_path: Path) -> FileTreeKG:
 
 @pytest.fixture
 def kg_embedded(tmp_path: Path) -> FileTreeKG:
-    """SQLite + LanceDB fixture (real embedding pass). Marked integration."""
-    pytest.importorskip("lancedb")
+    """SQLite + sqlite-vec fixture (real embedding pass). Marked integration."""
+    pytest.importorskip("sqlite_vec")
     pytest.importorskip("sentence_transformers")
     return _make_kg(tmp_path, embed=True)
 
@@ -84,9 +84,9 @@ def test_pack_snippets_have_content(kg: FileTreeKG) -> None:
 # --------------------------------------------------------------------------
 
 
-def test_query_lexical_fallback_when_no_lancedb(kg: FileTreeKG) -> None:
-    """When the LanceDB table is missing, query() must still return LIKE matches."""
-    # Fixture build() does not populate LanceDB, so semantic search returns []
+def test_query_lexical_fallback_when_no_vector_store(kg: FileTreeKG) -> None:
+    """When the vector store is missing, query() must still return LIKE matches."""
+    # Fixture build() does not populate the vector store, so semantic search returns []
     # and query() falls back to the lexical SQL LIKE path.
     result = kg.query("file", k=10)
     assert len(result.nodes) > 0, "lexical fallback should match 'file' kind"
@@ -114,24 +114,24 @@ def test_query_respects_k(kg: FileTreeKG) -> None:
 
 
 def test_lexical_query_direct(kg: FileTreeKG) -> None:
-    """_lexical_query is the LIKE path; bypasses LanceDB entirely."""
+    """_lexical_query is the LIKE path; bypasses the vector store entirely."""
     nodes = kg._lexical_query("file", k=5)
     assert isinstance(nodes, list)
     assert all(n["score"] == 1.0 for n in nodes)
 
 
-def test_semantic_query_empty_when_no_lancedb(kg: FileTreeKG) -> None:
-    """_semantic_query must return [] (not raise) when the LanceDB table is missing."""
+def test_semantic_query_empty_when_no_vector_store(kg: FileTreeKG) -> None:
+    """_semantic_query must return [] (not raise) when the vector store is missing."""
     nodes = kg._semantic_query("file tree extractor", 5)
     assert nodes == []
 
 
-def test_semantic_query_empty_when_lancedb_dir_missing(tmp_path: Path) -> None:
-    """When the LanceDB table file is missing, _semantic_query degrades cleanly."""
+def test_semantic_query_empty_when_vectors_file_missing(tmp_path: Path) -> None:
+    """When the vectors file is missing, _semantic_query degrades cleanly."""
     instance = FileTreeKG(
         repo_root=tmp_path,
         db_path=tmp_path / "graph.sqlite",
-        lancedb_path=tmp_path / "lancedb_does_not_exist",
+        vectors_path=tmp_path / "vectors_does_not_exist.sqlite",
     )
     instance.build(wipe=True, embed=False)
     nodes = instance._semantic_query("anything", 5)
@@ -199,7 +199,7 @@ def test_pack_no_match_returns_empty_snippets(kg: FileTreeKG) -> None:
 
 
 # --------------------------------------------------------------------------
-# Semantic search integration — populates a real LanceDB table
+# Semantic search integration — populates a real sqlite-vec store
 # --------------------------------------------------------------------------
 
 
@@ -266,19 +266,24 @@ def test_embed_text_drops_pythonic_fields() -> None:
 
 
 @pytest.mark.integration
-def test_build_populates_lancedb(kg_embedded: FileTreeKG) -> None:
-    """build(embed=True) must write a populated kg_nodes LanceDB table."""
-    import lancedb
+def test_build_populates_vector_store(kg_embedded: FileTreeKG) -> None:
+    """build(embed=True) must write a populated sqlite-vec store."""
+    from kg_utils.vector_backend import SqliteVecBackend
 
-    assert kg_embedded.lancedb_dir is not None
-    db = lancedb.connect(str(kg_embedded.lancedb_dir))
-    assert "kg_nodes" in db.list_tables().tables
-    table = db.open_table("kg_nodes")
-    assert table.count_rows() == kg_embedded.stats()["total_nodes"]
+    from ftree_kg.module import _META_COLUMNS
+
+    assert kg_embedded.vectors_path is not None
+    assert Path(kg_embedded.vectors_path).exists()
+    backend = SqliteVecBackend(kg_embedded.vectors_path, meta_columns=_META_COLUMNS)
+    backend.open()
+    try:
+        assert backend.count() == kg_embedded.stats()["total_nodes"]
+    finally:
+        backend.close()
 
 
 @pytest.mark.integration
-def test_semantic_query_routes_through_lancedb_after_build(kg_embedded: FileTreeKG) -> None:
+def test_semantic_query_routes_through_vector_store_after_build(kg_embedded: FileTreeKG) -> None:
     """After build(embed=True), query() should produce non-trivial scores (semantic, not LIKE=1.0)."""
     result = kg_embedded.query("source code file", k=3)
     assert result.nodes
@@ -313,7 +318,7 @@ def _kg_with_image(tmp_path: Path, embed: bool = False) -> FileTreeKG:
     instance = FileTreeKG(
         repo_root=tmp_path,
         db_path=tmp_path / ".filetreekg" / "graph.sqlite",
-        lancedb_path=tmp_path / ".filetreekg" / "lancedb",
+        vectors_path=tmp_path / ".filetreekg" / "vectors.sqlite",
     )
     instance.build(wipe=True, embed=embed, metadata=True)
     return instance
@@ -367,7 +372,7 @@ def test_metadata_skipped_when_metadata_false(tmp_path: Path) -> None:
     kg = FileTreeKG(
         repo_root=tmp_path,
         db_path=tmp_path / ".filetreekg" / "graph.sqlite",
-        lancedb_path=tmp_path / ".filetreekg" / "lancedb",
+        vectors_path=tmp_path / ".filetreekg" / "vectors.sqlite",
     )
     kg.build(wipe=True, embed=False, metadata=False)
     assert kg.db_path is not None
@@ -422,7 +427,7 @@ def test_pack_snippet_surfaces_image_metadata(tmp_path: Path) -> None:
 @pytest.mark.integration
 def test_semantic_query_finds_image_by_camera(tmp_path: Path) -> None:
     """End-to-end: build with embeddings, query 'iPhone photo', image ranks first."""
-    pytest.importorskip("lancedb")
+    pytest.importorskip("sqlite_vec")
     pytest.importorskip("sentence_transformers")
     kg = _kg_with_image(tmp_path, embed=True)
     result = kg.query("iPhone photo from 2023", k=5)
@@ -433,14 +438,16 @@ def test_semantic_query_finds_image_by_camera(tmp_path: Path) -> None:
 
 @pytest.mark.integration
 def test_semantic_query_with_real_index(kg: FileTreeKG) -> None:
-    """End-to-end: hand-build a LanceDB table over the fixture nodes, then query."""
-    pytest.importorskip("lancedb")
+    """End-to-end: hand-build a sqlite-vec store over the fixture nodes, then query."""
+    pytest.importorskip("sqlite_vec")
     pytest.importorskip("sentence_transformers")
     # Pull every node from the SQLite graph and embed its canonical text.
     import sqlite3
 
-    import lancedb
     from kg_utils.embedder import get_embedder
+    from kg_utils.vector_backend import SqliteVecBackend
+
+    from ftree_kg.module import _META_COLUMNS
 
     assert kg.db_path is not None
     with sqlite3.connect(kg.db_path) as conn:
@@ -466,15 +473,20 @@ def test_semantic_query_with_real_index(kg: FileTreeKG) -> None:
             }
         )
 
-    assert kg.lancedb_dir is not None
-    kg.lancedb_dir.mkdir(parents=True, exist_ok=True)
-    db = lancedb.connect(str(kg.lancedb_dir))
-    db.create_table("kg_nodes", data=docs, mode="overwrite")
+    assert kg.vectors_path is not None
+    backend = SqliteVecBackend(
+        kg.vectors_path, dim=len(docs[0]["vector"]), meta_columns=_META_COLUMNS
+    )
+    backend.open(wipe=True)
+    try:
+        backend.upsert(docs)
+    finally:
+        backend.close()
 
     # Semantic phrase that no node's qualname/docstring contains literally.
     nodes = kg._semantic_query("python source module file", k=5)
     assert len(nodes) > 0, "semantic query should rank fixture nodes by similarity"
-    # Scores must be in [0, 1]; ranking must be descending by lance _distance.
+    # Scores must be in [0, 1]; ranking must be descending by cosine distance.
     scores = [n["score"] for n in nodes]
     assert all(0.0 <= s <= 1.0 for s in scores)
     assert scores == sorted(scores, reverse=True)

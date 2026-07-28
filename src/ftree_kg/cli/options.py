@@ -33,12 +33,12 @@ db_option = click.option(
     help="SQLite database path (default: <repo>/.filetreekg/graph.sqlite).",
 )
 
-lancedb_option = click.option(
-    "--lancedb",
+vectors_option = click.option(
+    "--vectors",
     default=None,
     type=click.Path(),
     show_default=False,
-    help="LanceDB directory path (default: <repo>/.filetreekg/lancedb).",
+    help="sqlite-vec vector store path (default: <repo>/.filetreekg/vectors.sqlite).",
 )
 
 model_option = click.option(

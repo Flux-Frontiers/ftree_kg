@@ -22,6 +22,16 @@ from ftree_kg.config import load_exclude_dirs, load_include_dirs
 from ftree_kg.extractor import FileTreeKGExtractor
 from ftree_kg.metadata import extract_metadata, metadata_keywords, metadata_prose
 
+# Metadata columns carried alongside each vector in the sqlite-vec store.
+# ``text`` is included beyond the kg_utils default because _semantic_query
+# surfaces it as the result's ``docstring`` — filesystem nodes have no real
+# docstring, so the embedded locator line is what callers see.
+_META_COLUMNS = ("kind", "name", "qualname", "module_path", "text")
+
+# Fallback embedding width, used only when a build produces no vectors to
+# measure (BAAI/bge-small-en-v1.5 is 384-dimensional).
+_EMBED_DIM = 384
+
 _SCHEMA = """
 DROP TABLE IF EXISTS nodes;
 DROP TABLE IF EXISTS edges;
@@ -175,21 +185,28 @@ class FileTreeKG(KGModule):
 
     :param repo_root: Absolute path to the repository or corpus root.
     :param db_path: Path for the SQLite graph database.
-    :param lancedb_path: Path for the LanceDB vector index directory.
+    :param vectors_path: Path to the sqlite-vec vector store file.
     :param config: Optional domain-specific configuration dict.
     """
+
+    _default_dir = ".filetreekg"
 
     def __init__(
         self,
         repo_root: Path | str,
         db_path: Path | str | None = None,
-        lancedb_path: Path | str | None = None,
+        vectors_path: Path | str | None = None,
         config: dict[str, Any] | None = None,
     ) -> None:
         repo_root = Path(repo_root).resolve()
         db_path = Path(db_path) if db_path else repo_root / ".filetreekg" / "graph.sqlite"
-        lancedb_path = Path(lancedb_path) if lancedb_path else repo_root / ".filetreekg" / "lancedb"
-        super().__init__(repo_root=repo_root, db_path=db_path, lancedb_dir=lancedb_path)
+        super().__init__(
+            repo_root=repo_root,
+            db_path=db_path,
+            vector_backend="sqlite-vec",
+        )
+        if vectors_path is not None:
+            self.vectors_path = Path(vectors_path)
         self.config = config or {}
 
     def make_extractor(self) -> FileTreeKGExtractor:
@@ -214,7 +231,7 @@ class FileTreeKG(KGModule):
         return "filetree"
 
     def build(self, wipe: bool = True, embed: bool = True, metadata: bool = True) -> BuildStats:
-        """Build the SQLite graph index and (optionally) the LanceDB vector index.
+        """Build the SQLite graph index and (optionally) the sqlite-vec vector index.
 
         FileTreeKG predates kgmodule-utils 0.4's GraphStore/SemanticIndex-based
         pipeline and keeps its own raw-SQL schema (``size_bytes``, ``metadata``
@@ -228,11 +245,11 @@ class FileTreeKG(KGModule):
         Pass 2   — re-stat each file node to populate ``size_bytes``.
         Pass 2.5 — extract per-format metadata (EXIF, etc.) into the
                    ``metadata`` column when ``metadata=True``.
-        Pass 3   — embed each node's canonical text and write to LanceDB
+        Pass 3   — embed each node's canonical text and write to sqlite-vec
                    when ``embed=True`` and ``kg_utils.embedder`` is available.
 
         :param wipe: If True, delete the existing database before building.
-        :param embed: If True, populate the LanceDB vector index after Pass 2.5.
+        :param embed: If True, populate the sqlite-vec vector index after Pass 2.5.
         :param metadata: If True, extract per-format metadata (image EXIF, etc.)
             for each file node.  Cheap — the dispatcher returns immediately
             for files outside the supported extension set.
@@ -291,7 +308,7 @@ class FileTreeKG(KGModule):
         if metadata:
             self._extract_node_metadata()
 
-        # Pass 3: embed nodes into LanceDB
+        # Pass 3: embed nodes into the sqlite-vec store
         indexed_rows: int | None = None
         index_dim: int | None = None
         if embed:
@@ -334,28 +351,34 @@ class FileTreeKG(KGModule):
             conn.commit()
 
     def _embed_nodes(self, wipe: bool = True) -> tuple[int | None, int | None]:
-        """Embed every node into LanceDB at ``self.lancedb_dir / kg_nodes.lance``.
+        """Embed every node into the sqlite-vec store at ``self.vectors_path``.
 
         Builds a canonical text document per node (kind, name, qualname, source
         path, docstring, keywords derived from path components), embeds it via
-        :func:`kg_utils.embedder.get_embedder`, and writes ``(id, kind, name,
-        qualname, module_path, text, vector)`` rows to a LanceDB table named
-        ``kg_nodes``.
+        :func:`kg_utils.embedder.get_embedder`, and upserts ``(id, kind, name,
+        qualname, module_path, text, vector)`` rows into the sqlite-vec store.
 
-        Silently no-ops (and prints a brief warning to stderr) when LanceDB or
-        the sentence-transformer embedder is unavailable, so a missing model
-        cache or a CI runner without ``sentence-transformers`` does not break
-        the build.
+        ``text`` is carried as an extra metadata column because
+        :meth:`_semantic_query` surfaces it as the result's ``docstring`` — a
+        filesystem node has no real docstring, so the embedded locator line is
+        what the caller sees.
 
-        :param wipe: If True, drop and recreate the table; if False, append.
+        Silently no-ops (and prints a brief warning to stderr) when the
+        sentence-transformer embedder is unavailable, so a missing model cache
+        or a CI runner without ``sentence-transformers`` does not break the
+        build.
+
+        :param wipe: If True, wipe and recreate the store; if False, upsert.
         :return: ``(indexed_rows, index_dim)``, both ``None`` if the pass was
             skipped or no nodes were embedded.
         """
-        if self.lancedb_dir is None:
+        if self.vectors_path is None:
             return None, None
         try:
-            import lancedb  # pylint: disable=import-outside-toplevel
             from kg_utils.embedder import get_embedder  # pylint: disable=import-outside-toplevel
+            from kg_utils.vector_backend import (  # pylint: disable=import-outside-toplevel
+                SqliteVecBackend,
+            )
         except ImportError as exc:  # pragma: no cover
             import sys  # pylint: disable=import-outside-toplevel
 
@@ -415,16 +438,13 @@ class FileTreeKG(KGModule):
                 }
             )
 
-        self.lancedb_dir.mkdir(parents=True, exist_ok=True)
-        db = lancedb.connect(str(self.lancedb_dir))
-        if "kg_nodes" in db.list_tables().tables:
-            if wipe:
-                db.drop_table("kg_nodes")
-                db.create_table("kg_nodes", data=records)
-            else:
-                db.open_table("kg_nodes").add(records)
-        else:
-            db.create_table("kg_nodes", data=records)
+        dim = len(vectors[0]) if vectors else _EMBED_DIM
+        backend = SqliteVecBackend(self.vectors_path, dim=dim, meta_columns=_META_COLUMNS)
+        backend.open(wipe=wipe)
+        try:
+            backend.upsert(records)
+        finally:
+            backend.close()
 
         return len(records), (len(vectors[0]) if vectors else None)
 
@@ -468,10 +488,10 @@ class FileTreeKG(KGModule):
         }
 
     def query(self, q: str, k: int = 8, **kwargs: Any) -> QueryResult:
-        """Semantic query against the LanceDB vector index, with LIKE fallback.
+        """Semantic query against the sqlite-vec vector index, with LIKE fallback.
 
-        Vector-seeds via the kg_utils embedder against ``kg_nodes.lance`` and
-        ranks by cosine distance.  When the LanceDB table is missing or empty
+        Vector-seeds via the kg_utils embedder against the sqlite-vec store and
+        ranks by cosine distance.  When the sqlite-vec store is missing or empty
         (e.g. embeddings not yet built), falls back to a substring LIKE match
         against ``qualname``, ``kind``, and ``docstring`` so the method always
         returns something useful.
@@ -486,28 +506,35 @@ class FileTreeKG(KGModule):
         return QueryResult(nodes=nodes, seeds=len(nodes), returned_nodes=len(nodes))
 
     def _semantic_query(self, q: str, k: int) -> list[dict[str, Any]]:
-        """Vector search over the LanceDB table; returns [] if unavailable."""
-        if self.lancedb_dir is None:
-            return []
-        table_path = Path(self.lancedb_dir) / "kg_nodes.lance"
-        if not table_path.exists():
+        """Vector search over the sqlite-vec store; returns [] if unavailable."""
+        if self.vectors_path is None or not Path(self.vectors_path).exists():
             return []
         try:
-            import lancedb  # pylint: disable=import-outside-toplevel
             from kg_utils.embedder import get_embedder  # pylint: disable=import-outside-toplevel
+            from kg_utils.vector_backend import (  # pylint: disable=import-outside-toplevel
+                SqliteVecBackend,
+            )
 
             embedder = get_embedder()
             vec = embedder.embed_query(q)
-            db = lancedb.connect(str(self.lancedb_dir))
-            table = db.open_table("kg_nodes")
-            rows = table.search(vec).limit(k).to_list()
+            backend = SqliteVecBackend(self.vectors_path, dim=len(vec), meta_columns=_META_COLUMNS)
+            backend.open()
+            try:
+                rows = backend.search(vec, k)
+            finally:
+                backend.close()
         except Exception:  # pylint: disable=broad-exception-caught
             return []
 
         nodes: list[dict[str, Any]] = []
         for r in rows:
+            # sqlite-vec reports cosine distance (1 - cosine_similarity), so the
+            # similarity is 1 - d.  The previous LanceDB table was created
+            # without an explicit metric and so returned squared L2, which for
+            # normalised embeddings is 2*(1 - cos) — hence the old `1 - d/2`.
+            # Both forms yield the same score; only the metric scale differs.
             dist = float(r.get("_distance", 0.0))
-            score = max(0.0, 1.0 - dist / 2.0)
+            score = max(0.0, 1.0 - dist)
             nodes.append(
                 {
                     "node_id": r.get("id", ""),

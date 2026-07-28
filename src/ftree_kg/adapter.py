@@ -35,10 +35,12 @@ class FileTreeKGAdapter(KGAdapter):  # type: ignore[misc]
     def _load(self) -> None:
         if self._kg is not None:
             return
+        # ``vectors_path`` may be None on registry entries written before the
+        # sqlite-vec migration; FileTreeKG then derives its own default.
         self._kg = FileTreeKG(
             repo_root=self.entry.repo_path,
             db_path=self.entry.sqlite_path,
-            lancedb_path=self.entry.lancedb_path,
+            vectors_path=getattr(self.entry, "vectors_path", None),
         )
 
     def is_available(self) -> bool:

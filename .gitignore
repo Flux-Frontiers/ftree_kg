@@ -127,17 +127,18 @@ dmypy.json
 *.code-workspace
 
 # KGModule indices — exclude DBs/vectors, keep snapshots/
-.filetreekg/lancedb/
-.filetreekg/lancedb-*
+.filetreekg/vectors.sqlite
 .filetreekg/graph.sqlite
 .filetreekg/graph.sqlite*
 
 .pycodekg/lancedb/
 .pycodekg/lancedb-*
+.pycodekg/vectors.sqlite
 .pycodekg/graph.sqlite
 .pycodekg/graph.sqlite*
 .dockg/lancedb/
 .dockg/lancedb-*
+.dockg/vectors.sqlite
 .dockg/graph.sqlite
 .dockg/graph.sqlite*
 .agentkg/

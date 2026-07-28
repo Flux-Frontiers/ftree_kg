@@ -41,7 +41,7 @@ def kg(tmp_path: Path) -> FileTreeKG:
     instance = FileTreeKG(
         repo_root=tmp_path,
         db_path=tmp_path / ".filetreekg" / "graph.sqlite",
-        lancedb_path=tmp_path / ".filetreekg" / "lancedb",
+        vectors_path=tmp_path / ".filetreekg" / "vectors.sqlite",
     )
     instance.build(wipe=True, embed=False)
     return instance
