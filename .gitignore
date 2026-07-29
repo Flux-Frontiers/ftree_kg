@@ -127,24 +127,52 @@ dmypy.json
 *.code-workspace
 
 # KGModule indices — exclude DBs/vectors, keep snapshots/
-.filetreekg/vectors.sqlite
-.filetreekg/graph.sqlite
-.filetreekg/graph.sqlite*
 
-.pycodekg/lancedb/
-.pycodekg/lancedb-*
-.pycodekg/vectors.sqlite
-.pycodekg/graph.sqlite
-.pycodekg/graph.sqlite*
-.dockg/lancedb/
-.dockg/lancedb-*
-.dockg/vectors.sqlite
-.dockg/graph.sqlite
-.dockg/graph.sqlite*
-.agentkg/
 .claude/plugins/marketplaces/
 commit.txt
 
 # OS / package manager
 .DS_Store
 uv.lock
+
+# === KG generated artifacts (normalized across the fleet) ===
+# Databases, vector indexes and model caches are transient and
+# reproducible. snapshots/ is TRACKED and must never be ignored --
+# never use a bare `**/.<ns>/` pattern here, it swallows snapshots too.
+
+**/.pycodekg/lancedb/
+**/.pycodekg/lancedb-*
+**/.pycodekg/*.sqlite
+**/.pycodekg/*.sqlite-shm
+**/.pycodekg/*.sqlite-wal
+**/.pycodekg/*.db
+**/.pycodekg/models
+
+**/.dockg/lancedb/
+**/.dockg/lancedb-*
+**/.dockg/*.sqlite
+**/.dockg/*.sqlite-shm
+**/.dockg/*.sqlite-wal
+**/.dockg/*.db
+**/.dockg/models
+**/.dockg/embeddings.json
+
+# AgentKG local store -- nothing under it is ever tracked
+**/.agentkg/
+
+**/.filetreekg/lancedb/
+**/.filetreekg/lancedb-*
+**/.filetreekg/*.sqlite
+**/.filetreekg/*.sqlite-shm
+**/.filetreekg/*.sqlite-wal
+**/.filetreekg/*.db
+**/.filetreekg/models
+
+# Agent scratch dirs (Claude Code / Codex)
+.agents/
+.codex/
+
+# MCP server config -- machine-specific, contains absolute paths
+.mcp.json
+.mcp.json.sav
+# === end KG generated artifacts ===
