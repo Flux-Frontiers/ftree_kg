@@ -1,6 +1,6 @@
 {
   "format": "1.0",
-  "last_update": "2026-07-31T16:02:25.488194+00:00",
+  "last_update": "2026-07-31T16:35:48.213903+00:00",
   "snapshots": [
     {
       "key": "540f6b313c71d4409140c4167c0b8e04666be50f",
@@ -422,6 +422,49 @@
           "nodes": 1310,
           "edges": 10663,
           "coverage_delta": 0.13345888261142513,
+          "issues_delta": 0
+        }
+      }
+    },
+    {
+      "key": "c37cd723aab3e6a3ea4b783621280d426371e731",
+      "branch": "docs/citation-concept-doi",
+      "timestamp": "2026-07-31T16:35:48.213064+00:00",
+      "version": "0.20.0",
+      "file": "c37cd723aab3e6a3ea4b783621280d426371e731.json",
+      "metrics": {
+        "db_path": "/Users/egs/repos/ftree_kg/.dockg/graph.sqlite",
+        "total_nodes": 1581,
+        "total_edges": 11474,
+        "node_counts": {
+          "chunk": 297,
+          "document": 12,
+          "entity": 432,
+          "keyword": 465,
+          "section": 140,
+          "topic": 235
+        },
+        "edge_counts": {
+          "CONTAINS": 437,
+          "CO_OCCURS_WITH": 7534,
+          "HAS_KEYWORD": 1187,
+          "HAS_TOPIC": 312,
+          "MENTIONS_ENTITY": 1315,
+          "NEXT": 133,
+          "REFERENCES": 25,
+          "SIMILAR_TO": 531
+        },
+        "meaningful_nodes": 1569,
+        "coverage_score": 0.9854096520763188,
+        "issues_count": 0,
+        "complexity_median": 20.0
+      },
+      "deltas": {
+        "vs_previous": null,
+        "vs_baseline": {
+          "nodes": 1313,
+          "edges": 10697,
+          "coverage_delta": 0.13355780022446706,
           "issues_delta": 0
         }
       }

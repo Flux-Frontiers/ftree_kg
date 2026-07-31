@@ -15,6 +15,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The DOI badge and the citation text disagreed.** Both badges used the
+  repo-id form `zenodo.org/badge/1182124358.svg`, which redirects to whichever
+  *version* DOI is newest — so archiving v0.10.0 re-pointed them at
+  `10.5281/zenodo.21724586` while the APA and BibTeX blocks two lines below
+  still cited the concept DOI `10.5281/zenodo.19742541`. Both resolved, but the
+  block showed two different numbers for the same work. Both badges are now
+  pinned to the concept DOI, matching the citation text and `CITATION.cff`, and
+  will not drift again on future releases.
+
 ## [0.10.0] - 2026-07-31
 
 No changes to FTreeKG's own API. The minor bump reflects the dependency floors:

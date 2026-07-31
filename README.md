@@ -3,7 +3,7 @@
 [![Version](https://img.shields.io/badge/version-0.10.0-blue.svg)](https://github.com/Flux-Frontiers/ftree_kg/releases)
 [![CI](https://github.com/Flux-Frontiers/ftree_kg/actions/workflows/ci.yml/badge.svg)](https://github.com/Flux-Frontiers/ftree_kg/actions/workflows/ci.yml)
 [![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
-[![DOI](https://zenodo.org/badge/1182124358.svg)](https://zenodo.org/badge/latestdoi/1182124358)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19742541.svg)](https://doi.org/10.5281/zenodo.19742541)
 
 **FTreeKG** — A Knowledge Graph for Filesystem Hierarchies
 with Semantic Indexing and Per-Format Metadata Extraction
@@ -256,7 +256,7 @@ to a dedicated FTreeKG MCP server — see [docs/MCP.md](docs/MCP.md).
 
 If you use FTreeKG in research or a project, please cite it:
 
-[![DOI](https://zenodo.org/badge/1182124358.svg)](https://zenodo.org/badge/latestdoi/1182124358)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19742541.svg)](https://doi.org/10.5281/zenodo.19742541)
 
 **APA**
 
