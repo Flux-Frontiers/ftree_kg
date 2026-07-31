@@ -1,7 +1,7 @@
 [![Python](https://img.shields.io/badge/python-3.12%20%7C%203.13-blue.svg)](https://www.python.org/)
 [![License: Elastic-2.0](https://img.shields.io/badge/License-Elastic%202.0-blue.svg)](https://www.elastic.co/licensing/elastic-license)
-[![Version](https://img.shields.io/badge/version-0.9.0-blue.svg)](https://github.com/Flux-Frontiers/FTreeKG/releases)
-[![CI](https://github.com/Flux-Frontiers/FTreeKG/actions/workflows/ci.yml/badge.svg)](https://github.com/Flux-Frontiers/FTreeKG/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/badge/version-0.9.0-blue.svg)](https://github.com/Flux-Frontiers/ftree_kg/releases)
+[![CI](https://github.com/Flux-Frontiers/ftree_kg/actions/workflows/ci.yml/badge.svg)](https://github.com/Flux-Frontiers/ftree_kg/actions/workflows/ci.yml)
 [![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
 [![DOI](https://zenodo.org/badge/1182124358.svg)](https://zenodo.org/badge/latestdoi/1182124358)
 
@@ -260,7 +260,7 @@ If you use FTreeKG in research or a project, please cite it:
 
 **APA**
 
-> Suchanek, E. G. (2026). *FTreeKG: Knowledge Graph for Filesystem Hierarchies* (Version 0.9.0) [Software]. Flux-Frontiers. https://doi.org/10.5281/zenodo.1182124358
+> Suchanek, E. G. (2026). *FTreeKG: Knowledge Graph for Filesystem Hierarchies* (Version 0.9.0) [Software]. Flux-Frontiers. https://doi.org/10.5281/zenodo.19742541
 
 **BibTeX**
 
@@ -271,8 +271,8 @@ If you use FTreeKG in research or a project, please cite it:
   version   = {0.9.0},
   year      = {2026},
   publisher = {Flux-Frontiers},
-  url       = {https://github.com/Flux-Frontiers/FTreeKG},
-  doi       = {10.5281/zenodo.1182124358},
+  url       = {https://github.com/Flux-Frontiers/ftree_kg},
+  doi       = {10.5281/zenodo.19742541},
 }
 ```
 
