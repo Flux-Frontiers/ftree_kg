@@ -15,6 +15,69 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+## [0.10.0] - 2026-07-31
+
+No changes to FTreeKG's own API. The minor bump reflects the dependency floors:
+installing the `semantic` extra now pulls transformers 5.x where it previously
+resolved to 4.x.
+
+### Security
+
+- **Lifted the `kgmodule-utils` floor to `>=0.9.0`, clearing two high-severity
+  `transformers` advisories.** kgmodule-utils 0.9.0 replaced its
+  `transformers>=4.40.0,<4.57` cap with `>=5.5.0,<6`. The old cap held the stack
+  at 4.56.2, which is exposed to a remote-code-execution advisory (fixed in
+  transformers 5.3.0) and an arbitrary-code-execution flaw in the LightGlue
+  model-loading path (fixed in 5.5.0). Because this package declares
+  `kgmodule-utils[semantic,sqlite-vec]` as a core runtime dependency, every
+  `ftree-kg` install inherited the capped — and vulnerable — transformers.
+
+  **This forces a transformers 4.x → 5.x upgrade in existing environments.**
+  Upstream verified embeddings are bitwise identical across the boundary on
+  bge-small, bge-large, and nomic-embed, and that queries against a 4.x-built
+  index return identical rankings — **no re-index is required**. The full FTreeKG
+  suite, including the real-embedder semantic query tests, passes on
+  transformers 5.14.1.
+
+### Changed
+
+- **Dependency floors raised for the `kgdeps` extra**: `doc-kg>=0.20.0` (was
+  `>=0.18.1`) and `pycode-kg>=0.21.2` (was `>=0.20.0`). Both siblings dropped
+  `lancedb` from their published wheels over this range, so the optional KG
+  integration path no longer drags it in.
+- `src/ftree_kg/__init__.py` now carries `__version__ = "0.10.0"`. It had been
+  left at 0.9.0 and is exported from the package root, so library consumers
+  reading `ftree_kg.__version__` saw a stale value. The CLI was unaffected — it
+  reads `importlib.metadata.version("ftree-kg")`.
+
+### Fixed
+
+- **The citation DOI was dead.** The APA and BibTeX blocks both carried
+  `10.5281/zenodo.1182124358`, which returns 404. That number is the GitHub
+  repository id — correct inside the Zenodo badge URL, and pasted into the
+  citation text as though it were a DOI. This repo is public, so anyone citing
+  FTreeKG from the README got a dead link.
+
+  Replaced with the **concept DOI** `10.5281/zenodo.19742541`, which resolves
+  and tracks the latest deposit rather than pinning one snapshot. The badge is
+  unchanged; its repo-id form is correct and resolves.
+
+- **`CITATION.cff` had no `doi` field**, and its `date-released` was v0.6.0's
+  date (2026-04-24) paired with version 0.9.0. Both corrected.
+
+- **Four README links pointed at `Flux-Frontiers/FTreeKG`**, including the CI
+  and Version badges. The repository is `ftree_kg`, which is what the git remote
+  and `CITATION.cff` already record; the other name differs by more than case,
+  so it depends on a rename redirect that badge endpoints are not a reliable
+  place to lean on.
+
+- **`ruff format --check .` rewrote prose documentation.** ruff 0.16 formats
+  Python code blocks inside Markdown as stable behaviour where 0.15 gated it
+  behind preview, so CI began failing on files unrelated to whatever change
+  triggered the relock. Markdown is now excluded, matching doc_kg. Verified
+  Python coverage is unaffected: ruff still formats and lints every `.py` file,
+  and no `.md` reaches the formatter even with `--preview`.
+
 ## [0.9.0] - 2026-07-28
 
 ### Added
