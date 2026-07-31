@@ -260,7 +260,7 @@ If you use FTreeKG in research or a project, please cite it:
 
 **APA**
 
-> Suchanek, E. G. (2026). *FTreeKG: Knowledge Graph for Filesystem Hierarchies* (Version 0.9.0) [Software]. Flux-Frontiers. https://doi.org/10.5281/zenodo.1182124358
+> Suchanek, E. G. (2026). *FTreeKG: Knowledge Graph for Filesystem Hierarchies* (Version 0.9.0) [Software]. Flux-Frontiers. https://doi.org/10.5281/zenodo.19742541
 
 **BibTeX**
 
@@ -272,7 +272,7 @@ If you use FTreeKG in research or a project, please cite it:
   year      = {2026},
   publisher = {Flux-Frontiers},
   url       = {https://github.com/Flux-Frontiers/FTreeKG},
-  doi       = {10.5281/zenodo.1182124358},
+  doi       = {10.5281/zenodo.19742541},
 }
 ```
 
