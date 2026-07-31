@@ -1,6 +1,6 @@
 FTreeKG Pipeline - A Knowledge Graph for Filesystem Hierarchies
 
-Version: 0.10.0
+Version: 0.10.1
 Author: Eric G. Suchanek, PhD
 
 OVERVIEW

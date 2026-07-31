@@ -15,6 +15,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+## [0.10.1] - 2026-07-31
+
+Packaging and documentation only — no changes under `src/`.
+
+This release exists mainly to make the version number identify one artifact
+again. **The 0.10.0 wheel published to PyPI was built from `main` after both
+fixes below had merged, not from the `v0.10.0` tag**, so it carries the capped
+`rich` constraint and the corrected DOI badges while the tag, the GitHub
+Release assets, and the Zenodo deposit (record `21724586`) do not. Two distinct
+artifacts therefore circulate as "0.10.0". PyPI does not permit re-uploading a
+version, so 0.10.1 is the reconciliation: from here the tag, the PyPI wheel,
+the Release assets, and the archived snapshot are the same thing again.
+Functionally, anyone on PyPI 0.10.0 already has everything in this release.
+
+### Fixed
+
 - **The DOI badge and the citation text disagreed.** Both badges used the
   repo-id form `zenodo.org/badge/1182124358.svg`, which redirects to whichever
   *version* DOI is newest — so archiving v0.10.0 re-pointed them at
