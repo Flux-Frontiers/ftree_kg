@@ -24,6 +24,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   pinned to the concept DOI, matching the citation text and `CITATION.cff`, and
   will not drift again on future releases.
 
+- **`poetry.lock` was ambiguous about `rich`, so installs were not
+  reproducible.** The lock carried two `rich` entries — 14.3.4 and 15.0.0 —
+  both in the `main` group with no markers to tell them apart, and consecutive
+  `poetry install --all-extras` runs genuinely settled on different versions.
+  The cause was a missing ceiling: this package declared `rich>=13.0.0` while
+  `doc-kg` (`<15.0.0`) and `pycode-kg` (`<15`) both cap it. Because those two
+  live in the optional `kgdeps` extra, the resolver had two valid answers — 15.x
+  without the extra, 14.x with it — and recorded both. Capping at `<15.0.0` to
+  match the siblings collapses the lock to a single `rich` entry.
+
 ## [0.10.0] - 2026-07-31
 
 No changes to FTreeKG's own API. The minor bump reflects the dependency floors:
