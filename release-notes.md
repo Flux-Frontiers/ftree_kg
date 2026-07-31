@@ -1,53 +1,43 @@
-# Release Notes — v0.10.0
+# Release Notes — v0.10.1
 
 > Released: 2026-07-31
 
-FTreeKG 0.10.0 is a security release. Nothing under `src/` changed behaviour, but every
-install of 0.9.0 and earlier pulled a `transformers` version exposed to two high-severity
-advisories, and the only way to clear them is a dependency floor lift that upgrades
-transformers from 4.x to 5.x. That upgrade is why this is a minor rather than a patch.
+A packaging and documentation patch. Nothing under `src/` changed, and if you installed
+FTreeKG 0.10.0 from PyPI you already have everything here — the point of this release is to
+make the version number identify a single artifact again.
 
 ## What changed
 
-**Two high-severity transformers advisories, closed.** FTreeKG declares
-`kgmodule-utils[semantic,sqlite-vec]` as a core runtime dependency, and kgmodule-utils used
-to cap `transformers` at `<4.57`. That cap held every FTreeKG install at transformers 4.56.2
-— exposed to a remote-code-execution advisory fixed in 5.3.0, and to an arbitrary-code-execution
-flaw in the LightGlue model-loading path fixed in 5.5.0. kgmodule-utils 0.9.0 replaced the cap
-with `>=5.5.0,<6`; lifting our floor to `>=0.9.0` is what actually delivers the fix to anyone
-installing this package.
+**0.10.0 shipped as two different artifacts, and this fixes that.** The wheel published to
+PyPI was built from `main` after the two fixes below had already merged, rather than from the
+`v0.10.0` tag. So the PyPI wheel carries the capped `rich` constraint and the corrected DOI
+badges, while the git tag, the GitHub Release assets, and the Zenodo deposit do not. Both are
+labelled 0.10.0. PyPI does not allow re-uploading a version, so 0.10.1 is the reconciliation:
+from here the tag, the published wheel, the Release assets, and the archived snapshot all
+describe the same thing. This matters more than usual for a package that carries a DOI — a
+citation should resolve to what people actually install.
 
-**Your index does not need rebuilding.** The transformers major bump sounds like it should
-invalidate embeddings, and it does not. Upstream verified that embedding output is bitwise
-identical across the 4.x → 5.x boundary on bge-small, bge-large, and nomic-embed — including
-empty, unicode, and CRLF inputs — that a full index rebuild is byte-identical, and that
-queries against a 4.x-built index return identical rankings. The full FTreeKG suite, real
-embedder included, passes on transformers 5.14.1.
+**`rich` is capped at `<15`, which makes the lock reproducible.** `poetry.lock` had been
+carrying two `rich` entries — 14.3.4 and 15.0.0 — in the same group with no markers to tell
+them apart, and consecutive installs genuinely settled on different versions. The cause was a
+missing ceiling rather than a stale floor: FTreeKG declared `rich>=13.0.0` with no upper
+bound, while `doc-kg` and `pycode-kg` both cap it below 15. Because those two live in the
+optional `kgdeps` extra, the resolver had two legitimate answers and recorded both. Matching
+the siblings' cap leaves exactly one.
 
-**The `kgdeps` extra sheds lancedb.** `doc-kg` moves to `>=0.20.0` and `pycode-kg` to
-`>=0.21.2`. Both siblings dropped lancedb from their published wheels over that range, so the
-optional KG integration path no longer drags a vector database FTreeKG stopped using in 0.9.0.
-
-**`ftree_kg.__version__` was lying.** It sat at 0.9.0 while `pyproject` moved, and it is
-exported from the package root, so anything reading `ftree_kg.__version__` got a stale answer.
-The CLI was never affected — `ftreekg --version` and `ftreekg status` both read installed
-package metadata. Now bumped in step with everything else.
-
-**Citation and README fixes.** The APA and BibTeX blocks carried
-`10.5281/zenodo.1182124358` as a DOI. That number is the GitHub repository id — correct inside
-the Zenodo badge URL, wrong as a DOI, and it returned 404 for anyone who tried to cite
-FTreeKG. It is now the concept DOI `10.5281/zenodo.19742541`, which tracks the latest deposit
-rather than pinning one snapshot. Alongside it: `CITATION.cff` gained its missing `doi` field
-and a corrected `date-released`, and four README links that pointed at a non-canonical repo
-name now point at `ftree_kg`.
+**The citation block no longer contradicts itself.** Both DOI badges used the repo-id form,
+which redirects to whichever *version* DOI is newest — so archiving 0.10.0 silently re-pointed
+them at `10.5281/zenodo.21724586` while the APA and BibTeX text two lines below still cited
+the concept DOI `10.5281/zenodo.19742541`. Both resolved, but a reader saw two different
+numbers for the same work. The badges are now pinned to the concept DOI, which already tracks
+the latest deposit, so they will not drift again.
 
 ## Upgrading
 
-`pip install --upgrade ftree-kg`. There is no migration and no re-index.
+`pip install --upgrade ftree-kg`. No migration, no re-index, no API change.
 
-The one thing to know is that transformers will move from 4.x to 5.x in your environment. If
-you have other packages pinned to transformers 4, resolve that before upgrading — FTreeKG
-cannot stay on 4.x without reintroducing both advisories.
+If you are already on PyPI 0.10.0, upgrading changes nothing functionally — the dependency
+metadata and README you have are already the ones in this release.
 
 ---
 
