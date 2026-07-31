@@ -15,6 +15,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+## [0.9.1] - 2026-07-31
+
+Documentation and tooling only — no changes under `src/`.
+
+### Fixed
+
+- **The citation DOI was dead.** The APA and BibTeX blocks both carried
+  `10.5281/zenodo.1182124358`, which returns 404. That number is the GitHub
+  repository id — correct inside the Zenodo badge URL, and pasted into the
+  citation text as though it were a DOI. This repo is public, so anyone citing
+  FTreeKG from the README got a dead link.
+
+  Replaced with the **concept DOI** `10.5281/zenodo.19742541`, which resolves
+  and tracks the latest deposit rather than pinning one snapshot. The badge is
+  unchanged; its repo-id form is correct and resolves.
+
+- **`CITATION.cff` had no `doi` field**, and its `date-released` was v0.6.0's
+  date (2026-04-24) paired with version 0.9.0. Both corrected.
+
+- **Four README links pointed at `Flux-Frontiers/FTreeKG`**, including the CI
+  and Version badges. The repository is `ftree_kg`, which is what the git remote
+  and `CITATION.cff` already record; the other name differs by more than case,
+  so it depends on a rename redirect that badge endpoints are not a reliable
+  place to lean on.
+
+- **`ruff format --check .` rewrote prose documentation.** ruff 0.16 formats
+  Python code blocks inside Markdown as stable behaviour where 0.15 gated it
+  behind preview, so CI began failing on files unrelated to whatever change
+  triggered the relock. Markdown is now excluded, matching doc_kg. Verified
+  Python coverage is unaffected: ruff still formats and lints every `.py` file,
+  and no `.md` reaches the formatter even with `--preview`.
+
 ## [0.9.0] - 2026-07-28
 
 ### Added
