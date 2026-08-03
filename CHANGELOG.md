@@ -15,6 +15,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+## [0.11.0] - 2026-08-03
+
+Dependency-declaration corrections. No changes under `src/` — but the package's
+published metadata changes in both directions, which is why this is a minor
+rather than a patch.
+
+### Added
+
+- **`[adapter]` extra, declaring `kg-rag`.** `src/ftree_kg/adapter.py` imports
+  `kg_rag` at module scope, and `kg-rag` was declared nowhere. It worked only
+  because anything that reached that module had kg-rag installed for other
+  reasons; a bare `pip install ftree-kg` followed by
+  `import ftree_kg.adapter` raised `ModuleNotFoundError`.
+
+  It is an extra rather than a core dependency deliberately: kg-rag already
+  depends on ftree-kg, so declaring it core would create a genuine resolution
+  cycle.
+
+- **`[tool.poetry.group.kg]`, carrying `doc-kg>=0.21.1` and
+  `pycode-kg>=0.21.4`.** These are development tooling — the local pre-commit
+  hook rebuilds both indices, `.mcp.json` serves both MCP servers, and
+  `.claude/CLAUDE.md` documents `pycodekg build` / `dockg build` as the dev
+  workflow. A Poetry group is locked and installable but is never written into
+  wheel metadata, so contributors get the CLIs while consumers get nothing
+  extra:
+
+  ```bash
+  poetry install --with kg
+  ```
+
+### Removed
+
+- **The `kgdeps` extra, and `doc-kg` / `pycode-kg` from `[all]`.** Extras are
+  published metadata, so `pip install ftree-kg[all]` was pulling two sibling KG
+  packages into a consumer's environment for tooling they would never run — and
+  putting the whole KG fleet into a single resolution graph. Neither package is
+  imported anywhere under `src/`.
+
+  Nothing depends on the removed extra: kg-rag requires bare `ftree-kg`, not
+  `ftree-kg[kgdeps]`. Contributors who used it want `poetry install --with kg`.
+
 ## [0.10.1] - 2026-07-31
 
 Packaging and documentation only — no changes under `src/`.

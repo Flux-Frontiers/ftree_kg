@@ -1,44 +1,64 @@
-# Release Notes — v0.10.1
+# Release Notes — v0.11.0
 
-> Released: 2026-07-31
+> Released: 2026-08-03
 
-A packaging and documentation patch. Nothing under `src/` changed, and if you installed
-FTreeKG 0.10.0 from PyPI you already have everything here — the point of this release is to
-make the version number identify a single artifact again.
+Nothing under `src/` changed. What changed is what this package *says* it
+depends on — and it was wrong in both directions at once.
 
-## What changed
+## A dependency that was imported but never declared
 
-**0.10.0 shipped as two different artifacts, and this fixes that.** The wheel published to
-PyPI was built from `main` after the two fixes below had already merged, rather than from the
-`v0.10.0` tag. So the PyPI wheel carries the capped `rich` constraint and the corrected DOI
-badges, while the git tag, the GitHub Release assets, and the Zenodo deposit do not. Both are
-labelled 0.10.0. PyPI does not allow re-uploading a version, so 0.10.1 is the reconciliation:
-from here the tag, the published wheel, the Release assets, and the archived snapshot all
-describe the same thing. This matters more than usual for a package that carries a DOI — a
-citation should resolve to what people actually install.
+`src/ftree_kg/adapter.py` imports `kg_rag` at module scope. `kg-rag` appeared
+nowhere in `pyproject.toml`. That worked only by luck: anything reaching that
+module already had kg-rag installed for other reasons. A clean
+`pip install ftree-kg` followed by `import ftree_kg.adapter` raised
+`ModuleNotFoundError`.
 
-**`rich` is capped at `<15`, which makes the lock reproducible.** `poetry.lock` had been
-carrying two `rich` entries — 14.3.4 and 15.0.0 — in the same group with no markers to tell
-them apart, and consecutive installs genuinely settled on different versions. The cause was a
-missing ceiling rather than a stale floor: FTreeKG declared `rich>=13.0.0` with no upper
-bound, while `doc-kg` and `pycode-kg` both cap it below 15. Because those two live in the
-optional `kgdeps` extra, the resolver had two legitimate answers and recorded both. Matching
-the siblings' cap leaves exactly one.
+It is now declared as an `[adapter]` extra:
 
-**The citation block no longer contradicts itself.** Both DOI badges used the repo-id form,
-which redirects to whichever *version* DOI is newest — so archiving 0.10.0 silently re-pointed
-them at `10.5281/zenodo.21724586` while the APA and BibTeX text two lines below still cited
-the concept DOI `10.5281/zenodo.19742541`. Both resolved, but a reader saw two different
-numbers for the same work. The badges are now pinned to the concept DOI, which already tracks
-the latest deposit, so they will not drift again.
+```bash
+pip install 'ftree-kg[adapter]'
+```
+
+An extra rather than a core dependency, deliberately — kg-rag already depends
+on ftree-kg, so declaring it core would create a real resolution cycle.
+
+Worth knowing: KGRAG federation does **not** need this extra. kg-rag ships its
+own `FTreeKGAdapter` and imports this package, not the other way round. The
+module in question is not exported from `__init__.py`, nothing in the fleet
+imports it, and no test covers it. It may well be vestigial; this release
+declares its dependency rather than deciding its fate.
+
+## Two dependencies that were declared but never imported
+
+`doc-kg` and `pycode-kg` were in the `kgdeps` and `all` extras. FTreeKG imports
+neither. They are development tooling: the local pre-commit hook rebuilds both
+indices, `.mcp.json` serves both MCP servers, and `.claude/CLAUDE.md` documents
+them as the dev workflow.
+
+Because extras are published metadata, `pip install ftree-kg[all]` was pulling
+two sibling knowledge-graph packages — and their transitive weight — into the
+environment of anyone who wanted the visualizer or the test tools. It also put
+the entire KG fleet into one resolution graph, so a version bump in any sibling
+could constrain this package.
+
+They moved to a Poetry group, which is locked and installable but never written
+into the wheel:
+
+```bash
+poetry install --with kg      # contributors get the dockg / pycodekg CLIs
+poetry install                # everyone else gets nothing extra
+```
 
 ## Upgrading
 
-`pip install --upgrade ftree-kg`. No migration, no re-index, no API change.
+If you install `ftree-kg` or `ftree-kg[viz]`, nothing changes.
 
-If you are already on PyPI 0.10.0, upgrading changes nothing functionally — the dependency
-metadata and README you have are already the ones in this release.
+If you were installing **`ftree-kg[kgdeps]`**, that extra no longer exists. You
+almost certainly wanted the contributor setup — clone the repo and run
+`poetry install --with kg`. Nothing in the fleet referenced it: kg-rag depends
+on bare `ftree-kg`.
 
----
+If you import `ftree_kg.adapter`, install `ftree-kg[adapter]` to get kg-rag
+declared properly. Your existing environment already satisfies it.
 
-_Full changelog: [CHANGELOG.md](CHANGELOG.md)_
+See [CHANGELOG.md](CHANGELOG.md) for the itemised list.

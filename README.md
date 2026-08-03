@@ -1,6 +1,6 @@
 [![Python](https://img.shields.io/badge/python-3.12%20%7C%203.13-blue.svg)](https://www.python.org/)
 [![License: Elastic-2.0](https://img.shields.io/badge/License-Elastic%202.0-blue.svg)](https://www.elastic.co/licensing/elastic-license)
-[![Version](https://img.shields.io/badge/version-0.10.1-blue.svg)](https://github.com/Flux-Frontiers/ftree_kg/releases)
+[![Version](https://img.shields.io/badge/version-0.11.0-blue.svg)](https://github.com/Flux-Frontiers/ftree_kg/releases)
 [![CI](https://github.com/Flux-Frontiers/ftree_kg/actions/workflows/ci.yml/badge.svg)](https://github.com/Flux-Frontiers/ftree_kg/actions/workflows/ci.yml)
 [![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19742541.svg)](https://doi.org/10.5281/zenodo.19742541)
@@ -98,14 +98,23 @@ Rich, Pillow, and the shared `kgmodule-utils` package with its
 
 ```bash
 pip install ftree-kg                  # core runtime
-pip install 'ftree-kg[kgdeps]'        # add PyCodeKG + DocKG for federation
+pip install 'ftree-kg[adapter]'       # add kg-rag, for ftree_kg.adapter
 poetry add ftree-kg                   # Poetry equivalent
 ```
 
-The `kgdeps` extra is what you want if you're working in a repo where
-PyCodeKG and DocKG are also indexing alongside FTreeKG — it pins
-compatible versions of both. For a complete development setup
-(linting, tests, pre-commit, all extras), see
+The `adapter` extra pulls `kg-rag`, which `ftree_kg.adapter` imports. Note
+that KGRAG federation does not need it: kg-rag ships its own FTreeKG adapter
+and imports this package, not the other way round.
+
+The `kgdeps` extra was removed in 0.11.0. It pinned PyCodeKG and DocKG, which
+FTreeKG never imports — they are development tooling, and they now live in a
+Poetry group that is not part of the published package:
+
+```bash
+poetry install --with kg              # dockg / pycodekg CLIs, for contributors
+```
+
+For a complete development setup (linting, tests, pre-commit, all extras), see
 [docs/CLI.md#development-setup](docs/CLI.md).
 
 ---
@@ -260,7 +269,7 @@ If you use FTreeKG in research or a project, please cite it:
 
 **APA**
 
-> Suchanek, E. G. (2026). *FTreeKG: Knowledge Graph for Filesystem Hierarchies* (Version 0.10.1) [Software]. Flux-Frontiers. https://doi.org/10.5281/zenodo.19742541
+> Suchanek, E. G. (2026). *FTreeKG: Knowledge Graph for Filesystem Hierarchies* (Version 0.11.0) [Software]. Flux-Frontiers. https://doi.org/10.5281/zenodo.19742541
 
 **BibTeX**
 
@@ -268,7 +277,7 @@ If you use FTreeKG in research or a project, please cite it:
 @software{suchanek_ftree_kg,
   author    = {Suchanek, Eric G.},
   title     = {{FTreeKG}: Knowledge Graph for Filesystem Hierarchies},
-  version   = {0.10.1},
+  version   = {0.11.0},
   year      = {2026},
   publisher = {Flux-Frontiers},
   url       = {https://github.com/Flux-Frontiers/ftree_kg},
