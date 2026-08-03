@@ -69,7 +69,20 @@ classifiers = [
 requires-python = ">=3.12,<3.14"
 dependencies = [
     "click>=8.1.0,<9",
-    "kgmodule-utils[semantic,sqlite-vec]>=0.9.0",
+    # `[semantic]` dropped: it bundled numpy, rich, sentence-transformers,
+    # torch, transformers and sqlite-vec plus `lancedb`, the last thing pulling
+    # the retired backend into a clean install. kgmodule-utils has no
+    # `lancedb`-only extra yet, so this is the only way to shed it without a new
+    # upstream release.
+    "kgmodule-utils[sqlite-vec]>=0.9.0",
+    # These were arriving only via `[semantic]`. ftree_kg calls kg_utils'
+    # get_embedder, which lazily imports torch, transformers and numpy, and
+    # corpus_embedder pulls rich for its progress display — so they are runtime
+    # requirements here despite not being imported directly.
+    "numpy>=1.24.0",
+    "sentence-transformers>=5.4.1",
+    "torch>=2.5.1",
+    "transformers>=5.5.0,<6",
     "pillow>=10.0.0",
     "rich>=13.0.0,<15.0.0",
 ]
