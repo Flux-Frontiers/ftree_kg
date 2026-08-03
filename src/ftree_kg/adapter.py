@@ -17,6 +17,7 @@ from kg_rag.primitives import (
     CrossSnippet,
     KGEntry,
     KGKind,
+    QueryScope,
 )
 
 from ftree_kg.module import FileTreeKG
@@ -50,17 +51,37 @@ class FileTreeKGAdapter(KGAdapter):  # type: ignore[misc]
         """
         return bool(self.entry.is_built)
 
-    def query(self, q: str, k: int = 8) -> list[CrossHit]:
+    def query(
+        self,
+        q: str,
+        k: int = 8,
+        min_score: float = 0.0,
+        semantic_floor: float = 0.0,
+        scope: QueryScope | None = None,
+    ) -> list[CrossHit]:
         """Query FileTreeKG and return ranked hits.
 
         :param q: Natural-language query string.
         :param k: Number of results to return.
+        :param min_score: Minimum relevance score; hits below this are dropped.
+        :param semantic_floor: If the best hit scores below this, the whole
+            result set is discarded rather than returning k noisy
+            near-neighbour hits from a KG with nothing relevant to say.
+        :param scope: Optional retrieval scope. FileTreeKG cannot push this
+            into its backend, so it is accepted and ignored — the orchestrator
+            post-filters, as :class:`~kg_rag.adapters.base.KGAdapter` permits
+            for adapters that do not set ``supports_scope``.
         :return: List of CrossHit objects, or [] on error.
         """
         try:
             self._load()
             assert self._kg is not None
             result = self._kg.query(q, k=k)
+            nodes = result.nodes[:k]
+            if semantic_floor > 0.0 and nodes:
+                if nodes[0].get("score", 0.0) < semantic_floor:
+                    return []
+            nodes = [n for n in nodes if n.get("score", 0.0) >= min_score]
             return [
                 CrossHit(
                     kg_name=self.entry.name,
@@ -72,33 +93,53 @@ class FileTreeKGAdapter(KGAdapter):  # type: ignore[misc]
                     summary=n.get("docstring", ""),
                     source_path=n.get("source_path", ""),
                 )
-                for n in result.nodes[:k]
+                for n in nodes
             ]
         except Exception:  # pylint: disable=broad-exception-caught
             return []
 
-    def pack(self, q: str, k: int = 8, context: int = 5) -> list[CrossSnippet]:
+    def pack(
+        self,
+        q: str,
+        k: int = 8,
+        context: int = 5,
+        semantic_floor: float = 0.0,
+        scope: QueryScope | None = None,
+    ) -> list[CrossSnippet]:
         """Query FileTreeKG and return source snippets.
 
         :param q: Natural-language query string.
         :param k: Number of snippets to return.
         :param context: Lines of context (for source-code KGs).
+        :param semantic_floor: If the best snippet scores below this, the whole
+            result set is discarded. Mirrors the same parameter on
+            :meth:`query`.
+        :param scope: Optional retrieval scope, accepted and ignored — see
+            :meth:`query`.
         :return: List of CrossSnippet objects, or [] on error.
         """
         try:
             self._load()
             assert self._kg is not None
             pack = self._kg.pack(q, k=k, context=context)
+            # FileTreeKG.pack() fills SnippetPack.snippets with plain dicts
+            # (node_id / source_path / content / score / kind / name), not
+            # objects. This previously used attribute access, which raised
+            # AttributeError on the first snippet and was swallowed by the
+            # except below — so pack() silently returned [] every single time.
+            # There are no line numbers: filesystem nodes are not source spans,
+            # so lineno/end_lineno stay None.
+            if semantic_floor > 0.0 and pack.snippets:
+                if pack.snippets[0].get("score", 0.0) < semantic_floor:
+                    return []
             return [
                 CrossSnippet(
                     kg_name=self.entry.name,
                     kg_kind=KGKind.FILETREE,
-                    node_id=s.node_id,
-                    source_path=s.source_path,
-                    content=s.content,
-                    score=s.score,
-                    lineno=s.lineno,
-                    end_lineno=s.end_lineno,
+                    node_id=s["node_id"],
+                    source_path=s.get("source_path", ""),
+                    content=s.get("content", ""),
+                    score=s.get("score", 0.0),
                 )
                 for s in pack.snippets
             ]
