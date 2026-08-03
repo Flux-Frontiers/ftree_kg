@@ -1,7 +1,7 @@
 {
-  "key": "1834ffa91a18ee0f04d68688dbe8856cda95067f",
-  "branch": "fix/adapter-interface-drift",
-  "timestamp": "2026-08-03T18:54:44.336532+00:00",
+  "key": "d8cf1d2f0aa8ec055645cb24ae1704d1ed1187f7",
+  "branch": "chore/kg-tooling-group",
+  "timestamp": "2026-08-03T20:29:28.222237+00:00",
   "version": "0.20.0",
   "metrics": {
     "db_path": "/Users/egs/repos/ftree_kg/.dockg/graph.sqlite",
