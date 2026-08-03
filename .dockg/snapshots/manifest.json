@@ -1,6 +1,6 @@
 {
   "format": "1.0",
-  "last_update": "2026-07-31T16:51:34.240457+00:00",
+  "last_update": "2026-08-03T18:54:44.337104+00:00",
   "snapshots": [
     {
       "key": "540f6b313c71d4409140c4167c0b8e04666be50f",
@@ -470,11 +470,11 @@
       }
     },
     {
-      "key": "02281302dadce50448977ce96c67476af81949e9",
-      "branch": "chore/release-v0.10.1",
-      "timestamp": "2026-07-31T16:51:34.239599+00:00",
+      "key": "1834ffa91a18ee0f04d68688dbe8856cda95067f",
+      "branch": "fix/adapter-interface-drift",
+      "timestamp": "2026-08-03T18:54:44.336532+00:00",
       "version": "0.20.0",
-      "file": "02281302dadce50448977ce96c67476af81949e9.json",
+      "file": "1834ffa91a18ee0f04d68688dbe8856cda95067f.json",
       "metrics": {
         "db_path": "/Users/egs/repos/ftree_kg/.dockg/graph.sqlite",
         "total_nodes": 1604,
