@@ -4485,4 +4485,4 @@ dev = ["detect-secrets", "pre-commit", "pylint", "pytest", "pytest-cov", "ruff",
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "7a375c093946fe84290575fe7468327164999169fcdd58d51878c14dae9f0c0d"
+content-hash = "1f5b22ea30df091fcce22b08761949e5c3a6c3f64ca45480a63f44e14ad50aea"
