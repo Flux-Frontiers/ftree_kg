@@ -37,9 +37,9 @@ type:
 
 build-kg:
 	@echo "Building PyCodeKG index..."
-	poetry run pycodekg build --repo . --wipe
+	poetry run pycodekg build --repo .
 	@echo "Building DocKG index..."
-	poetry run dockg build --repo . --wipe
+	poetry run dockg build --repo .
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

@@ -19,6 +19,16 @@
       "env": {
         "POETRY_VIRTUALENVS_IN_PROJECT": "false"
       }
+    },
+    "ftreekg": {
+      "command": "poetry",
+      "args": [
+        "run", "ftreekg-mcp",
+        "--repo", "/Users/egs/repos/ftree_kg"
+      ],
+      "env": {
+        "POETRY_VIRTUALENVS_IN_PROJECT": "false"
+      }
     }
   }
 }

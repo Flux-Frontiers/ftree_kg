@@ -31,6 +31,10 @@ aliases — useful for shell scripts, Makefiles, and CI pipelines with no
 Subcommands without a dedicated alias (`status`, `install-hooks`) are only
 reachable via the `ftreekg <command>` form.
 
+`ftreekg-mcp` is a script with no `ftreekg` subcommand behind it — it starts
+the MCP server rather than running a one-shot command. See
+[MCP.md](MCP.md).
+
 ---
 
 ## Shared Options

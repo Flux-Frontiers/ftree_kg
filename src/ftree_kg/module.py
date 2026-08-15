@@ -536,6 +536,10 @@ class FileTreeKG(KGModule):
             score = max(0.0, 1.0 - dist)
             nodes.append(
                 {
+                    # ``id`` is the kg_utils node contract (SnippetPack.to_markdown
+                    # reads it); ``node_id`` is kept as the long-standing FTreeKG
+                    # spelling so existing consumers keep working.
+                    "id": r.get("id", ""),
                     "node_id": r.get("id", ""),
                     "kind": r.get("kind", ""),
                     "name": r.get("name", ""),
@@ -569,6 +573,7 @@ class FileTreeKG(KGModule):
             ).fetchall()
         return [
             {
+                "id": r[0],
                 "node_id": r[0],
                 "kind": r[1],
                 "name": r[2],

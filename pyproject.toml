@@ -68,6 +68,9 @@ requires-python = ">=3.12,<3.14"
 dependencies = [
     "click>=8.1.0,<9",
     "kgmodule-utils[semantic,sqlite-vec]>=0.13.2",
+    # Capped: mcp 2.0 split FastMCP into its own package, and mcp_server.py
+    # imports it from `mcp` at module scope. Lift only alongside that port.
+    "mcp>=1.0.0,<2",
     "pillow>=10.0.0",
     "rich>=13.0.0,<15.0.0",
 ]
@@ -137,6 +140,7 @@ Repository = "https://github.com/Flux-Frontiers/ftree_kg"
 [project.scripts]
 ftreekg          = "ftree_kg.cli:cli"
 ftreekg-build    = "ftree_kg.cli.cmd_build:build"
+ftreekg-mcp      = "ftree_kg.mcp_server:main"
 ftreekg-query    = "ftree_kg.cli.cmd_query:query"
 ftreekg-pack     = "ftree_kg.cli.cmd_query:pack"
 ftreekg-analyze  = "ftree_kg.cli.cmd_analyze:analyze"

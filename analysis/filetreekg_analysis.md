@@ -4,21 +4,21 @@
 
 | Metric | Value |
 |--------|-------|
-| Total paths | 51 |
-| Total links | 51 |
-| Files | 42 |
-| Directories | 9 |
+| Total paths | 58 |
+| Total links | 58 |
+| Files | 48 |
+| Directories | 10 |
 | Symlinks | 0 |
-| Total size (files) | 554.0 KB |
+| Total size (files) | 589.0 KB |
 
 ## Size by top-level directory
 
 ```
-.                    ████████████████████    446.0 KB
-src                  ███░░░░░░░░░░░░░░░░░     72.0 KB
-analysis             ░░░░░░░░░░░░░░░░░░░░     17.0 KB
-tests                ░░░░░░░░░░░░░░░░░░░░      6.0 KB
-docs                 ░░░░░░░░░░░░░░░░░░░░      6.0 KB
+.                    ████████████████████    370.0 KB
+src                  █████░░░░░░░░░░░░░░░     97.0 KB
+docs                 ███░░░░░░░░░░░░░░░░░     64.0 KB
+tests                ██░░░░░░░░░░░░░░░░░░     37.0 KB
+analysis             ░░░░░░░░░░░░░░░░░░░░     14.0 KB
 scripts              ░░░░░░░░░░░░░░░░░░░░      2.0 KB
 examples             ░░░░░░░░░░░░░░░░░░░░      1.0 KB
 ```
@@ -35,12 +35,16 @@ examples             ░░░░░░░░░░░░░░░░░░░�
 ├── analysis/
 │   ├── FTreeKG_analysis_20260321.md
 │   └── filetreekg_analysis.md
-├── codekg_pyproject.toml
+├── assets/
 ├── commit.txt
 ├── conftest.py
 ├── docs/
-│   ├── ftreekg_packaging_fix.md
-│   └── guide.md
+│   ├── CHEATSHEET.md
+│   ├── CLI.md
+│   ├── MCP.md
+│   ├── SCHEMA.md
+│   ├── guide.md
+│   └── pipeline.md
 ├── examples/
 │   └── query_examples.py
 └── … (10 more)
@@ -50,11 +54,11 @@ examples             ░░░░░░░░░░░░░░░░░░░�
 
 | Kind | Count |
 |------|-------|
-| `directory` | 9 |
-| `file` | 42 |
+| `directory` | 10 |
+| `file` | 48 |
 
 ## Link breakdown
 
 | Relation | Count |
 |----------|-------|
-| `CONTAINS` | 51 |
+| `CONTAINS` | 58 |

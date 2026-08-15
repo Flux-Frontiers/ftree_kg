@@ -25,7 +25,7 @@ Then activate and build indices:
 
 ```bash
 poetry shell
-poetry run pycodekg build --repo . --wipe
+poetry run pycodekg build --repo .
 poetry run dockg build --repo .
 ```
 
@@ -61,7 +61,7 @@ pytest --cov=ftree_kg
 The module itself should be indexed:
 
 ```bash
-pycodekg build --repo . --wipe
+pycodekg build --repo .
 dockg build --repo .
 ```
 
@@ -81,7 +81,8 @@ poetry publish
 
 - **FileTreeKGExtractor** (`src/ftree_kg/extractor.py`) — walks filesystem, yields NodeSpec/EdgeSpec
 - **FileTreeKG** (`src/ftree_kg/module.py`) — KGModule (build, query, pack, analyze)
-- **FileTreeKGAdapter** (`src/ftree_kg/adapter.py`) — KGRAG integration (kind="meta")
+- **FileTreeKGAdapter** (`src/ftree_kg/adapter.py`) — KGRAG integration (kind="filetree", `KGKind.FILETREE`)
+- **MCP server** (`src/ftree_kg/mcp_server.py`) — `ftreekg-mcp`; tools: `query_tree`, `pack_tree`, `graph_stats`, `analyze_tree`
 
 ### Node ID Format
 
