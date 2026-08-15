@@ -5,7 +5,6 @@ CLI command for installing FTreeKG git hooks:
   install-hooks — install the pre-commit snapshot hook into .git/hooks/
 
 Author: Eric G. Suchanek, PhD
-Last Revision: 2026-07-07 04:47:36
 License: Elastic 2.0
 """
 

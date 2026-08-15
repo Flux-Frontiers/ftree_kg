@@ -5,7 +5,6 @@ Click subcommand for displaying live FTreeKG graph status:
   status  — show node/edge counts, filesystem size, index paths, and config
 
 Author: Eric G. Suchanek, PhD
-Last Revision: 2026-07-28 08:58:00
 License: Elastic 2.0
 """
 

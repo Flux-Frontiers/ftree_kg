@@ -1,7 +1,6 @@
 """filetreekg — KGModule for filetreekg.
 
 Author: Eric G. Suchanek, PhD
-Last Revision: 2026-07-31
 License: Elastic 2.0
 """
 

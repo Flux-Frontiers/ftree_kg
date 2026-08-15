@@ -20,7 +20,6 @@ All extractors degrade gracefully — a missing optional library, a corrupt
 file, or an unsupported format returns ``None``, never raises.
 
 Author: Eric G. Suchanek, PhD
-Last Revision: 2026-07-07 14:08:46
 License: Elastic 2.0
 """
 
