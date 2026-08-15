@@ -1,83 +1,71 @@
-# Release Notes — v0.12.0
+# Release Notes — v0.13.0
 
 > Released: 2026-08-15
 
-Nothing under `src/` changed behaviour. As in 0.11.0, what changed is the
-package's declared dependencies — this time by moving the development toolchain
-out of the published metadata entirely, and by bringing every floor current with
-the rest of the KGRAG fleet.
+FTreeKG gets an MCP server. Until now it was the only indexing KGModule in the
+fleet without one — PyCodeKG and DocKG were reachable from an agent, the
+filesystem graph was not, and closing that gap meant shelling out to the CLI or
+routing through KGRAG federation. `ftreekg-mcp` makes the filetree graph a
+first-class participant alongside its sisters.
 
-## The dev toolchain is no longer part of the package
+## What changed
 
-`pip install 'ftree-kg[dev]'` and `pip install 'ftree-kg[all]'` no longer
-resolve. Both extras are gone.
+**An MCP server, deliberately small.** `ftreekg-mcp` speaks stdio or SSE and
+exposes four tools: `query_tree` for ranked filesystem nodes, `pack_tree` for
+their metadata rendered as Markdown blocks, `graph_stats` for counts and size
+totals, and `analyze_tree` for the full report. That is the whole surface, and
+it is meant to be. A filesystem graph has three node kinds and one edge type, so
+there are no call chains or similarity edges to traverse — the hop-expansion
+machinery that justifies seventeen tools in PyCodeKG would only re-derive the
+directory tree here. The server starts even when the graph is missing, warning
+on stderr rather than failing, so a misconfigured client reports empty results
+instead of a crash.
 
-The rule the fleet settled on is that **extras are user-facing features and
-Poetry groups are repo tooling**. A PEP 621 extra is written into the wheel, so
-declaring `dev` there advertised pytest, ruff, ty, pylint, pre-commit, and
-detect-secrets as things an *installer* of this package could ask for. Nobody
-installing a filesystem knowledge graph wants a linter, and shipping the offer
-in the wheel meant the metadata promised an install path the project had no
-interest in supporting.
+**A pack-rendering bug that had been there all along.** Wiring the server up
+immediately broke on `SnippetPack.to_markdown()`, which raised `KeyError: 'id'`
+on every FTreeKG pack. The cause was a quiet divergence: FTreeKG's query nodes
+carried only its own `node_id` spelling, while the shared `kg_utils` node
+contract — and every other module in the fleet — uses `id`. Nothing had noticed
+because the CLI renders packs through rich and never calls `to_markdown()`. Both
+keys are now emitted, so anything reading `node_id` is untouched.
 
-`all` was the worse of the two. It aggregated nothing but dev tools — so it kept
-advertising them as pip-installable no matter where the dev dependencies
-themselves lived. That is precisely the defect that survived the equivalent
-migrations in `doc_kg` and `Metabo_kg`, which is why it is called out here rather
-than quietly dropped.
+The test that should have caught it is worth a mention, because it existed and
+passed. It read `node.get("id") or node.get("node_id")` — an either-or on a
+two-spelling contract, which is indistinguishable from no assertion at all. It
+is now an equality check, and the semantic query path, which builds its node
+dicts separately from the lexical one, got its own coverage rather than
+inheriting a fix it never exercised.
 
-The toolchain now lives in an optional Poetry group, locked and installable but
-absent from the wheel:
-
-```bash
-poetry install                # runtime only, unchanged
-poetry install --with dev     # pytest, ruff, ty, pylint, pre-commit
-```
-
-`adapter` is now the only extra this package publishes.
-
-## Dependency floors caught up
-
-The `kgmodule-utils` floor had been sitting at `>=0.9.0` while the shared SDK
-moved on considerably; it is now `>=0.13.2`. It got there in stages across
-several fleet sweeps — 0.12.0 brought the `viz3d.organic` growth engine, then
-0.12.1, then 0.13.2. The `[adapter]` extra's `kg-rag` floor moves to `>=0.12.0`,
-and the maintainer `kg` group tracks `doc-kg>=0.21.2` and `pycode-kg>=0.23.1`.
-
-Two of the bumps are security floors rather than preferences. `pytest` is pinned
-`>=9.0.3` for GHSA-6w46-j5rx-g56g, and the locked `cryptography` moved 49.0.0 →
-50.0.0 for an OSV.dev advisory against the pinned version — a lockfile-only
-change, since the existing `>=3.4.0` floor already allowed the fix.
-
-One floor is deliberately capped instead: `ruff>=0.4.0,<0.16`. Ruff 0.16
-reformats Markdown, and while the `*.md` exclusion under `[tool.ruff]` blunts
-that, the cap is what actually keeps the resolved ruff aligned with the
-`v0.15.22` pin in `.pre-commit-config.yaml`.
-
-## `Last Revision` headers are gone
-
-Every module under `src/ftree_kg/` carried a hand-maintained
-`Last Revision: <date>` line, and they had drifted. They are deleted rather than
-restamped, because the field cannot be kept honest: correcting one *is* a change
-to the file, which moves git's last-change date to today and makes the header
-wrong again immediately. A fleet-wide count on 2026-08-15 found 81 of 113 such
-headers inaccurate. `Author:` and `License:` stay — those are real provenance and
-do not decay.
+**Documentation caught up with the code.** `docs/MCP.md` was written around the
+premise that FTreeKG has no MCP server and argued at length for why it did not
+need one; it now documents the server that exists. Smaller corrections came out
+of the same pass: the adapter was documented as registering `kind="meta"` when
+the source has always used `KGKind.FILETREE`, and `snapshots.py` described
+itself as a thin layer over `kg_rag.snapshots` when it has imported
+`kg_utils.snapshots` for some time — which misleadingly implied that a core
+module depended on the optional `[adapter]` extra.
 
 ## Upgrading
 
-If you install `ftree-kg` or `ftree-kg[adapter]`, nothing changes and no rebuild
-is needed. There are no schema, node-ID, or index-format changes, so existing
-`.filetreekg/` indices remain valid.
+Nothing to migrate, and no rebuild is required — the graph format is unchanged,
+so an existing `.filetreekg/` keeps working.
 
-If you were installing **`ftree-kg[dev]`** or **`ftree-kg[all]`**, those extras
-are gone and the install will now fail. You wanted the contributor setup: clone
-the repo and run `poetry install --with dev`. For the full maintainer
-environment, including the DocKG and PyCodeKG CLIs, use
-`poetry install --all-extras --with dev,kg`.
+The one thing to know is that `mcp>=1.0.0,<2` is now a **core** dependency, not
+an extra, so a plain `pip install ftree-kg` pulls it. The upper bound is
+deliberate and matches doc-kg and pycode-kg: mcp 2.0 split `FastMCP` into a
+standalone package, and `mcp_server.py` imports it from `mcp` at module scope.
 
-Contributors already working in a clone should re-run `poetry install --with dev`
-— CI now installs with `--with dev` rather than `--extras dev`, and the
-pre-commit ruff hook was renamed `ruff` → `ruff-check` to match ruff 0.15.
+To use the server, build an index and point a client at it:
 
-See [CHANGELOG.md](CHANGELOG.md) for the itemised list.
+```bash
+ftreekg build --repo .
+ftreekg-mcp --repo /abs/path/to/tree
+```
+
+For Claude Code, add an `ftreekg` entry to `.mcp.json` running
+`ftreekg-mcp --repo .`; `docs/MCP.md` covers Copilot, Claude Desktop, and Cline
+as well.
+
+---
+
+_Full changelog: [CHANGELOG.md](CHANGELOG.md)_

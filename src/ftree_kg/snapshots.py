@@ -1,7 +1,7 @@
-"""snapshots.py — FileTreeKG Temporal Snapshots (thin layer over kg_rag.snapshots)
+"""snapshots.py — FileTreeKG Temporal Snapshots (thin layer over kg_utils.snapshots)
 
 Imports the shared Snapshot, SnapshotManifest, and base SnapshotManager from
-kg_rag.snapshots and adds FileTreeKG-specific behaviour:
+kg_utils.snapshots and adds FileTreeKG-specific behaviour:
 
   - SnapshotMetrics / SnapshotDelta dataclasses (domain types used by the CLI
     and tests for attribute-style access).

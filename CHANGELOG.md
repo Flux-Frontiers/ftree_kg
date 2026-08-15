@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-08-15
+
 ### Added
 
 - **An MCP server — `ftreekg-mcp` (`src/ftree_kg/mcp_server.py`).** FTreeKG was
@@ -26,6 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   emitted, so existing consumers of `node_id` are unaffected. The CLI's `pack`
   renders via rich and never called `to_markdown()`, which is why this went
   unnoticed until the MCP server exercised it.
+- **`snapshots.py`'s docstring named the wrong package.** It described itself as
+  a thin layer over `kg_rag.snapshots`, but the module has imported
+  `kg_utils.snapshots` for some time. Harmless at runtime, but it read as though
+  a core module depended on the optional `[adapter]` extra — backwards, since
+  `kg_rag` is imported only by `adapter.py`.
 
 ## [0.12.0] - 2026-08-15
 

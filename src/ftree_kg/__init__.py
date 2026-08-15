@@ -8,4 +8,4 @@ from ftree_kg.extractor import FileTreeKGExtractor
 from ftree_kg.module import FileTreeKG
 
 __all__ = ["FileTreeKG", "FileTreeKGExtractor"]
-__version__ = "0.12.0"
+__version__ = "0.13.0"

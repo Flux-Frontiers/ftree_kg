@@ -98,8 +98,8 @@ ftreekg-mcp --repo /path/to/repo     # stdio (default) or --transport sse
 The server warns on stderr and still starts when the graph is missing — run
 `ftreekg build` first or every tool returns empty.
 
-> **Availability:** the MCP server landed after 0.12.0. Until the next release
-> it exists only on `main` / a source install, not on the PyPI wheel.
+> **Availability:** the MCP server ships in ftree-kg 0.13.0 and later. On 0.12.0
+> or earlier, `ftreekg-mcp` does not exist.
 
 ## Schema
 

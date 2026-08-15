@@ -6,18 +6,18 @@
 |--------|-------|
 | Total paths | 58 |
 | Total links | 58 |
-| Files | 48 |
-| Directories | 10 |
+| Files | 50 |
+| Directories | 8 |
 | Symlinks | 0 |
-| Total size (files) | 589.0 KB |
+| Total size (files) | 628.0 KB |
 
 ## Size by top-level directory
 
 ```
-.                    ████████████████████    370.0 KB
-src                  █████░░░░░░░░░░░░░░░     97.0 KB
+.                    ████████████████████    398.0 KB
+src                  █████░░░░░░░░░░░░░░░    104.0 KB
 docs                 ███░░░░░░░░░░░░░░░░░     64.0 KB
-tests                ██░░░░░░░░░░░░░░░░░░     37.0 KB
+tests                ██░░░░░░░░░░░░░░░░░░     41.0 KB
 analysis             ░░░░░░░░░░░░░░░░░░░░     14.0 KB
 scripts              ░░░░░░░░░░░░░░░░░░░░      2.0 KB
 examples             ░░░░░░░░░░░░░░░░░░░░      1.0 KB
@@ -35,7 +35,6 @@ examples             ░░░░░░░░░░░░░░░░░░░�
 ├── analysis/
 │   ├── FTreeKG_analysis_20260321.md
 │   └── filetreekg_analysis.md
-├── assets/
 ├── commit.txt
 ├── conftest.py
 ├── docs/
@@ -47,15 +46,16 @@ examples             ░░░░░░░░░░░░░░░░░░░�
 │   └── pipeline.md
 ├── examples/
 │   └── query_examples.py
-└── … (10 more)
+├── ftree_kg.code-workspace
+└── … (9 more)
 ```
 
 ## Path breakdown
 
 | Kind | Count |
 |------|-------|
-| `directory` | 10 |
-| `file` | 48 |
+| `directory` | 8 |
+| `file` | 50 |
 
 ## Link breakdown
 
