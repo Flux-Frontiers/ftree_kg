@@ -73,8 +73,8 @@ echo "  3. Format code:"
 echo "     poetry run ruff format src tests conftest.py"
 echo
 echo "  4. Build knowledge graphs:"
-echo "     poetry run pycodekg build --repo . --wipe"
-echo "     poetry run dockg build --repo . --wipe"
+echo "     poetry run pycodekg build --repo ."
+echo "     poetry run dockg build --repo ."
 echo
 echo "Quick command reference:"
 echo "     make help"

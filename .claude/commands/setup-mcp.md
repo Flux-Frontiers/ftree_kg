@@ -123,7 +123,7 @@ Build the documentation knowledge graph under `.dockg/`.
 
 3. Build:
    ```bash
-   cd "$REPO_ROOT" && poetry run dockg build --repo . --wipe
+   cd "$REPO_ROOT" && poetry run dockg build --repo .
    ```
 
 4. Verify:
@@ -352,7 +352,7 @@ cd "$REPO_ROOT" && poetry run ftreekg build
 cd "$REPO_ROOT" && poetry run pycodekg build --repo .
 
 # Rebuild DocKG index
-cd "$REPO_ROOT" && poetry run dockg build --repo . --wipe
+cd "$REPO_ROOT" && poetry run dockg build --repo .
 ```
 
 MCP client configs do not need to change — they point to the same file paths.

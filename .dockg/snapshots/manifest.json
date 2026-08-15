@@ -1,6 +1,6 @@
 {
   "format": "1.0",
-  "last_update": "2026-08-15T16:31:44.460349+00:00",
+  "last_update": "2026-08-15T17:49:54.864507+00:00",
   "snapshots": [
     {
       "key": "540f6b313c71d4409140c4167c0b8e04666be50f",
@@ -637,6 +637,49 @@
           "nodes": 1401,
           "edges": 11113,
           "coverage_delta": 0.13333333333333353,
+          "issues_delta": 0
+        }
+      }
+    },
+    {
+      "key": "f65c31d832d74c94c7ce457842b20a5e1f6d7f00",
+      "branch": "feat/ftreekg-mcp-server",
+      "timestamp": "2026-08-15T17:49:54.863939+00:00",
+      "version": "0.21.2",
+      "file": "f65c31d832d74c94c7ce457842b20a5e1f6d7f00.json",
+      "metrics": {
+        "db_path": ".dockg/graph.sqlite",
+        "total_nodes": 1678,
+        "total_edges": 12044,
+        "node_counts": {
+          "chunk": 316,
+          "document": 12,
+          "entity": 456,
+          "keyword": 491,
+          "section": 147,
+          "topic": 256
+        },
+        "edge_counts": {
+          "CONTAINS": 463,
+          "CO_OCCURS_WITH": 7884,
+          "HAS_KEYWORD": 1263,
+          "HAS_TOPIC": 331,
+          "MENTIONS_ENTITY": 1372,
+          "NEXT": 137,
+          "REFERENCES": 25,
+          "SIMILAR_TO": 569
+        },
+        "meaningful_nodes": 1666,
+        "coverage_score": 0.9852320675105485,
+        "issues_count": 0,
+        "complexity_median": 20.0
+      },
+      "deltas": {
+        "vs_previous": null,
+        "vs_baseline": {
+          "nodes": 1410,
+          "edges": 11267,
+          "coverage_delta": 0.13338021565869673,
           "issues_delta": 0
         }
       }

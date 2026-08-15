@@ -76,7 +76,10 @@ def test_pack_snippets_have_content(kg: FileTreeKG) -> None:
     pack = kg.pack("file", k=3)
     for node in pack.nodes:
         assert node.get("docstring") or node.get("qualname"), "each node should have metadata"
-        assert node.get("id") or node.get("node_id"), "each node must have an id"
+        # Both spellings are required, not either-or: ``id`` is the kg_utils
+        # node contract, ``node_id`` the long-standing FTreeKG one. An ``or``
+        # here is what let the missing ``id`` reach SnippetPack.to_markdown().
+        assert node["id"] == node["node_id"], "each node must carry both id spellings"
 
 
 # --------------------------------------------------------------------------
@@ -96,7 +99,7 @@ def test_query_lexical_fallback_when_no_vector_store(kg: FileTreeKG) -> None:
 
 def test_query_returns_dicts_with_expected_keys(kg: FileTreeKG) -> None:
     result = kg.query("file", k=3)
-    expected = {"node_id", "kind", "name", "qualname", "source_path", "docstring", "score"}
+    expected = {"id", "node_id", "kind", "name", "qualname", "source_path", "docstring", "score"}
     for n in result.nodes:
         assert expected.issubset(n.keys()), f"missing keys: {expected - n.keys()}"
 
@@ -290,6 +293,38 @@ def test_semantic_query_routes_through_vector_store_after_build(kg_embedded: Fil
     # The lexical fallback would stamp every score at 1.0; the semantic path
     # produces real cosine-derived scores in (0, 1).
     assert any(n["score"] != 1.0 for n in result.nodes)
+
+
+def test_pack_renders_markdown(kg: FileTreeKG) -> None:
+    """SnippetPack.to_markdown() must render — regression for a missing ``id``.
+
+    kg_utils reads ``n['id']`` when rendering; FTreeKG emitted only ``node_id``,
+    so this raised ``KeyError: 'id'``. Nothing caught it because the CLI renders
+    packs via rich and never calls ``to_markdown()``.
+    """
+    md = kg.pack("file", k=3).to_markdown()
+    assert "## Nodes" in md
+    assert "- id: `" in md
+
+
+@pytest.mark.integration
+def test_semantic_query_nodes_carry_both_id_spellings(kg_embedded: FileTreeKG) -> None:
+    """The vector path builds its own node dicts, so it needs its own check.
+
+    ``_semantic_query`` and ``_lexical_query`` construct dicts independently —
+    fixing one does not fix the other.
+    """
+    result = kg_embedded.query("source code file", k=3)
+    assert result.nodes
+    for n in result.nodes:
+        assert n["id"] == n["node_id"]
+
+
+@pytest.mark.integration
+def test_semantic_pack_renders_markdown(kg_embedded: FileTreeKG) -> None:
+    """to_markdown() must also survive the semantic path, not just the fallback."""
+    md = kg_embedded.pack("source code file", k=3).to_markdown()
+    assert "- id: `" in md
 
 
 # --------------------------------------------------------------------------

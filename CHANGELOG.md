@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **An MCP server — `ftreekg-mcp` (`src/ftree_kg/mcp_server.py`).** FTreeKG was
+  the only indexing KGModule in the fleet without one, so the filetree graph was
+  unreachable from agents that reach PyCodeKG and DocKG over MCP. Four tools:
+  `query_tree`, `pack_tree`, `graph_stats`, and `analyze_tree`, over stdio or
+  SSE. `.mcp.json` now serves all three graphs.
+- **`mcp>=1.0.0,<2` as a core dependency.** Upper-bounded for the same reason as
+  doc-kg and pycode-kg: mcp 2.0 split `FastMCP` into a standalone package, and
+  `mcp_server.py` imports it from `mcp` at module scope.
+
+### Fixed
+
+- **`SnippetPack.to_markdown()` raised `KeyError: 'id'` on FTreeKG packs.**
+  Query nodes carried only the FTreeKG `node_id` spelling, but the `kg_utils`
+  node contract (and every other fleet module) uses `id`. Both keys are now
+  emitted, so existing consumers of `node_id` are unaffected. The CLI's `pack`
+  renders via rich and never called `to_markdown()`, which is why this went
+  unnoticed until the MCP server exercised it.
+
 ## [0.12.0] - 2026-08-15
 
 The fleet dev-group migration, plus a currency sweep of the dependency floors.
