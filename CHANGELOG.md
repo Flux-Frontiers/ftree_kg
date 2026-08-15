@@ -7,13 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-08-15
+
+The fleet dev-group migration, plus a currency sweep of the dependency floors.
+As with 0.11.0, nothing under `src/` changes behaviour — but the published
+metadata loses two extras, so this is a minor rather than a patch.
+
 ### Added
+
+- **`[tool.poetry.group.dev]`, carrying the dev toolchain** — `detect-secrets`,
+  `ty>=0.0.44`, `pre-commit`, `pylint`, `pytest>=9.0.3`, `pytest-cov`, and
+  `ruff>=0.4.0,<0.16`. The group is `optional = true`, so a bare
+  `poetry install` still gets the runtime only; `poetry install --with dev`
+  is the new dev setup. This is the fleet rule from `FLEET_STANDARDS.md`:
+  extras are user-facing features, optional Poetry groups are repo tooling.
 
 ### Changed
 
+- **`kgmodule-utils` floor raised `>=0.9.0` → `>=0.13.2`.** The intermediate
+  stops — 0.12.0 for the `viz3d.organic` growth engine, 0.12.1, then 0.13.2 —
+  landed as separate fleet-sweep commits.
+- **`kg-rag` floor (the `[adapter]` extra) raised `>=0.11.0` → `>=0.12.0`**, and
+  the maintainer `kg` group's floors to `doc-kg>=0.21.2` and
+  `pycode-kg>=0.23.1`.
+- **CI installs dev tooling with `--with dev` instead of `--extras dev`** across
+  the lint, typecheck, and test jobs, following the extras-to-group move.
+- **`ruff-pre-commit` pinned to `v0.15.22`** (was `v0.9.10`), and the hook id
+  renamed `ruff` → `ruff-check` to match. The `<0.16` cap in the dev group is
+  what keeps the resolved ruff aligned with what the hook config declares —
+  0.16 reformats Markdown.
+
 ### Removed
 
+- **The `dev` and `all` extras.** `pip install "ftree-kg[dev]"` and
+  `[all]` no longer resolve; the dev toolchain now lives in the Poetry group
+  above and never ships in the wheel. `all` listed nothing *but* dev tools, so
+  it advertised them as pip-installable regardless of where they actually
+  lived — the same defect that survived the `doc_kg` and `Metabo_kg` group
+  migrations. `adapter` is now the only feature extra.
+- **`Last Revision:` header lines** from every module under `src/ftree_kg/` and
+  from `pyproject.toml`. They were hand-maintained and had drifted; git records
+  the same thing accurately.
+
 ### Fixed
+
+- **`pytest` floor raised to `>=9.0.3`** for GHSA-6w46-j5rx-g56g.
+- **Locked `cryptography` bumped 49.0.0 → 50.0.0** for the OSV.dev advisory
+  against the pinned version. The existing `>=3.4.0` floor already permitted
+  the fix, so this is a lockfile-only change.
 
 ## [0.11.0] - 2026-08-03
 

@@ -47,7 +47,7 @@ packages = [{ include = "ftree_kg", from = "src" }]
 # ---------------------------------------------------------------------------
 [project]
 name = "ftree-kg"
-version = "0.11.0"
+version = "0.12.0"
 description = "KGModule for file tree knowledge graphs"
 readme = "README.md"
 license = "Elastic-2.0"

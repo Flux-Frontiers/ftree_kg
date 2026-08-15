@@ -1,64 +1,83 @@
-# Release Notes — v0.11.0
+# Release Notes — v0.12.0
 
-> Released: 2026-08-03
+> Released: 2026-08-15
 
-Nothing under `src/` changed. What changed is what this package *says* it
-depends on — and it was wrong in both directions at once.
+Nothing under `src/` changed behaviour. As in 0.11.0, what changed is the
+package's declared dependencies — this time by moving the development toolchain
+out of the published metadata entirely, and by bringing every floor current with
+the rest of the KGRAG fleet.
 
-## A dependency that was imported but never declared
+## The dev toolchain is no longer part of the package
 
-`src/ftree_kg/adapter.py` imports `kg_rag` at module scope. `kg-rag` appeared
-nowhere in `pyproject.toml`. That worked only by luck: anything reaching that
-module already had kg-rag installed for other reasons. A clean
-`pip install ftree-kg` followed by `import ftree_kg.adapter` raised
-`ModuleNotFoundError`.
+`pip install 'ftree-kg[dev]'` and `pip install 'ftree-kg[all]'` no longer
+resolve. Both extras are gone.
 
-It is now declared as an `[adapter]` extra:
+The rule the fleet settled on is that **extras are user-facing features and
+Poetry groups are repo tooling**. A PEP 621 extra is written into the wheel, so
+declaring `dev` there advertised pytest, ruff, ty, pylint, pre-commit, and
+detect-secrets as things an *installer* of this package could ask for. Nobody
+installing a filesystem knowledge graph wants a linter, and shipping the offer
+in the wheel meant the metadata promised an install path the project had no
+interest in supporting.
 
-```bash
-pip install 'ftree-kg[adapter]'
-```
+`all` was the worse of the two. It aggregated nothing but dev tools — so it kept
+advertising them as pip-installable no matter where the dev dependencies
+themselves lived. That is precisely the defect that survived the equivalent
+migrations in `doc_kg` and `Metabo_kg`, which is why it is called out here rather
+than quietly dropped.
 
-An extra rather than a core dependency, deliberately — kg-rag already depends
-on ftree-kg, so declaring it core would create a real resolution cycle.
-
-Worth knowing: KGRAG federation does **not** need this extra. kg-rag ships its
-own `FTreeKGAdapter` and imports this package, not the other way round. The
-module in question is not exported from `__init__.py`, nothing in the fleet
-imports it, and no test covers it. It may well be vestigial; this release
-declares its dependency rather than deciding its fate.
-
-## Two dependencies that were declared but never imported
-
-`doc-kg` and `pycode-kg` were in the `kgdeps` and `all` extras. FTreeKG imports
-neither. They are development tooling: the local pre-commit hook rebuilds both
-indices, `.mcp.json` serves both MCP servers, and `.claude/CLAUDE.md` documents
-them as the dev workflow.
-
-Because extras are published metadata, `pip install ftree-kg[all]` was pulling
-two sibling knowledge-graph packages — and their transitive weight — into the
-environment of anyone who wanted the visualizer or the test tools. It also put
-the entire KG fleet into one resolution graph, so a version bump in any sibling
-could constrain this package.
-
-They moved to a Poetry group, which is locked and installable but never written
-into the wheel:
+The toolchain now lives in an optional Poetry group, locked and installable but
+absent from the wheel:
 
 ```bash
-poetry install --with kg      # contributors get the dockg / pycodekg CLIs
-poetry install                # everyone else gets nothing extra
+poetry install                # runtime only, unchanged
+poetry install --with dev     # pytest, ruff, ty, pylint, pre-commit
 ```
+
+`adapter` is now the only extra this package publishes.
+
+## Dependency floors caught up
+
+The `kgmodule-utils` floor had been sitting at `>=0.9.0` while the shared SDK
+moved on considerably; it is now `>=0.13.2`. It got there in stages across
+several fleet sweeps — 0.12.0 brought the `viz3d.organic` growth engine, then
+0.12.1, then 0.13.2. The `[adapter]` extra's `kg-rag` floor moves to `>=0.12.0`,
+and the maintainer `kg` group tracks `doc-kg>=0.21.2` and `pycode-kg>=0.23.1`.
+
+Two of the bumps are security floors rather than preferences. `pytest` is pinned
+`>=9.0.3` for GHSA-6w46-j5rx-g56g, and the locked `cryptography` moved 49.0.0 →
+50.0.0 for an OSV.dev advisory against the pinned version — a lockfile-only
+change, since the existing `>=3.4.0` floor already allowed the fix.
+
+One floor is deliberately capped instead: `ruff>=0.4.0,<0.16`. Ruff 0.16
+reformats Markdown, and while the `*.md` exclusion under `[tool.ruff]` blunts
+that, the cap is what actually keeps the resolved ruff aligned with the
+`v0.15.22` pin in `.pre-commit-config.yaml`.
+
+## `Last Revision` headers are gone
+
+Every module under `src/ftree_kg/` carried a hand-maintained
+`Last Revision: <date>` line, and they had drifted. They are deleted rather than
+restamped, because the field cannot be kept honest: correcting one *is* a change
+to the file, which moves git's last-change date to today and makes the header
+wrong again immediately. A fleet-wide count on 2026-08-15 found 81 of 113 such
+headers inaccurate. `Author:` and `License:` stay — those are real provenance and
+do not decay.
 
 ## Upgrading
 
-If you install `ftree-kg` or `ftree-kg[viz]`, nothing changes.
+If you install `ftree-kg` or `ftree-kg[adapter]`, nothing changes and no rebuild
+is needed. There are no schema, node-ID, or index-format changes, so existing
+`.filetreekg/` indices remain valid.
 
-If you were installing **`ftree-kg[kgdeps]`**, that extra no longer exists. You
-almost certainly wanted the contributor setup — clone the repo and run
-`poetry install --with kg`. Nothing in the fleet referenced it: kg-rag depends
-on bare `ftree-kg`.
+If you were installing **`ftree-kg[dev]`** or **`ftree-kg[all]`**, those extras
+are gone and the install will now fail. You wanted the contributor setup: clone
+the repo and run `poetry install --with dev`. For the full maintainer
+environment, including the DocKG and PyCodeKG CLIs, use
+`poetry install --all-extras --with dev,kg`.
 
-If you import `ftree_kg.adapter`, install `ftree-kg[adapter]` to get kg-rag
-declared properly. Your existing environment already satisfies it.
+Contributors already working in a clone should re-run `poetry install --with dev`
+— CI now installs with `--with dev` rather than `--extras dev`, and the
+pre-commit ruff hook was renamed `ruff` → `ruff-check` to match ruff 0.15.
 
 See [CHANGELOG.md](CHANGELOG.md) for the itemised list.
