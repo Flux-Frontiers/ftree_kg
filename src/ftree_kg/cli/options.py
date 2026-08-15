@@ -10,7 +10,6 @@ Click command to provide consistent option names, defaults, and help text::
         ...
 
 Author: Eric G. Suchanek, PhD
-Last Revision: 2026-07-28 08:58:00
 License: Elastic 2.0
 """
 

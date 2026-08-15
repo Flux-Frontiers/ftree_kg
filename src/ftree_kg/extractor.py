@@ -3,7 +3,6 @@
 FileTreeKGExtractor — KGExtractor for filetreekg.
 
 Author: Eric G. Suchanek, PhD
-Last Revision: 2026-07-07 06:13:24
 License: Elastic 2.0
 """
 

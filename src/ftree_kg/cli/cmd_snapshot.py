@@ -8,7 +8,6 @@ Click subcommands for managing temporal snapshots of filesystem tree metrics:
     snapshot diff   — compare two snapshots side-by-side
 
 Author: Eric G. Suchanek, PhD
-Last Revision: 2026-07-28 08:58:00
 License: Elastic 2.0
 """
 

@@ -7,7 +7,6 @@ Usage::
     ftreekg build --help
 
 Author: Eric G. Suchanek, PhD
-Last Revision: 2026-05-01 00:21:08
 License: Elastic 2.0
 """
 

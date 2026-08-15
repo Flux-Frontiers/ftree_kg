@@ -6,7 +6,6 @@ Click subcommands for querying the FileTreeKG knowledge graph:
     pack    - get metadata snippets for query results
 
 Author: Eric G. Suchanek, PhD
-Last Revision: 2026-07-28 08:58:00
 License: Elastic 2.0
 """
 
