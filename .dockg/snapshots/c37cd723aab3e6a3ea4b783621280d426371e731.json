@@ -4,7 +4,7 @@
   "timestamp": "2026-07-31T16:35:48.213064+00:00",
   "version": "0.20.0",
   "metrics": {
-    "db_path": "/Users/egs/repos/ftree_kg/.dockg/graph.sqlite",
+    "db_path": ".dockg/graph.sqlite",
     "total_nodes": 1581,
     "total_edges": 11474,
     "node_counts": {
