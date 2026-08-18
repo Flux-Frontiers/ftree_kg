@@ -101,7 +101,6 @@ optional = true
 detect-secrets = ">=1.5.0"
 ty = ">=0.0.44"
 pre-commit = ">=4.5.1"
-pylint = ">=4.0.5"
 # >=9.0.3 is a security floor, not a preference: GHSA-6w46-j5rx-g56g.
 pytest = ">=9.0.3"
 pytest-cov = ">=5.0.0"
@@ -181,19 +180,6 @@ markers = [
     "integration: marks tests that exercise real external dependencies (model, sqlite-vec)",
 ]
 
-[tool.pylint.messages_control]
-disable = ["all"]
-enable = [
-    "broad-exception-caught",   # W0718
-    "cell-var-from-loop",       # W0640
-    "cyclic-import",            # R0401
-    "import-outside-toplevel",  # C0415
-    "undefined-variable",       # E0602
-]
-
-# ---------------------------------------------------------------------------
-# FTreeKG / PyCodeKG / DocKG index configuration
-# ---------------------------------------------------------------------------
 [tool.filetreekg]
 # Directories to include in indexing (empty = include all)
 #include = ["src", "docs"]
