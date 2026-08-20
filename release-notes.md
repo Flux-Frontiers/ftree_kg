@@ -1,71 +1,49 @@
-# Release Notes — v0.13.0
+# Release Notes -- v0.13.1
 
-> Released: 2026-08-15
+> Released: 2026-08-20
 
-FTreeKG gets an MCP server. Until now it was the only indexing KGModule in the
-fleet without one — PyCodeKG and DocKG were reachable from an agent, the
-filesystem graph was not, and closing that gap meant shelling out to the CLI or
-routing through KGRAG federation. `ftreekg-mcp` makes the filetree graph a
-first-class participant alongside its sisters.
+A single-bug patch, but the bug was load-bearing: `ftreekg build` accepted
+`--include-dir` and `--exclude-dir`, printed them back, and then ignored both.
 
 ## What changed
 
-**An MCP server, deliberately small.** `ftreekg-mcp` speaks stdio or SSE and
-exposes four tools: `query_tree` for ranked filesystem nodes, `pack_tree` for
-their metadata rendered as Markdown blocks, `graph_stats` for counts and size
-totals, and `analyze_tree` for the full report. That is the whole surface, and
-it is meant to be. A filesystem graph has three node kinds and one edge type, so
-there are no call chains or similarity edges to traverse — the hop-expansion
-machinery that justifies seventeen tools in PyCodeKG would only re-derive the
-directory tree here. The server starts even when the graph is missing, warning
-on stderr rather than failing, so a misconfigured client reports empty results
-instead of a crash.
+`cmd_build` parsed the flags, merged them with `[tool.filetreekg]`, echoed the
+merged sets, and constructed `FileTreeKG` without passing either. The module's
+`make_extractor()` then re-read `pyproject.toml` unconditionally. Nothing the
+caller typed could reach the filesystem walk; only the dotdir rule and
+`DEFAULT_SKIP_DIRS` narrowed it.
 
-**A pack-rendering bug that had been there all along.** Wiring the server up
-immediately broke on `SnippetPack.to_markdown()`, which raised `KeyError: 'id'`
-on every FTreeKG pack. The cause was a quiet divergence: FTreeKG's query nodes
-carried only its own `node_id` spelling, while the shared `kg_utils` node
-contract — and every other module in the fleet — uses `id`. Nothing had noticed
-because the CLI renders packs through rich and never calls `to_markdown()`. Both
-keys are now emitted, so anything reading `node_id` is untouched.
+What makes this worth a release rather than a footnote is the shape of the
+failure. It is quiet, and it looks like success -- the build reports exactly the
+scope you asked for and then indexes something else entirely. Building a
+19-repo fleet tree over a directory of clones printed the right 19 repository
+names and wrote 314,935 file nodes, most of them from third-party checkouts
+that were never in the include list: `myML` at 105,760 files, `python_packages`
+at 85,260, `npsML` at 67,846. The corpus directories that the exclude list
+named explicitly were indexed too.
 
-The test that should have caught it is worth a mention, because it existed and
-passed. It read `node.get("id") or node.get("node_id")` — an either-or on a
-two-spelling contract, which is indistinguishable from no assertion at all. It
-is now an equality check, and the semantic query path, which builds its node
-dicts separately from the lexical one, got its own coverage rather than
-inheriting a fix it never exercised.
+## The fix
 
-**Documentation caught up with the code.** `docs/MCP.md` was written around the
-premise that FTreeKG has no MCP server and argued at length for why it did not
-need one; it now documents the server that exists. Smaller corrections came out
-of the same pass: the adapter was documented as registering `kind="meta"` when
-the source has always used `KGKind.FILETREE`, and `snapshots.py` described
-itself as a thin layer over `kg_rag.snapshots` when it has imported
-`kg_utils.snapshots` for some time — which misleadingly implied that a core
-module depended on the optional `[adapter]` extra.
+`FileTreeKG.__init__` now accepts `include_dirs` and `exclude_dirs`, and
+`make_extractor` prefers them over the config file. Passing `None` -- the
+default -- still falls back to `pyproject.toml`, so library callers relying on
+the documented config behaviour see no change. The two states are now
+distinguishable: `None` means "read the config", an empty set means "no
+restriction". Collapsing them is what made the flags dead in the first place.
+
+## Tests
+
+`tests/test_build_scoping.py` adds six tests covering the module API, the
+`pyproject.toml` fallback, the empty-set case, and the CLI wiring itself.
+
+The CLI test is the one that matters. Every assertion made against the build
+command's *output* passed while the bug was live, because the output was
+correct -- it was the behaviour behind it that was not. The new test asserts on
+what `FileTreeKG` actually receives.
 
 ## Upgrading
 
-Nothing to migrate, and no rebuild is required — the graph format is unchanged,
-so an existing `.filetreekg/` keeps working.
-
-The one thing to know is that `mcp>=1.0.0,<2` is now a **core** dependency, not
-an extra, so a plain `pip install ftree-kg` pulls it. The upper bound is
-deliberate and matches doc-kg and pycode-kg: mcp 2.0 split `FastMCP` into a
-standalone package, and `mcp_server.py` imports it from `mcp` at module scope.
-
-To use the server, build an index and point a client at it:
-
-```bash
-ftreekg build --repo .
-ftreekg-mcp --repo /abs/path/to/tree
-```
-
-For Claude Code, add an `ftreekg` entry to `.mcp.json` running
-`ftreekg-mcp --repo .`; `docs/MCP.md` covers Copilot, Claude Desktop, and Cline
-as well.
-
----
-
-_Full changelog: [CHANGELOG.md](CHANGELOG.md)_
+No API breaks. If you build with `--include-dir` or `--exclude-dir`, or with
+`[tool.filetreekg]` include/exclude keys and a CLI override, rebuild your graph
+after upgrading: any index built with 0.13.0 or earlier was scoped by the
+dotdir rule and `DEFAULT_SKIP_DIRS` alone, whatever the build log claimed.

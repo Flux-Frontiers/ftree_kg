@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.1] - 2026-08-20
+
+### Fixed
+
+- **`ftreekg build` silently ignored `--include-dir` and `--exclude-dir`.**
+  `cmd_build` parsed both flags, merged them with `[tool.filetreekg]`, echoed
+  the merged sets to the terminal, and then built `FileTreeKG(repo_root=...,
+  db_path=..., vectors_path=...)` without passing either one.
+  `FileTreeKG.make_extractor()` re-read `pyproject.toml` unconditionally, so
+  the flags could not reach the walk. Only the dotdir rule and
+  `DEFAULT_SKIP_DIRS` narrowed anything.
+
+  The failure is quiet and it looks like success: the build prints exactly the
+  scope you asked for, then indexes something else. Building a 19-repo fleet
+  tree over a directory of clones printed the right 19 names and produced
+  314,935 file nodes spanning unrelated third-party checkouts -- `myML`
+  (105,760 files), `python_packages` (85,260), `npsML` (67,846) -- plus the
+  corpus directories the exclude list had named.
+
+  `FileTreeKG.__init__` now takes `include_dirs` and `exclude_dirs`, and
+  `make_extractor` prefers them. Either left as `None` still falls back to
+  `pyproject.toml`, so the documented library behaviour is unchanged; an empty
+  set now correctly means "no restriction" rather than "read the config".
+  `tests/test_build_scoping.py` covers both the module API and the CLI wiring
+  -- the CLI test is the one that would have caught this, since assertions made
+  against the command's *output* passed throughout.
+
 ## [0.13.0] - 2026-08-15
 
 ### Added

@@ -75,6 +75,8 @@ def build(
             repo_root=repo_root,
             db_path=db_path,
             vectors_path=vectors_path,
+            include_dirs=include_dirs,
+            exclude_dirs=exclude_dirs,
         )
         kg.build(wipe=not no_wipe)
         stats = kg.stats()

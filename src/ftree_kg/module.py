@@ -186,6 +186,11 @@ class FileTreeKG(KGModule):
     :param db_path: Path for the SQLite graph database.
     :param vectors_path: Path to the sqlite-vec vector store file.
     :param config: Optional domain-specific configuration dict.
+    :param include_dirs: Directory names to restrict indexing to. ``None`` (the
+        default) loads ``[tool.filetreekg].include`` from ``pyproject.toml``.
+        An empty set means "no restriction", which is not the same as ``None``.
+    :param exclude_dirs: Directory names to skip at every depth. ``None`` (the
+        default) loads ``[tool.filetreekg].exclude`` from ``pyproject.toml``.
     """
 
     _default_dir = ".filetreekg"
@@ -196,6 +201,8 @@ class FileTreeKG(KGModule):
         db_path: Path | str | None = None,
         vectors_path: Path | str | None = None,
         config: dict[str, Any] | None = None,
+        include_dirs: set[str] | None = None,
+        exclude_dirs: set[str] | None = None,
     ) -> None:
         repo_root = Path(repo_root).resolve()
         db_path = Path(db_path) if db_path else repo_root / ".filetreekg" / "graph.sqlite"
@@ -207,19 +214,36 @@ class FileTreeKG(KGModule):
         if vectors_path is not None:
             self.vectors_path = Path(vectors_path)
         self.config = config or {}
+        # Kept as None when not supplied so make_extractor can tell "caller said
+        # nothing" (load pyproject.toml) from "caller said no restriction"
+        # (an empty set).  Collapsing the two is what made the CLI flags dead.
+        self.include_dirs = include_dirs
+        self.exclude_dirs = exclude_dirs
 
     def make_extractor(self) -> FileTreeKGExtractor:
         """Return the domain extractor for this module.
 
-        Loads include/exclude directories from [tool.filetreekg] in pyproject.toml.
+        Uses the ``include_dirs``/``exclude_dirs`` passed to the constructor.
+        Either one left as ``None`` falls back to the matching
+        ``[tool.filetreekg]`` key in ``pyproject.toml``.
 
         :return: FileTreeKGExtractor instance.
         """
+        include = (
+            self.include_dirs
+            if self.include_dirs is not None
+            else load_include_dirs(self.repo_root)
+        )
+        exclude = (
+            self.exclude_dirs
+            if self.exclude_dirs is not None
+            else load_exclude_dirs(self.repo_root)
+        )
         return FileTreeKGExtractor(
             self.repo_root,
             self.config,
-            include_dirs=load_include_dirs(self.repo_root),
-            exclude_dirs=load_exclude_dirs(self.repo_root),
+            include_dirs=include,
+            exclude_dirs=exclude,
         )
 
     def kind(self) -> str:
