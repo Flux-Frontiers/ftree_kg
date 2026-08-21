@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.2] - 2026-08-20
+
 ### Fixed
 
 - **`--include-dir` matched a name at any depth, not just the top level, contradicting its own `--help` text ("Top-level directory names to include in indexing").** A nested directory that happened to share a name with an include entry pulled in its entire unrelated top-level parent. Building a fleet tree with `--include-dir proteusPy` also indexed `proteusPy_src/proteusPy/...` and `proteusPy_priv/paper/docs/proteusPy/...` -- neither is the fleet repo; each merely contains a subdirectory named `proteusPy` somewhere inside it. `exclude_dirs` and the dotdir rule are unchanged and still match at every depth, which is correct for them -- an excluded name should be excluded wherever it appears. `tests/test_build_scoping.py` adds coverage for the nested-collision case and for exclude staying any-depth.

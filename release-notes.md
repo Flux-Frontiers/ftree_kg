@@ -1,49 +1,45 @@
-# Release Notes -- v0.13.1
+# Release Notes -- v0.13.2
 
 > Released: 2026-08-20
 
-A single-bug patch, but the bug was load-bearing: `ftreekg build` accepted
-`--include-dir` and `--exclude-dir`, printed them back, and then ignored both.
+A follow-on patch to yesterday's fix: `--include-dir` now matches only the
+top-level directory name it documents, not any path component at any depth.
 
 ## What changed
 
-`cmd_build` parsed the flags, merged them with `[tool.filetreekg]`, echoed the
-merged sets, and constructed `FileTreeKG` without passing either. The module's
-`make_extractor()` then re-read `pyproject.toml` unconditionally. Nothing the
-caller typed could reach the filesystem walk; only the dotdir rule and
-`DEFAULT_SKIP_DIRS` narrowed it.
+v0.13.1 made `--include-dir` and `--exclude-dir` actually reach the
+filesystem walk, but the include check itself matched a name against every
+path component, not just the top one -- contradicting its own `--help` text,
+which promises "top-level directory names to include in indexing." A nested
+directory that happened to share a name with an include entry pulled in its
+entire unrelated top-level parent.
 
-What makes this worth a release rather than a footnote is the shape of the
-failure. It is quiet, and it looks like success -- the build reports exactly the
-scope you asked for and then indexes something else entirely. Building a
-19-repo fleet tree over a directory of clones printed the right 19 repository
-names and wrote 314,935 file nodes, most of them from third-party checkouts
-that were never in the include list: `myML` at 105,760 files, `python_packages`
-at 85,260, `npsML` at 67,846. The corpus directories that the exclude list
-named explicitly were indexed too.
+This surfaced immediately when building the fleet tree with `--include-dir
+proteusPy`: the index also picked up `proteusPy_src/proteusPy/...` and
+`proteusPy_priv/paper/docs/proteusPy/...`. Neither is the actual `proteusPy`
+repo -- both are unrelated top-level directories that each happen to contain
+a subdirectory named `proteusPy` somewhere inside.
 
 ## The fix
 
-`FileTreeKG.__init__` now accepts `include_dirs` and `exclude_dirs`, and
-`make_extractor` prefers them over the config file. Passing `None` -- the
-default -- still falls back to `pyproject.toml`, so library callers relying on
-the documented config behaviour see no change. The two states are now
-distinguishable: `None` means "read the config", an empty set means "no
-restriction". Collapsing them is what made the flags dead in the first place.
+The include check now looks only at the first path component: a path is kept
+when its top-level directory is in `include_dirs`, full stop. `exclude_dirs`
+and the dotdir rule are unchanged and still match at any depth, which is the
+correct behavior for them -- an excluded name should be excluded wherever it
+appears, but an included name should not pull in an unrelated tree just
+because a same-named subdirectory happens to live inside it somewhere.
 
 ## Tests
 
-`tests/test_build_scoping.py` adds six tests covering the module API, the
-`pyproject.toml` fallback, the empty-set case, and the CLI wiring itself.
-
-The CLI test is the one that matters. Every assertion made against the build
-command's *output* passed while the bug was live, because the output was
-correct -- it was the behaviour behind it that was not. The new test asserts on
-what `FileTreeKG` actually receives.
+`tests/test_build_scoping.py` adds coverage for the nested-name-collision
+case and for exclude staying any-depth. Full suite: 87 passed.
 
 ## Upgrading
 
-No API breaks. If you build with `--include-dir` or `--exclude-dir`, or with
-`[tool.filetreekg]` include/exclude keys and a CLI override, rebuild your graph
-after upgrading: any index built with 0.13.0 or earlier was scoped by the
-dotdir rule and `DEFAULT_SKIP_DIRS` alone, whatever the build log claimed.
+No API breaks. If you use `--include-dir`, rebuild your graph: an index built
+with v0.13.1 may have pulled in unrelated directories that merely contained a
+same-named subdirectory.
+
+---
+
+_Full changelog: [CHANGELOG.md](CHANGELOG.md)_
