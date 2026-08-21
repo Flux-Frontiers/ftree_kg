@@ -110,6 +110,14 @@ class FileTreeKGExtractor(KGExtractor):
         in addition to DEFAULT_SKIP_DIRS.  All dotdirs (names starting with ``.'')
         are skipped unless explicitly listed in ``include``.
 
+        ``include_dirs`` matches the top-level path component only, matching
+        the documented "top-level directory names" semantics of
+        ``--include-dir``.  ``exclude_dirs`` and the dotdir rule still match
+        at every depth -- an excluded name should be excluded wherever it
+        occurs, but an included name should not pull in an unrelated
+        top-level tree just because it happens to contain a same-named
+        subdirectory somewhere inside it.
+
         node_id format: '<kind>:<source_path>:<qualname>'
 
         :return: Iterator of NodeSpec and EdgeSpec objects.
@@ -127,9 +135,10 @@ class FileTreeKGExtractor(KGExtractor):
             if any(part.startswith(".") and part not in self.include_dirs for part in parts):
                 continue
 
-            # If include_dirs specified, only keep paths under those directories
+            # If include_dirs specified, only keep paths whose top-level
+            # component is one of them.
             if self.include_dirs:
-                if not any(part in self.include_dirs for part in parts):
+                if not parts or parts[0] not in self.include_dirs:
                     continue
 
             # Determine node kind

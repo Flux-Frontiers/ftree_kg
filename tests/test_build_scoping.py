@@ -118,3 +118,38 @@ def test_cli_build_passes_both_flags_to_the_module(tmp_path: Path, monkeypatch) 
     assert captured.get("include_dirs") == {"keep_me"}
     assert captured.get("exclude_dirs") == {"also_drop"}
     assert captured.get("built") is True
+
+
+def test_include_dirs_does_not_match_nested_same_name_dirs(tmp_path: Path) -> None:
+    """A nested directory sharing an include-dir's name must not pull in its
+    unrelated top-level parent.
+
+    Regression guard: ``include_dirs`` originally matched any path component,
+    so ``--include-dir proteusPy`` against a fleet root pulled in
+    ``proteusPy_src/proteusPy/...`` and ``proteusPy_priv/paper/docs/proteusPy/...``
+    -- neither is the fleet repo, both merely contain a subdirectory that
+    happens to be named ``proteusPy``.
+    """
+    (tmp_path / "proteusPy").mkdir()
+    (tmp_path / "proteusPy" / "real.txt").write_text("real")
+    (tmp_path / "proteusPy_src" / "proteusPy").mkdir(parents=True)
+    (tmp_path / "proteusPy_src" / "proteusPy" / "stray.txt").write_text("stray")
+
+    kg = FileTreeKG(repo_root=tmp_path, include_dirs={"proteusPy"})
+    assert _indexed_dirs(kg) == {"proteusPy"}
+
+
+def test_exclude_dirs_still_match_at_any_depth(tmp_path: Path) -> None:
+    """Unlike include_dirs, exclude_dirs intentionally matches every depth."""
+    (tmp_path / "keep_me" / "__pycache__").mkdir(parents=True)
+    (tmp_path / "keep_me" / "__pycache__" / "x.pyc").write_text("x")
+    (tmp_path / "keep_me" / "real.py").write_text("real")
+
+    kg = FileTreeKG(repo_root=tmp_path, exclude_dirs={"__pycache__"})
+    paths = {
+        spec.source_path
+        for spec in kg.make_extractor().extract()
+        if getattr(spec, "source_path", None)
+    }
+    assert not any("__pycache__" in p for p in paths)
+    assert "keep_me/real.py" in paths
