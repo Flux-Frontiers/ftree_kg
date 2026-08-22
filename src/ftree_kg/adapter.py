@@ -91,7 +91,6 @@ class FileTreeKGAdapter(KGAdapter):  # type: ignore[misc]
                     score=n.get("score", 0.0),
                     summary=n.get("docstring", ""),
                     source_path=n.get("source_path", ""),
-                    metadata=n.get("metadata") or {},
                 )
                 for n in nodes
             ]

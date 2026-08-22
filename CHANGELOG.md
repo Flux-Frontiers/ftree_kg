@@ -49,8 +49,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
   Both paths now carry it: the lexical `SELECT` includes the column, and
   semantic hits come back to SQLite via `_attach_metadata()` rather than
-  duplicating the blob into the vector index. `pack()` snippets carry it too,
-  and `ftree_kg.adapter` forwards it onto its `CrossHit`s.
+  duplicating the blob into the vector index. `pack()` snippets carry it too.
+  `ftree_kg.adapter` does not forward it onto its `CrossHit`s -- kg-rag's
+  `CrossHit` has no `metadata` field to carry it in, and this adapter is
+  unused dead code (kg-rag ships its own `ftree_adapter.py` instead).
 
 - **`build(wipe=False)` wiped.** The `DROP TABLE` statements lived inside the
   schema script, which ran on every build regardless of the flag, so an
