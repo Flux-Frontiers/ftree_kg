@@ -1,6 +1,6 @@
 FTreeKG Pipeline - A Knowledge Graph for Filesystem Hierarchies
 
-Version: 0.13.2
+Version: 0.14.0
 Author: Eric G. Suchanek, PhD
 
 OVERVIEW
@@ -141,7 +141,7 @@ KGRAG: FileTreeKGAdapter registers as kind="filetree". Federated queries via kgr
 
 DEPENDENCIES
 
-Core (required): click 8.1.0+, kgmodule-utils[semantic,sqlite-vec] 0.13.2+, pillow 10.0.0+, rich 13.0.0+. Embedding model retrieval is brokered by kg_utils.embedder.get_embedder() (default: BAAI/bge-small-en-v1.5 from sentence-transformers).
+Core (required): click 8.1.0+, kgmodule-utils[semantic,sqlite-vec] 0.18.0+, pillow 10.0.0+, rich 13.0.0+. Embedding model retrieval is brokered by kg_utils.embedder.get_embedder() (default: BAAI/bge-small-en-v1.5 from sentence-transformers).
 
 Optional adapter extra: kg-rag 0.12.0+, imported by ftree_kg.adapter. (KGRAG federation
 itself does not need it — kg-rag ships its own FTreeKG adapter.) The doc-kg / pycode-kg
