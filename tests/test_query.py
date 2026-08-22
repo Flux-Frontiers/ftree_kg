@@ -5,6 +5,7 @@ Tests for FileTreeKG query and pack.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -379,8 +380,15 @@ def test_metadata_column_populated_for_images(tmp_path: Path) -> None:
     assert meta["taken_at"].startswith("2023:07:15")
 
 
-def test_metadata_column_null_for_non_image_files(tmp_path: Path) -> None:
-    """A .py / .txt file must have NULL metadata, not an empty dict."""
+def test_metadata_for_non_image_files_is_temporal_only(tmp_path: Path) -> None:
+    """A .py / .txt file carries the temporal contract and nothing else.
+
+    This asserted NULL until the temporal contract landed. Every file now gets
+    ``occurred_start`` / ``recorded_at`` from its modification time, because a
+    tree where only photographs are dated would answer "what changed in April"
+    with photographs alone. What must still be absent is *format-specific*
+    metadata — a text file has no camera.
+    """
     import sqlite3
 
     kg = _kg_with_image(tmp_path, embed=False)
@@ -391,7 +399,9 @@ def test_metadata_column_null_for_non_image_files(tmp_path: Path) -> None:
     with sqlite3.connect(kg.db_path) as conn:
         row = conn.execute("SELECT metadata FROM nodes WHERE name = 'notes.txt'").fetchone()
     assert row is not None
-    assert row[0] is None, "non-image files must not have a metadata blob"
+    meta = json.loads(row[0])
+    assert set(meta) == {"occurred_start", "recorded_at"}
+    assert "camera_make" not in meta
 
 
 def test_metadata_skipped_when_metadata_false(tmp_path: Path) -> None:

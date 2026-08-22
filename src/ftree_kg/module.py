@@ -19,7 +19,12 @@ from kg_utils.specs import BuildStats, EdgeSpec, NodeSpec, QueryResult, SnippetP
 
 from ftree_kg.config import load_exclude_dirs, load_include_dirs
 from ftree_kg.extractor import FileTreeKGExtractor
-from ftree_kg.metadata import extract_metadata, metadata_keywords, metadata_prose
+from ftree_kg.metadata import (
+    extract_metadata,
+    metadata_keywords,
+    metadata_prose,
+    temporal_keys,
+)
 
 # Metadata columns carried alongside each vector in the sqlite-vec store.
 # ``text`` is included beyond the kg_utils default because _semantic_query
@@ -355,6 +360,13 @@ class FileTreeKG(KGModule):
         Directories and symlinks are skipped (no per-format metadata applies).
         Failures on individual files are silently swallowed — a single bad
         image must not abort the build.
+
+        The shared :mod:`kg_utils.temporal` contract is merged in alongside the
+        format-specific fields, via :func:`~ftree_kg.metadata.temporal_keys`, so
+        a federated query can scope the filesystem by time. Every file gets it,
+        not just the ones with EXIF: the modification time is always available,
+        and a tree where only photographs are dated would answer "what changed
+        in April" with photographs alone.
         """
         assert self.db_path is not None
         with sqlite3.connect(self.db_path) as conn:
@@ -368,7 +380,12 @@ class FileTreeKG(KGModule):
                     meta = extract_metadata(full_path)
                 except Exception:  # pylint: disable=broad-exception-caught
                     meta = None
-                blob = json.dumps(meta) if meta else None
+                try:
+                    temporal = temporal_keys(full_path, meta)
+                except Exception:  # pylint: disable=broad-exception-caught
+                    temporal = {}
+                merged = {**(meta or {}), **temporal}
+                blob = json.dumps(merged) if merged else None
                 updates.append((blob, node_id))
             conn.executemany("UPDATE nodes SET metadata = ? WHERE node_id = ?", updates)
             conn.commit()

@@ -67,7 +67,10 @@ classifiers = [
 requires-python = ">=3.12,<3.14"
 dependencies = [
     "click>=8.1.0,<9",
-    "kgmodule-utils[semantic,sqlite-vec]>=0.13.2",
+    # 0.18.0: metadata.temporal_keys() derives the shared kg_utils.temporal
+    # contract from EXIF capture time and filesystem mtime, so a federated
+    # query can scope a tree by time.
+    "kgmodule-utils[semantic,sqlite-vec]>=0.18.0",
     # Capped: mcp 2.0 split FastMCP into its own package, and mcp_server.py
     # imports it from `mcp` at module scope. Lift only alongside that port.
     "mcp>=1.0.0,<2",

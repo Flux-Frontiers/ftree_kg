@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`metadata.temporal_keys()` — the filesystem speaks the shared
+  `kg_utils.temporal` contract, and it is where *occurred* and *recorded* come
+  furthest apart.** A photograph taken on holiday in 1998 and copied onto this
+  disk in 2024 occurred in 1998 and was recorded in 2024. A timeline that files
+  it under 2024 is simply wrong about it, so FTreeKG now says both:
+  `occurred_start` is the EXIF capture time where there is one, falling back to
+  the modification time; `recorded_at` is always the modification time.
+
+  The contract is merged into each file node's existing `metadata` blob
+  alongside the format-specific fields, so nothing is displaced and the raw
+  EXIF value is still there beside its normalised form.
+
+  **EXIF datetimes needed converting, not just passing through.** EXIF writes
+  `2024:01:15 10:30:00` — colon-separated in the date part, which
+  `datetime.fromisoformat` rejects outright. Left alone, every photograph in a
+  corpus would have failed to parse and dropped silently out of time-scoped
+  queries, which is precisely the failure the contract exists to prevent.
+
+  **Every file is dated, not only the ones with EXIF.** A tree where only
+  photographs carry dates would answer "what changed in April" with
+  photographs alone. This changes the metadata column for plain files from
+  `NULL` to a temporal-only blob; `test_metadata_for_non_image_files_is_temporal_only`
+  was updated from asserting `NULL` and now pins the new intent — temporal keys
+  present, format-specific fields still absent.
+
+  A malformed EXIF stamp falls back to the modification time rather than
+  costing the file its date entirely.
+
+  Requires `kgmodule-utils>=0.18.0`; the floor moves with it.
+
 ## [0.13.2] - 2026-08-20
 
 ### Fixed
