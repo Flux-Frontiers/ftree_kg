@@ -7,6 +7,83 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`metadata.temporal_keys()` — the filesystem speaks the shared
+  `kg_utils.temporal` contract, and it is where *occurred* and *recorded* come
+  furthest apart.** A photograph taken on holiday in 1998 and copied onto this
+  disk in 2024 occurred in 1998 and was recorded in 2024. A timeline that files
+  it under 2024 is simply wrong about it, so FTreeKG now says both:
+  `occurred_start` is the EXIF capture time where there is one, falling back to
+  the modification time; `recorded_at` is always the modification time.
+
+  The contract is merged into each file node's existing `metadata` blob
+  alongside the format-specific fields, so nothing is displaced and the raw
+  EXIF value is still there beside its normalised form.
+
+  **EXIF datetimes needed converting, not just passing through.** EXIF writes
+  `2024:01:15 10:30:00` — colon-separated in the date part, which
+  `datetime.fromisoformat` rejects outright. Left alone, every photograph in a
+  corpus would have failed to parse and dropped silently out of time-scoped
+  queries, which is precisely the failure the contract exists to prevent.
+
+  **Every file is dated, not only the ones with EXIF.** A tree where only
+  photographs carry dates would answer "what changed in April" with
+  photographs alone. This changes the metadata column for plain files from
+  `NULL` to a temporal-only blob; `test_metadata_for_non_image_files_is_temporal_only`
+  was updated from asserting `NULL` and now pins the new intent — temporal keys
+  present, format-specific fields still absent.
+
+  A malformed EXIF stamp falls back to the modification time rather than
+  costing the file its date entirely.
+
+### Fixed
+
+- **The contract was written to disk and never handed to a caller.** Neither
+  query path selected the `metadata` column — `_lexical_query` omitted it from
+  its `SELECT` (it appeared only in the `WHERE`, for matching), and
+  `_semantic_query` reads the vector store, which carries `_META_COLUMNS` and
+  nothing else. So every filetree hit reached kg-rag's adapter undated, and any
+  `QueryScope(time_range=...)` discarded the whole KG as having no dates.
+  Storing the contract and surfacing it turn out to be two different jobs.
+
+  Both paths now carry it: the lexical `SELECT` includes the column, and
+  semantic hits come back to SQLite via `_attach_metadata()` rather than
+  duplicating the blob into the vector index. `pack()` snippets carry it too.
+  `ftree_kg.adapter` does not forward it onto its `CrossHit`s -- kg-rag's
+  `CrossHit` has no `metadata` field to carry it in, and this adapter is
+  unused dead code (kg-rag ships its own `ftree_adapter.py` instead).
+
+- **`build(wipe=False)` wiped.** The `DROP TABLE` statements lived inside the
+  schema script, which ran on every build regardless of the flag, so an
+  incremental build was indistinguishable from a full one and the parameter
+  documented behaviour it had never had. Dropping is now conditional on `wipe`
+  and the creates are `IF NOT EXISTS`.
+
+- **`pack()` read the entire nodes table** to annotate at most `max_nodes` of
+  them — a full scan of the tree per call, on a table with no indexes. Scoped
+  to the nodes being rendered.
+
+- **Incremental builds duplicated every edge.** The `edges` table had no
+  primary key and was written with a bare `INSERT`, which stayed invisible only
+  because every build wiped. Once `wipe=False` genuinely preserved rows the
+  defect went live: edge counts ran 3 → 6 → 9 across successive incremental
+  builds while node counts correctly held. The table now carries
+  `PRIMARY KEY (source_id, target_id, relation)` and inserts use
+  `INSERT OR REPLACE`.
+
+  Nothing migrates a database built before this. A filesystem walk is cheap and
+  `build()` wipes by default, so the next ordinary build recreates the table
+  correctly; an old database rebuilt with `wipe=False` should be wiped once.
+
+- **The graph carried no indexes at all** — zero, against six in `kg_utils`'s
+  equivalent store — so every query, every `stats()` aggregation and every
+  `pack()` lookup was a full table scan. Added on `nodes(kind)`, `nodes(name)`,
+  `nodes(source_path)`, `edges(source_id)`, `edges(target_id)` and
+  `edges(relation)`.
+
+  Requires `kgmodule-utils>=0.18.0`; the floor moves with it.
+
 ## [0.13.2] - 2026-08-20
 
 ### Fixed

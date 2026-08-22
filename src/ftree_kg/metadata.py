@@ -25,8 +25,12 @@ License: Elastic 2.0
 
 from __future__ import annotations
 
+import re
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
+from kg_utils.temporal import temporal_metadata
 
 # Extensions per format family. Lowercase, with leading dot.
 IMAGE_EXTS: frozenset[str] = frozenset(
@@ -277,3 +281,68 @@ def _dms_to_decimal(dms: tuple[Any, Any, Any]) -> float:
 def _normalise(s: str) -> str:
     """Strip whitespace, collapse internal runs, lower-case."""
     return " ".join(s.split()).lower()
+
+
+# ---------------------------------------------------------------------------
+# Shared temporal contract
+# ---------------------------------------------------------------------------
+
+#: EXIF stores datetimes as ``YYYY:MM:DD HH:MM:SS`` — colon-separated in the
+#: date part, which is not ISO-8601 and which ``datetime.fromisoformat``
+#: rejects outright. Converting is the whole reason this module, rather than
+#: the caller, owns the mapping onto the contract.
+_EXIF_DT_RE = re.compile(r"^(\d{4}):(\d{2}):(\d{2})[ T](\d{2}:\d{2}:\d{2})")
+
+
+def _exif_to_iso(value: Any) -> str | None:
+    """Convert an EXIF datetime string to ISO-8601, if it looks like one.
+
+    :param value: Raw EXIF value, typically ``"2024:01:15 10:30:00"``.
+    :return: ISO-8601 text, or ``None`` when there is nothing usable.
+    """
+    if not value:
+        return None
+    text = str(value).strip()
+    if m := _EXIF_DT_RE.match(text):
+        year, month, day, clock = m.groups()
+        return f"{year}-{month}-{day}T{clock}"
+    return text or None
+
+
+def temporal_keys(path: Path, meta: dict[str, Any] | None = None) -> dict[str, str]:
+    """Derive the shared :mod:`kg_utils.temporal` contract for a filesystem node.
+
+    A file is one of the clearest cases for keeping *occurred* and *recorded*
+    apart. A photograph taken on holiday in 1998 and copied onto this disk in
+    2024 occurred in 1998 and was recorded in 2024, and a timeline that files it
+    under 2024 is simply wrong about it. So:
+
+    - ``occurred_start`` — the EXIF capture time when the file has one, falling
+      back to the modification time for everything else. For a plain file the
+      two coincide, which is truthful rather than redundant: when the content
+      was last written *is* when it came to be.
+    - ``recorded_at`` — always the modification time, which is when this
+      filesystem learned about the content.
+
+    Derived, never authored: both values come from the file itself, so nothing
+    here can drift out of step with the filesystem or the EXIF block.
+
+    :param path: Absolute path to the file.
+    :param meta: Format-specific metadata from :func:`extract_metadata`, if any.
+    :return: The contract keys, or ``{}`` when the file yields no usable date.
+    """
+    try:
+        mtime = datetime.fromtimestamp(path.stat().st_mtime, tz=UTC)
+    except (OSError, ValueError, OverflowError):
+        mtime = None
+
+    taken = _exif_to_iso((meta or {}).get("taken_at"))
+
+    try:
+        return temporal_metadata(occurred_start=taken or mtime, recorded_at=mtime)
+    except (ValueError, TypeError):
+        # A malformed EXIF stamp must not cost the file its modification time.
+        try:
+            return temporal_metadata(occurred_start=mtime, recorded_at=mtime)
+        except (ValueError, TypeError):
+            return {}
