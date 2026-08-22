@@ -55,11 +55,26 @@ CREATE TABLE IF NOT EXISTS nodes (
     size_bytes  INTEGER DEFAULT 0,
     metadata    TEXT
 );
+-- The primary key is what makes `INSERT OR REPLACE` idempotent. Without it
+-- an incremental build re-inserted every edge, which was invisible only while
+-- every build wiped. Nothing migrates a database built before this: a filesystem
+-- walk is cheap, and `build()` wipes by default, so the next ordinary build
+-- recreates the table correctly.
 CREATE TABLE IF NOT EXISTS edges (
     source_id TEXT,
     target_id TEXT,
-    relation  TEXT
+    relation  TEXT,
+    PRIMARY KEY (source_id, target_id, relation)
 );
+
+-- This table carried no indexes at all until 2026-08-22, so every query,
+-- every stats() aggregation and every pack() lookup was a full scan.
+CREATE INDEX IF NOT EXISTS idx_nodes_kind        ON nodes(kind);
+CREATE INDEX IF NOT EXISTS idx_nodes_name        ON nodes(name);
+CREATE INDEX IF NOT EXISTS idx_nodes_source_path ON nodes(source_path);
+CREATE INDEX IF NOT EXISTS idx_edges_source      ON edges(source_id);
+CREATE INDEX IF NOT EXISTS idx_edges_target      ON edges(target_id);
+CREATE INDEX IF NOT EXISTS idx_edges_relation    ON edges(relation);
 """
 
 
@@ -337,7 +352,7 @@ class FileTreeKG(KGModule):
                     )
                 elif isinstance(spec, EdgeSpec):
                     conn.execute(
-                        "INSERT INTO edges VALUES (?,?,?)",
+                        "INSERT OR REPLACE INTO edges VALUES (?,?,?)",
                         (spec.source_id, spec.target_id, spec.relation),
                     )
             conn.commit()

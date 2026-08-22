@@ -62,6 +62,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   them — a full scan of the tree per call, on a table with no indexes. Scoped
   to the nodes being rendered.
 
+- **Incremental builds duplicated every edge.** The `edges` table had no
+  primary key and was written with a bare `INSERT`, which stayed invisible only
+  because every build wiped. Once `wipe=False` genuinely preserved rows the
+  defect went live: edge counts ran 3 → 6 → 9 across successive incremental
+  builds while node counts correctly held. The table now carries
+  `PRIMARY KEY (source_id, target_id, relation)` and inserts use
+  `INSERT OR REPLACE`.
+
+  Nothing migrates a database built before this. A filesystem walk is cheap and
+  `build()` wipes by default, so the next ordinary build recreates the table
+  correctly; an old database rebuilt with `wipe=False` should be wiped once.
+
+- **The graph carried no indexes at all** — zero, against six in `kg_utils`'s
+  equivalent store — so every query, every `stats()` aggregation and every
+  `pack()` lookup was a full table scan. Added on `nodes(kind)`, `nodes(name)`,
+  `nodes(source_path)`, `edges(source_id)`, `edges(target_id)` and
+  `edges(relation)`.
+
   Requires `kgmodule-utils>=0.18.0`; the floor moves with it.
 
 ## [0.13.2] - 2026-08-20

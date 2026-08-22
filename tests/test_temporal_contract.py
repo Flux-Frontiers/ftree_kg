@@ -223,3 +223,72 @@ class TestBuildWipeSemantics:
         kg.build(wipe=False, embed=False, metadata=False)
         names = {n["name"] for n in kg._lexical_query("b.txt", k=10)}
         assert "b.txt" in names
+
+
+class TestGraphSchema:
+    """Edges are keyed and the tables are indexed.
+
+    The edges table had no primary key and was written with a bare ``INSERT``,
+    which was invisible only because every build wiped. Once ``wipe=False``
+    genuinely preserved rows, an incremental build duplicated every edge on
+    every run. Nothing migrates an older database — a filesystem walk is cheap
+    and ``build()`` wipes by default.
+    """
+
+    def _kg(self, tmp_path):
+        from ftree_kg.module import FileTreeKG
+
+        (tmp_path / "sub").mkdir()
+        (tmp_path / "sub" / "a.txt").write_text("a")
+        (tmp_path / "b.txt").write_text("b")
+        kg = FileTreeKG(
+            repo_root=tmp_path,
+            db_path=tmp_path / ".ft" / "graph.sqlite",
+            vectors_path=tmp_path / ".ft" / "vectors.sqlite",
+        )
+        kg.build(wipe=True, embed=False, metadata=False)
+        return kg
+
+    def _edge_stats(self, kg):
+        import sqlite3
+
+        with sqlite3.connect(kg.db_path) as conn:
+            total = conn.execute("SELECT COUNT(*) FROM edges").fetchone()[0]
+            dups = conn.execute(
+                "SELECT COUNT(*) FROM (SELECT source_id, target_id, relation, "
+                "COUNT(*) c FROM edges GROUP BY 1,2,3 HAVING c > 1)"
+            ).fetchone()[0]
+        return total, dups
+
+    def test_incremental_builds_do_not_duplicate_edges(self, tmp_path):
+        kg = self._kg(tmp_path)
+        first, _ = self._edge_stats(kg)
+        kg.build(wipe=False, embed=False, metadata=False)
+        kg.build(wipe=False, embed=False, metadata=False)
+        after, dups = self._edge_stats(kg)
+        assert after == first
+        assert dups == 0
+
+    def test_edges_table_has_a_primary_key(self, tmp_path):
+        import sqlite3
+
+        kg = self._kg(tmp_path)
+        with sqlite3.connect(kg.db_path) as conn:
+            sql = conn.execute(
+                "SELECT sql FROM sqlite_master WHERE type='table' AND name='edges'"
+            ).fetchone()[0]
+        assert "PRIMARY KEY" in sql.upper()
+
+    def test_tables_are_indexed(self, tmp_path):
+        """Zero indexes meant every query and every stats() call was a scan."""
+        import sqlite3
+
+        kg = self._kg(tmp_path)
+        with sqlite3.connect(kg.db_path) as conn:
+            names = {
+                r[0]
+                for r in conn.execute(
+                    "SELECT name FROM sqlite_master WHERE type='index' AND name LIKE 'idx_%'"
+                ).fetchall()
+            }
+        assert {"idx_nodes_kind", "idx_edges_source", "idx_edges_target"} <= names
