@@ -111,3 +111,115 @@ class TestMergedIntoNodeMetadata:
         meta = {"taken_at": "1998:07:04 14:22:31"}
         t = temporal_keys(dated_file, meta)
         assert parse_temporal(_exif_to_iso(meta["taken_at"])) == parse_temporal(t["occurred_start"])
+
+
+class TestQueryResultsSurfaceMetadata:
+    """Every path that returns a node must carry its metadata.
+
+    FTreeKG wrote the contract to disk and then never handed it to a caller:
+    neither query path selected the column, so through kg-rag's adapter every
+    filetree hit arrived undated and any ``time_range`` scope discarded the
+    whole KG. Storing it and surfacing it are two different jobs.
+    """
+
+    def _kg(self, tmp_path):
+        from ftree_kg.module import FileTreeKG
+
+        (tmp_path / "notes.txt").write_text("hello")
+        kg = FileTreeKG(
+            repo_root=tmp_path,
+            db_path=tmp_path / ".ft" / "graph.sqlite",
+            vectors_path=tmp_path / ".ft" / "vectors.sqlite",
+        )
+        kg.build(wipe=True, embed=False, metadata=True)
+        return kg
+
+    def test_lexical_query_carries_metadata(self, tmp_path):
+        kg = self._kg(tmp_path)
+        nodes = kg._lexical_query("notes", k=5)
+        assert nodes, "fixture should match"
+        assert all("metadata" in n for n in nodes)
+
+    def test_lexical_metadata_holds_the_contract(self, tmp_path):
+        kg = self._kg(tmp_path)
+        files = [n for n in kg._lexical_query("notes", k=5) if n["kind"] == "file"]
+        assert files
+        assert "occurred_start" in files[0]["metadata"]
+
+    def test_query_results_are_readable_as_spans(self, tmp_path):
+        """The end-to-end claim: a hit can be time-scoped."""
+        kg = self._kg(tmp_path)
+        files = [n for n in kg.query("notes", k=5).nodes if n.get("kind") == "file"]
+        assert files
+        span = read_span(files[0].get("metadata"))
+        assert span is not None, "a filetree hit must be datable"
+
+    def test_pack_snippets_carry_metadata(self, tmp_path):
+        kg = self._kg(tmp_path)
+        pack = kg.pack("notes", k=5)
+        assert pack.snippets
+        assert all("metadata" in s for s in pack.snippets)
+
+    def test_undated_nodes_still_return_a_dict(self, tmp_path):
+        """Directories have no metadata; the key must exist and be empty."""
+        kg = self._kg(tmp_path)
+        nodes = kg._lexical_query("directory", k=10)
+        for n in nodes:
+            assert isinstance(n["metadata"], dict)
+
+
+class TestBuildWipeSemantics:
+    """`wipe=False` must not wipe.
+
+    The DROP statements lived in the schema script, which ran on every build
+    regardless of the flag — so an incremental build was indistinguishable from
+    a full one, and the parameter documented behaviour it never had.
+    """
+
+    def _kg(self, tmp_path):
+        from ftree_kg.module import FileTreeKG
+
+        (tmp_path / "a.txt").write_text("a")
+        kg = FileTreeKG(
+            repo_root=tmp_path,
+            db_path=tmp_path / ".ft" / "graph.sqlite",
+            vectors_path=tmp_path / ".ft" / "vectors.sqlite",
+        )
+        kg.build(wipe=True, embed=False, metadata=False)
+        return kg
+
+    def _sentinel(self, kg):
+        import sqlite3
+
+        with sqlite3.connect(kg.db_path) as conn:
+            conn.execute(
+                "INSERT INTO nodes (node_id, kind, name, source_path) VALUES (?,?,?,?)",
+                ("sentinel", "file", "s", "a.txt"),
+            )
+
+    def _sentinel_present(self, kg) -> bool:
+        import sqlite3
+
+        with sqlite3.connect(kg.db_path) as conn:
+            row = conn.execute("SELECT COUNT(*) FROM nodes WHERE node_id = 'sentinel'").fetchone()
+        return bool(row[0])
+
+    def test_wipe_false_preserves_existing_rows(self, tmp_path):
+        kg = self._kg(tmp_path)
+        self._sentinel(kg)
+        kg.build(wipe=False, embed=False, metadata=False)
+        assert self._sentinel_present(kg)
+
+    def test_wipe_true_clears_existing_rows(self, tmp_path):
+        kg = self._kg(tmp_path)
+        self._sentinel(kg)
+        kg.build(wipe=True, embed=False, metadata=False)
+        assert not self._sentinel_present(kg)
+
+    def test_wipe_false_still_refreshes_real_nodes(self, tmp_path):
+        """Incremental must still upsert the tree, not just skip work."""
+        kg = self._kg(tmp_path)
+        (tmp_path / "b.txt").write_text("b")
+        kg.build(wipe=False, embed=False, metadata=False)
+        names = {n["name"] for n in kg._lexical_query("b.txt", k=10)}
+        assert "b.txt" in names

@@ -37,6 +37,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   A malformed EXIF stamp falls back to the modification time rather than
   costing the file its date entirely.
 
+### Fixed
+
+- **The contract was written to disk and never handed to a caller.** Neither
+  query path selected the `metadata` column — `_lexical_query` omitted it from
+  its `SELECT` (it appeared only in the `WHERE`, for matching), and
+  `_semantic_query` reads the vector store, which carries `_META_COLUMNS` and
+  nothing else. So every filetree hit reached kg-rag's adapter undated, and any
+  `QueryScope(time_range=...)` discarded the whole KG as having no dates.
+  Storing the contract and surfacing it turn out to be two different jobs.
+
+  Both paths now carry it: the lexical `SELECT` includes the column, and
+  semantic hits come back to SQLite via `_attach_metadata()` rather than
+  duplicating the blob into the vector index. `pack()` snippets carry it too,
+  and `ftree_kg.adapter` forwards it onto its `CrossHit`s.
+
+- **`build(wipe=False)` wiped.** The `DROP TABLE` statements lived inside the
+  schema script, which ran on every build regardless of the flag, so an
+  incremental build was indistinguishable from a full one and the parameter
+  documented behaviour it had never had. Dropping is now conditional on `wipe`
+  and the creates are `IF NOT EXISTS`.
+
+- **`pack()` read the entire nodes table** to annotate at most `max_nodes` of
+  them — a full scan of the tree per call, on a table with no indexes. Scoped
+  to the nodes being rendered.
+
   Requires `kgmodule-utils>=0.18.0`; the floor moves with it.
 
 ## [0.13.2] - 2026-08-20

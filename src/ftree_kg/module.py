@@ -36,10 +36,16 @@ _META_COLUMNS = ("kind", "name", "qualname", "module_path", "text")
 # measure (BAAI/bge-small-en-v1.5 is 384-dimensional).
 _EMBED_DIM = 384
 
-_SCHEMA = """
+# Dropping is deliberately *not* part of _SCHEMA. It used to be, which made
+# `build(wipe=False)` a no-op promise: the file survived and both tables were
+# dropped anyway, so an incremental build was indistinguishable from a full one.
+_DROP_SQL = """
 DROP TABLE IF EXISTS nodes;
 DROP TABLE IF EXISTS edges;
-CREATE TABLE nodes (
+"""
+
+_SCHEMA = """
+CREATE TABLE IF NOT EXISTS nodes (
     node_id     TEXT PRIMARY KEY,
     kind        TEXT,
     name        TEXT,
@@ -49,7 +55,7 @@ CREATE TABLE nodes (
     size_bytes  INTEGER DEFAULT 0,
     metadata    TEXT
 );
-CREATE TABLE edges (
+CREATE TABLE IF NOT EXISTS edges (
     source_id TEXT,
     target_id TEXT,
     relation  TEXT
@@ -119,6 +125,21 @@ def _size_bar(value: int, total: int, width: int = 20) -> str:
     """ASCII bar proportional to value/total."""
     filled = int(width * value / total) if total else 0
     return "█" * filled + "░" * (width - filled)
+
+
+def _decode_metadata(blob: str | None) -> dict[str, Any]:
+    """Decode a stored metadata blob, tolerating anything unreadable.
+
+    :param blob: JSON text from the ``metadata`` column, or ``None``.
+    :return: The decoded mapping, or ``{}``.
+    """
+    if not blob:
+        return {}
+    try:
+        loaded = json.loads(blob)
+    except (TypeError, ValueError):
+        return {}
+    return loaded if isinstance(loaded, dict) else {}
 
 
 def _embed_text(row: tuple[Any, ...]) -> str:
@@ -276,7 +297,10 @@ class FileTreeKG(KGModule):
         Pass 3   — embed each node's canonical text and write to sqlite-vec
                    when ``embed=True`` and ``kg_utils.embedder`` is available.
 
-        :param wipe: If True, delete the existing database before building.
+        :param wipe: If True, delete the existing database and drop both tables
+            before building. If False, the existing rows are kept and this build
+            upserts over them — which is what the flag has always claimed and,
+            until this was fixed, never did.
         :param embed: If True, populate the sqlite-vec vector index after Pass 2.5.
         :param metadata: If True, extract per-format metadata (image EXIF, etc.)
             for each file node.  Cheap — the dispatcher returns immediately
@@ -292,6 +316,8 @@ class FileTreeKG(KGModule):
 
         # Pass 1: extract nodes and edges
         with sqlite3.connect(self.db_path) as conn:
+            if wipe:
+                conn.executescript(_DROP_SQL)
             conn.executescript(_SCHEMA)
             for spec in extractor.extract():
                 if isinstance(spec, NodeSpec):
@@ -590,6 +616,36 @@ class FileTreeKG(KGModule):
                     "score": score,
                 }
             )
+        return self._attach_metadata(nodes)
+
+    def _attach_metadata(self, nodes: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Fill in each node's ``metadata`` from SQLite, in place.
+
+        The vector store carries only ``_META_COLUMNS`` — deliberately, since
+        duplicating the metadata blob into the index would bloat it and give
+        the same fact two homes. SQLite stays authoritative, so a semantic hit
+        has to come back here for it.
+
+        Without this a semantic hit reaches a federated query with no dates on
+        it, and any ``time_range`` scope discards the whole KG as undated.
+
+        :param nodes: Node dicts from :meth:`_semantic_query`, mutated in place.
+        :return: The same list, for chaining.
+        """
+        if not nodes or self.db_path is None:
+            return nodes
+        ids = [n.get("node_id", "") for n in nodes if n.get("node_id")]
+        if not ids:
+            return nodes
+        placeholders = ",".join("?" * len(ids))
+        with sqlite3.connect(self.db_path) as conn:
+            rows = conn.execute(
+                f"SELECT node_id, metadata FROM nodes WHERE node_id IN ({placeholders})",
+                ids,
+            ).fetchall()
+        blobs = {nid: blob for nid, blob in rows}
+        for n in nodes:
+            n["metadata"] = _decode_metadata(blobs.get(n.get("node_id", "")))
         return nodes
 
     def _lexical_query(self, q: str, k: int) -> list[dict[str, Any]]:
@@ -604,7 +660,7 @@ class FileTreeKG(KGModule):
         with sqlite3.connect(self.db_path) as conn:
             rows = conn.execute(
                 """
-                SELECT node_id, kind, name, qualname, source_path, docstring
+                SELECT node_id, kind, name, qualname, source_path, docstring, metadata
                 FROM nodes
                 WHERE qualname LIKE ? OR kind LIKE ? OR docstring LIKE ?
                    OR metadata LIKE ?
@@ -622,6 +678,7 @@ class FileTreeKG(KGModule):
                 "source_path": r[4],
                 "docstring": r[5],
                 "score": 1.0,
+                "metadata": _decode_metadata(r[6]),
             }
             for r in rows
         ]
@@ -637,17 +694,27 @@ class FileTreeKG(KGModule):
         :param q: Query string.
         :param k: Number of results.
         :param max_nodes: Max nodes in pack.
-        :return: SnippetPack with snippet dicts (node_id, source_path, content, score, kind, name).
+        :return: SnippetPack with snippet dicts (node_id, source_path, content,
+            score, kind, name, metadata).
         """
         k: int = kwargs.get("k", 8)
         max_nodes: int = kwargs.get("max_nodes", 15)
         qresult = self.query(q, k=k)
 
+        # Scoped to the nodes this pack will actually render. This read used to
+        # be `SELECT ... FROM nodes` with no WHERE, pulling every row in the
+        # tree into memory to annotate at most `max_nodes` of them.
+        wanted = [n.get("node_id", "") for n in qresult.nodes[:max_nodes] if n.get("node_id")]
         sizes: dict[str, int] = {}
         meta_blobs: dict[str, str | None] = {}
-        if self.db_path is not None:
+        if self.db_path is not None and wanted:
+            placeholders = ",".join("?" * len(wanted))
             with sqlite3.connect(self.db_path) as conn:
-                rows = conn.execute("SELECT node_id, size_bytes, metadata FROM nodes").fetchall()
+                rows = conn.execute(
+                    f"SELECT node_id, size_bytes, metadata FROM nodes "
+                    f"WHERE node_id IN ({placeholders})",
+                    wanted,
+                ).fetchall()
             for nid, sz, mb in rows:
                 sizes[nid] = sz
                 meta_blobs[nid] = mb
@@ -664,12 +731,8 @@ class FileTreeKG(KGModule):
                 lines.append(f"size: {_fmt_size(size_bytes)}")
             if docstring:
                 lines.append(docstring)
-            mb = meta_blobs.get(nid)
-            if mb:
-                try:
-                    meta = json.loads(mb)
-                except (TypeError, ValueError):
-                    meta = None
+            meta = _decode_metadata(meta_blobs.get(nid))
+            if meta:
                 prose = metadata_prose(meta)
                 if prose:
                     lines.append(prose)
@@ -681,6 +744,7 @@ class FileTreeKG(KGModule):
                     "score": n.get("score", 0.0),
                     "kind": kind,
                     "name": n.get("name", ""),
+                    "metadata": meta,
                 }
             )
 
