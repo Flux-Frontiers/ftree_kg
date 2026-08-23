@@ -733,19 +733,19 @@ files = [
 
 [[package]]
 name = "doc-kg"
-version = "0.21.2"
+version = "0.22.0"
 description = "A tool to build a semantically searchable knowledge graph from markdown and text documents"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["kg"]
 files = [
-    {file = "doc_kg-0.21.2-py3-none-any.whl", hash = "sha256:56a9daca368d96c782b96bc5e238c3b1ea03ec84a35784b0e2c469badbe723f2"},
-    {file = "doc_kg-0.21.2.tar.gz", hash = "sha256:d02fa9b25b50512bf0fbbf574861cd28c6a8a82f0602528f8e8e212940dca363"},
+    {file = "doc_kg-0.22.0-py3-none-any.whl", hash = "sha256:9ad50cad83ac37518ff916b44342c72cbb1972034963b3ab4ebbfd21e8361a43"},
+    {file = "doc_kg-0.22.0.tar.gz", hash = "sha256:77ccf66da16dee6c79ce22cebd08d9c27f1ec907f5f9bb32c67f096cb258dcc0"},
 ]
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = {version = ">=0.12.1", extras = ["semantic"]}
+kgmodule-utils = {version = ">=0.18.0", extras = ["semantic"]}
 mcp = ">=1.0.0,<2"
 pymupdf4llm = ">=0.0.17"
 pyyaml = ">=6.0.0"
@@ -753,9 +753,7 @@ rich = ">=14.3.3,<15"
 tqdm = ">=4.60"
 
 [package.extras]
-all = ["detect-secrets (>=1.5.0)", "joblib (>=1.4.0)", "pdoc (>=14.0.0)", "pre-commit (>=4.5.1)", "pytest (>=9.0.3)", "pytest-cov (>=5.0.0)", "pyvis (>=0.3.2)", "ruff (>=0.4.0,<0.16)", "scikit-learn (>=1.3.0)", "streamlit (>=1.35.0)", "ty (>=0.0.41)"]
 analysis = ["joblib (>=1.4.0)", "scikit-learn (>=1.3.0)"]
-dev = ["detect-secrets (>=1.5.0)", "pdoc (>=14.0.0)", "pre-commit (>=4.5.1)", "pytest (>=9.0.3)", "pytest-cov (>=5.0.0)", "ruff (>=0.4.0,<0.16)", "ty (>=0.0.41)"]
 lancedb = ["lancedb (>=0.29.0)"]
 viz = ["pyvis (>=0.3.2)", "streamlit (>=1.35.0)"]
 
@@ -1071,32 +1069,35 @@ referencing = ">=0.31.0"
 
 [[package]]
 name = "kg-rag"
-version = "0.12.0"
+version = "0.14.0"
 description = "Orchestration layer for the KGRAG(tm) components."
 optional = true
 python-versions = "<3.14,>=3.12"
 groups = ["main"]
 markers = "extra == \"adapter\""
 files = [
-    {file = "kg_rag-0.12.0-py3-none-any.whl", hash = "sha256:2b18e5f054375ef9726f7f87c5937d80b977130bd018b30bfcd0580b54a4788b"},
-    {file = "kg_rag-0.12.0.tar.gz", hash = "sha256:0f75692b658c3065a1539c18d7351a232033217c608876110bec2e662824df03"},
+    {file = "kg_rag-0.14.0-py3-none-any.whl", hash = "sha256:ef00a4a37923272f8b7bf43fcece08c4d2118f9097147ab9ba67f9893ee53344"},
+    {file = "kg_rag-0.14.0.tar.gz", hash = "sha256:c106a3166416b52ef8c8daaf9009a13c3725e9ab6fceffe2654190ff358d2e1c"},
 ]
 
 [package.dependencies]
 click = ">=8.1.0"
-kgmodule-utils = ">=0.12.1"
+kgmodule-utils = ">=0.18.0"
 mcp = ">=1.0.0,<2"
 numpy = ">=1.24.0"
 pandas = ">=2.0.0"
-rich = ">=14.3.3,<15.0.0"
+rich = ">=14.3.3,<15"
 safetensors = ">=0.5.0"
-sentence-transformers = ">=5.2.0,<6.0.0"
+sentence-transformers = ">=5.2.0,<6"
 torch = ">=2.5.1"
 transformers = ">=5.5.0,<6"
 
 [package.extras]
-all = ["PyQt5 (>=5.15.0)", "diary-kg (>=0.96.0)", "doc-kg (>=0.21.1)", "ftree-kg (>=0.11.0)", "markdown (>=3.6)", "param (>=2.0.0)", "plotly (>=5.14.0)", "pycode-kg (>=0.22.0)", "pyvis (>=0.3.2)", "pyvista (>=0.44.0)", "pyvistaqt (>=0.11.0)", "streamlit (>=1.35.0)", "trame-vtk (>=2.0.0)"]
-kg = ["diary-kg (>=0.96.0)", "doc-kg (>=0.21.1)", "ftree-kg (>=0.11.0)", "pycode-kg (>=0.22.0)"]
+all = ["PyQt5 (>=5.15.0)", "diary-kg (>=0.97.0)", "doc-kg (>=0.21.2)", "firecrawl-anydoc (>=0.1.9)", "ftree-kg (>=0.14.0)", "markdown (>=3.6)", "memory-kg (>=0.7.0)", "param (>=2.0.0)", "plotly (>=5.14.0)", "pycode-kg (>=0.23.1)", "pyvis (>=0.3.2)", "pyvista (>=0.44.0)", "pyvistaqt (>=0.11.0)", "streamlit (>=1.35.0)", "trame-vtk (>=2.0.0)"]
+diary = ["diary-kg (>=0.97.0)"]
+filetree = ["ftree-kg (>=0.14.0)"]
+ingest = ["firecrawl-anydoc (>=0.1.9)"]
+kg = ["doc-kg (>=0.21.2)", "memory-kg (>=0.7.0)", "pycode-kg (>=0.23.1)"]
 pi = ["llama-cpp-python (>=0.3.0)"]
 qt = ["PyQt5 (>=5.15.0)"]
 viz = ["plotly (>=5.14.0)", "pyvis (>=0.3.2)", "streamlit (>=1.35.0)"]
@@ -3628,4 +3629,4 @@ adapter = ["kg-rag"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "0ecc69c1444b63ca8570fb4df4eaf4732aec8822a902df2d9f86c1b3d249fec0"
+content-hash = "fe9e363711ac9d8e1397fb68e4c2f18abc74280c43523eddbd7e3344cc558187"
