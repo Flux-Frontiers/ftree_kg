@@ -15,14 +15,13 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import cast
 
 import click
 
 from ftree_kg.cli.group import cli
 from ftree_kg.cli.options import db_option, repo_option, vectors_option
 from ftree_kg.module import FileTreeKG
-from ftree_kg.snapshots import SnapshotDelta, SnapshotManager, SnapshotMetrics
+from ftree_kg.snapshots import SnapshotDelta, SnapshotManager, delta_from_dict, metrics_from_dict
 
 
 @cli.group("snapshot")
@@ -51,7 +50,13 @@ def snapshot() -> None:
     "--tree-hash",
     default="",
     type=str,
-    help="Git tree hash; auto-detected if not provided.",
+    help="Git tree hash, recorded as provenance; auto-detected if not provided.",
+)
+@click.option(
+    "--subject",
+    default="",
+    type=str,
+    help="What was measured, e.g. 'repo:ftree-kg' or 'tree:/some/path'.",
 )
 def save_snapshot(
     version: str,
@@ -61,18 +66,21 @@ def save_snapshot(
     snapshots_dir: str | None,
     branch: str | None,
     tree_hash: str,
+    subject: str,
 ) -> None:
     """Capture current FileTreeKG metrics and save as a temporal snapshot.
 
     Reads node/edge statistics from the SQLite graph, then saves a snapshot
-    tagged with the given VERSION. The tree hash is auto-detected from git
-    when not provided.
+    keyed on the given VERSION. Omit VERSION and the snapshot is keyed on a
+    UTC timestamp, which is the right answer for a tree that has no release
+    tag. The tree hash is recorded as provenance and auto-detected from git
+    when not provided; it is not the key.
 
-    Snapshots are stored in .filetreekg/snapshots/{tree_hash}.json, with a
+    Snapshots are stored in .filetreekg/snapshots/{key}.json, with a
     manifest.json tracking all snapshots and their metrics.
 
     Example:
-        ftreekg snapshot save 0.1.0 --repo .
+        ftreekg snapshot save 0.1.0 --repo . --subject repo:ftree-kg
     """
     repo_root = Path(repo).resolve()
     db_path = Path(db) if db else repo_root / ".filetreekg" / "graph.sqlite"
@@ -93,13 +101,17 @@ def save_snapshot(
         branch=branch,
         stats_dict=stats,
         tree_hash=tree_hash,
+        # An explicit VERSION is a release tag and becomes the key. An
+        # auto-detected one is the measuring tool's version and must not be.
+        key=version or "",
+        subject=subject,
     )
 
     snapshot_file = snap_mgr.save_snapshot(snapshot_obj)
     click.echo(f"OK Snapshot saved: {snapshot_file or '(skipped, unchanged)'}")
     click.echo(f"  Key:     {snapshot_obj.key}")
     click.echo(f"  Version: {snapshot_obj.version}")
-    m = cast(SnapshotMetrics, snapshot_obj.metrics)
+    m = metrics_from_dict(snapshot_obj.metrics)
     click.echo(f"  Nodes:   {m.total_nodes}")
     click.echo(f"  Edges:   {m.total_edges}")
     click.echo(f"  Files:   {m.total_files}")
@@ -191,7 +203,7 @@ def show_snapshot(key: str, snapshots_dir: str | None) -> None:
     click.echo(f"Version:   {snap.version}")
     click.echo()
 
-    m = cast(SnapshotMetrics, snap.metrics)
+    m = metrics_from_dict(snap.metrics)
     click.echo("Metrics:")
     click.echo(f"  Total Nodes:  {m.total_nodes}")
     click.echo(f"  Total Edges:  {m.total_edges}")
@@ -221,7 +233,7 @@ def show_snapshot(key: str, snapshots_dir: str | None) -> None:
 
     if snap.vs_previous:
         click.echo("Delta vs. Previous:")
-        d = cast(SnapshotDelta, snap.vs_previous)
+        d = delta_from_dict(snap.vs_previous) or SnapshotDelta()
         click.echo(f"  Nodes:  {d.nodes:+d}")
         click.echo(f"  Edges:  {d.edges:+d}")
         click.echo(f"  Files:  {d.files_delta:+d}")
@@ -230,7 +242,7 @@ def show_snapshot(key: str, snapshots_dir: str | None) -> None:
 
     if snap.vs_baseline:
         click.echo("Delta vs. Baseline:")
-        d = cast(SnapshotDelta, snap.vs_baseline)
+        d = delta_from_dict(snap.vs_baseline) or SnapshotDelta()
         click.echo(f"  Nodes:  {d.nodes:+d}")
         click.echo(f"  Edges:  {d.edges:+d}")
         click.echo(f"  Files:  {d.files_delta:+d}")

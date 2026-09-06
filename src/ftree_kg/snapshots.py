@@ -1,31 +1,41 @@
 """snapshots.py — FileTreeKG Temporal Snapshots (thin layer over kg_utils.snapshots)
 
-Imports the shared Snapshot, SnapshotManifest, and base SnapshotManager from
-kg_utils.snapshots and adds FileTreeKG-specific behaviour:
+``Snapshot``, ``SnapshotManifest`` and ``PruneResult`` are re-exported from
+``kg_utils.snapshots`` unchanged.  A snapshot's ``metrics``, ``vs_previous``
+and ``vs_baseline`` are plain dicts, which is what the shared manager reads
+and writes.
 
-  - SnapshotMetrics / SnapshotDelta dataclasses (domain types used by the CLI
-    and tests for attribute-style access).
-  - FtreeSnapshotManager subclass that:
-      * Defaults package_name to "ftree-kg" (fallback "filetreekg").
-      * Accepts the legacy ``stats_dict`` keyword in ``capture()``.
-      * Returns snapshots with ``metrics`` hydrated as a SnapshotMetrics
-        instance and ``vs_previous`` / ``vs_baseline`` as SnapshotDelta
-        instances so existing callers continue to use attribute access.
-      * Overrides ``_compute_delta_from_metrics`` to include ``files_delta``
-        and ``dirs_delta``.
-      * Provides ``_collect_dir_node_counts()`` (per-directory SQLite query).
+This module adds:
+
+  - ``SnapshotMetrics`` / ``SnapshotDelta`` — domain dataclasses, used as
+    converters by callers that want attribute access.  Convert with
+    ``metrics_from_dict`` / ``metrics_to_dict`` and ``delta_from_dict`` /
+    ``delta_to_dict``; a ``Snapshot`` never holds one.
+  - ``FtreeSnapshotManager``, which defaults ``package_name`` to ``"ftree-kg"``
+    (falling back to ``"filetreekg"``), accepts the legacy ``stats_dict``
+    keyword in ``capture()``, adds ``total_files``, ``total_dirs`` and
+    ``dir_node_counts`` to the metrics, adds ``files_delta`` and ``dirs_delta``
+    to deltas, and extends a diff with ``dir_node_counts_delta``.
 
 The name ``SnapshotManager`` is re-exported as an alias for
 ``FtreeSnapshotManager`` so that ``from ftree_kg.snapshots import SnapshotManager``
 continues to work unchanged.
 
+Do not hydrate a ``Snapshot``'s structured fields into these dataclasses.  This
+module used to overwrite ``metrics``, ``vs_previous`` and ``vs_baseline`` with
+dataclass instances after every load and convert them back before every save,
+which meant ``load_snapshot``, ``save_snapshot`` and ``diff_snapshots`` all
+needed overrides.  In the sibling repos the equivalent ``save_snapshot``
+override dropped ``snapshot_key``, ``subject`` and ``tool`` on the way to disk.
+
 Usage
 -----
->>> from ftree_kg.snapshots import SnapshotManager
+>>> from ftree_kg.snapshots import SnapshotManager, metrics_from_dict
 >>> mgr = SnapshotManager(".filetreekg/snapshots", db_path=".filetreekg/graph.sqlite")
->>> snapshot = mgr.capture(version="v0.1.0", branch="main", stats_dict=kg.stats())
+>>> snapshot = mgr.capture(version="0.15.0", key="v0.15.0", subject="repo:ftree-kg")
 >>> mgr.save_snapshot(snapshot)
->>> prev = mgr.get_previous(tree_hash)
+>>> metrics_from_dict(snapshot.metrics).total_files
+0
 
 Author: Eric G. Suchanek, PhD
 License: Elastic 2.0
@@ -37,7 +47,7 @@ import importlib.metadata
 import sqlite3
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 # ---------------------------------------------------------------------------
 # Re-export shared models for backwards compatibility
@@ -153,26 +163,6 @@ def delta_from_dict(d: dict[str, Any] | None) -> SnapshotDelta | None:
     )
 
 
-def _hydrate_snapshot(snap: Snapshot) -> Snapshot:
-    """Replace dict-typed metrics / deltas with domain dataclasses in-place.
-
-    The shared Snapshot stores ``metrics``, ``vs_previous``, and
-    ``vs_baseline`` as plain dicts.  FileTreeKG callers (CLI, tests) rely on
-    attribute access (``snap.metrics.total_nodes``, ``snap.vs_previous.nodes``
-    etc.), so we overwrite those fields with the domain dataclass instances
-    after loading.
-
-    Returns the same Snapshot object for convenience.
-    """
-    if isinstance(snap.metrics, dict):
-        snap.metrics = metrics_from_dict(snap.metrics)  # ty: ignore[invalid-assignment]
-    if isinstance(snap.vs_previous, dict):
-        snap.vs_previous = delta_from_dict(snap.vs_previous)  # ty: ignore[invalid-assignment]
-    if isinstance(snap.vs_baseline, dict):
-        snap.vs_baseline = delta_from_dict(snap.vs_baseline)  # ty: ignore[invalid-assignment]
-    return snap
-
-
 # ---------------------------------------------------------------------------
 # FileTreeKG-specific SnapshotManager
 # ---------------------------------------------------------------------------
@@ -182,14 +172,19 @@ class FtreeSnapshotManager(_BaseSnapshotManager):
     """FileTreeKG snapshot manager.
 
     Extends the shared SnapshotManager with:
+
     - Default package name "ftree-kg" (fallback "filetreekg").
-    - Legacy ``stats_dict`` parameter in ``capture()`` (mapped to
-      ``graph_stats_dict`` of the base class).
-    - ``files_delta`` and ``dirs_delta`` fields in delta computation.
+    - The legacy ``stats_dict`` parameter in ``capture()`` (mapped to the
+      base class's ``graph_stats_dict``), plus ``total_files``,
+      ``total_dirs`` and ``dir_node_counts`` in the metrics.
+    - ``files_delta`` and ``dirs_delta`` in delta computation.
+    - ``dir_node_counts_delta`` in a diff.
     - Per-directory node counts via ``_collect_dir_node_counts()``.
-    - Automatic hydration of returned Snapshot objects so that
-      ``snap.metrics`` is a SnapshotMetrics instance and
-      ``snap.vs_*`` are SnapshotDelta instances.
+
+    Everything else -- saving, loading, listing, pruning, key handling -- is
+    inherited unchanged.  Overriding those to hydrate and dehydrate the domain
+    dataclasses is what this module used to do, and it is the same pattern
+    that dropped the snapshot key in two sibling repos.
     """
 
     def __init__(
@@ -220,7 +215,7 @@ class FtreeSnapshotManager(_BaseSnapshotManager):
         super().__init__(snapshots_dir, package_name=resolved_name, db_path=db_path)
 
     # ------------------------------------------------------------------
-    # capture — accept legacy stats_dict kwarg
+    # capture — accept legacy stats_dict kwarg, add filesystem metrics
     # ------------------------------------------------------------------
 
     def capture(
@@ -231,9 +226,11 @@ class FtreeSnapshotManager(_BaseSnapshotManager):
         tree_hash: str = "",
         hotspots: list[dict[str, Any]] | None = None,
         issues: list[str] | None = None,
+        key: str = "",
+        subject: str = "",
         *,
         stats_dict: dict[str, Any] | None = None,
-        **kwargs: Any,
+        **extra_metrics: Any,
     ) -> Snapshot:
         """Capture a snapshot.
 
@@ -242,41 +239,43 @@ class FtreeSnapshotManager(_BaseSnapshotManager):
         ``total_files``, ``total_dirs``, and ``dir_node_counts`` before
         delegating to the base implementation.
 
-        All other keyword arguments are forwarded to the base class.
-
+        :param version: Version string; auto-detected from the package if None.
+        :param branch: Git branch name; auto-detected if None.
+        :param graph_stats_dict: Output from ``FileTreeKG.stats()``.
+        :param tree_hash: Git tree hash, recorded as provenance; auto-detected
+            if not provided. It is not the snapshot's key.
+        :param hotspots: Top hotspot entries.
+        :param issues: Issue description strings.
+        :param key: Snapshot identifier. Pass the release tag at release time;
+            omit it and the base assigns a UTC timestamp. Named explicitly
+            rather than left to ``**extra_metrics``, which would silently
+            record it as a metric instead of passing it to the base.
+        :param subject: What was measured, e.g. ``repo:ftree-kg`` or
+            ``tree:/some/path``. Explicit for the same reason.
         :param stats_dict: Legacy alias for ``graph_stats_dict``.
+        :param extra_metrics: Additional domain-specific metric fields.
+        :return: New :class:`~kg_utils.snapshots.Snapshot` (not yet persisted).
         """
         # Prefer explicit graph_stats_dict over legacy stats_dict.
         effective_stats = graph_stats_dict if graph_stats_dict is not None else stats_dict or {}
-
         node_counts: dict[str, int] = effective_stats.get("node_counts", {})
-        dir_node_counts = self._collect_dir_node_counts()
 
-        snap = super().capture(
+        return super().capture(
             version=version,
             branch=branch,
             graph_stats_dict={
                 **effective_stats,
                 "total_files": node_counts.get("file", 0),
                 "total_dirs": node_counts.get("directory", 0),
-                "dir_node_counts": dir_node_counts,
+                "dir_node_counts": self._collect_dir_node_counts(),
             },
             tree_hash=tree_hash,
             hotspots=hotspots,
             issues=issues,
-            **kwargs,
+            key=key,
+            subject=subject,
+            **extra_metrics,
         )
-        return _hydrate_snapshot(snap)
-
-    # ------------------------------------------------------------------
-    # load_snapshot — hydrate domain types on read-back
-    # ------------------------------------------------------------------
-
-    def load_snapshot(self, key: str) -> Snapshot | None:
-        snap = super().load_snapshot(key)
-        if snap is None:
-            return None
-        return _hydrate_snapshot(snap)
 
     # ------------------------------------------------------------------
     # Delta computation — add files_delta and dirs_delta
@@ -290,6 +289,31 @@ class FtreeSnapshotManager(_BaseSnapshotManager):
         base["files_delta"] = new_m.get("total_files", 0) - old_m.get("total_files", 0)
         base["dirs_delta"] = new_m.get("total_dirs", 0) - old_m.get("total_dirs", 0)
         return base
+
+    # ------------------------------------------------------------------
+    # diff_snapshots — add dir_node_counts_delta for the CLI display
+    # ------------------------------------------------------------------
+
+    def diff_snapshots(self, key_a: str, key_b: str) -> dict[str, Any]:
+        """Compare two snapshots; extends the base result with dir_node_counts_delta.
+
+        :param key_a: Earlier snapshot key.
+        :param key_b: Later snapshot key.
+        :return: The shared diff result plus ``dir_node_counts_delta``, which
+            lists only the top-level directories whose node count changed.
+        """
+        result = super().diff_snapshots(key_a, key_b)
+        if "error" in result:
+            return result
+
+        dnc_a: dict[str, int] = result["a"]["metrics"].get("dir_node_counts", {})
+        dnc_b: dict[str, int] = result["b"]["metrics"].get("dir_node_counts", {})
+        result["dir_node_counts_delta"] = {
+            d: dnc_b.get(d, 0) - dnc_a.get(d, 0)
+            for d in set(dnc_a) | set(dnc_b)
+            if dnc_b.get(d, 0) != dnc_a.get(d, 0)
+        }
+        return result
 
     # ------------------------------------------------------------------
     # Per-directory node counts (SQLite query)
@@ -317,80 +341,6 @@ class FtreeSnapshotManager(_BaseSnapshotManager):
             return counts
         except sqlite3.Error:
             return {}
-
-    # ------------------------------------------------------------------
-    # diff_snapshots — restore dir_node_counts_delta for CLI display
-    # ------------------------------------------------------------------
-
-    def diff_snapshots(self, key_a: str, key_b: str) -> dict[str, Any]:
-        """Compare two snapshots; extends base result with dir_node_counts_delta.
-
-        Overrides the base implementation to:
-        - Ensure ``result["a"]["metrics"]`` and ``result["b"]["metrics"]`` are
-          plain dicts (the base class uses the hydrated dataclass directly, but
-          ``cmd_snapshot.py`` calls ``.get()`` on those values).
-        - Add ``dir_node_counts_delta`` for the CLI diff display.
-        """
-        snap_a = self.load_snapshot(key_a)
-        snap_b = self.load_snapshot(key_b)
-
-        if not snap_a or not snap_b:
-            return {"error": "One or both snapshots not found"}
-
-        # snap.metrics is a SnapshotMetrics dataclass after _hydrate_snapshot.
-        m_a = metrics_to_dict(cast(SnapshotMetrics, snap_a.metrics))
-        m_b = metrics_to_dict(cast(SnapshotMetrics, snap_b.metrics))
-
-        all_node_kinds = set(m_a.get("node_counts", {})) | set(m_b.get("node_counts", {}))
-        all_edge_rels = set(m_a.get("edge_counts", {})) | set(m_b.get("edge_counts", {}))
-
-        node_counts_delta = {
-            k: m_b.get("node_counts", {}).get(k, 0) - m_a.get("node_counts", {}).get(k, 0)
-            for k in all_node_kinds
-        }
-        edge_counts_delta = {
-            k: m_b.get("edge_counts", {}).get(k, 0) - m_a.get("edge_counts", {}).get(k, 0)
-            for k in all_edge_rels
-        }
-
-        dnc_a: dict[str, int] = m_a.get("dir_node_counts", {})
-        dnc_b: dict[str, int] = m_b.get("dir_node_counts", {})
-        all_dirs = set(dnc_a) | set(dnc_b)
-        dir_node_counts_delta = {
-            d: dnc_b.get(d, 0) - dnc_a.get(d, 0)
-            for d in all_dirs
-            if dnc_b.get(d, 0) != dnc_a.get(d, 0)
-        }
-
-        return {
-            "a": {"key": snap_a.key, "metrics": m_a},
-            "b": {"key": snap_b.key, "metrics": m_b},
-            "delta": self._compute_delta_from_metrics(m_b, m_a),
-            "node_counts_delta": node_counts_delta,
-            "edge_counts_delta": edge_counts_delta,
-            "dir_node_counts_delta": dir_node_counts_delta,
-        }
-
-    # ------------------------------------------------------------------
-    # save_snapshot — serialize domain dataclasses back to dicts
-    # ------------------------------------------------------------------
-
-    def save_snapshot(self, snapshot: Snapshot, *, force: bool = False) -> Path | None:
-        """Save snapshot; converts domain dataclass fields to dicts first."""
-        # The base class expects metrics and vs_* to be dicts.  If they have
-        # been hydrated to domain dataclasses, convert them back before saving.
-        if isinstance(snapshot.metrics, SnapshotMetrics):
-            snapshot.metrics = metrics_to_dict(snapshot.metrics)
-        if isinstance(snapshot.vs_previous, SnapshotDelta):
-            snapshot.vs_previous = delta_to_dict(snapshot.vs_previous)
-        if isinstance(snapshot.vs_baseline, SnapshotDelta):
-            snapshot.vs_baseline = delta_to_dict(snapshot.vs_baseline)
-
-        path = super().save_snapshot(snapshot, force=force)
-
-        # Re-hydrate after saving so the caller still has attribute access.
-        _hydrate_snapshot(snapshot)
-        return path
 
 
 # ---------------------------------------------------------------------------
