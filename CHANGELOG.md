@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Snapshots are keyed on a release tag or timestamp, not a git tree hash.**
+  The floor on `kgmodule-utils` moves from `>=0.19.0`, where the key scheme
+  changed; the lock was resolving 0.18.0, so this repo had not received the fix
+  even though the fleet believed it inherited it for free. The tree hash is read
+  before `git add` stages the snapshot, so it names a tree that is never
+  committed and cannot be resolved afterwards. It is still recorded as
+  provenance, in the `tree_hash` field.
+
+  `ftreekg snapshot save VERSION` now keys the snapshot on VERSION, which the
+  command accepted and ignored before. Omit VERSION and the snapshot is keyed on
+  a UTC timestamp, which is the right answer for a tree with no release tag. A
+  new `--subject` option records what was measured, for example `repo:ftree-kg`
+  or `tree:/some/path`, separately from the version, which names the measuring
+  tool. Snapshots written before this change stay addressable by the tree hash
+  they were stored under.
+
+- **The hydration layer is gone.** `capture()` and `load_snapshot()` used to
+  overwrite a `Snapshot`'s `metrics`, `vs_previous` and `vs_baseline` with
+  `SnapshotMetrics` and `SnapshotDelta` instances, and `save_snapshot()`
+  converted them back before writing and re-hydrated afterwards. That forced
+  overrides of `load_snapshot`, `save_snapshot` and `diff_snapshots`, none of
+  which had anything to do with filesystem trees. In two sibling repos the
+  equivalent `save_snapshot` override dropped `snapshot_key`, `subject` and
+  `tool` on the way to disk.
+
+  A snapshot's three structured fields are now plain dicts, which is what the
+  shared manager reads and writes. `SnapshotMetrics` and `SnapshotDelta` remain
+  exported as converters, with `metrics_to_dict`, `metrics_from_dict`,
+  `delta_to_dict` and `delta_from_dict`; the CLI uses them in place of the
+  `cast()` calls the hydration made true. Read a metric as
+  `snap.metrics["total_nodes"]`, or as
+  `metrics_from_dict(snap.metrics).dir_node_counts` when you want the
+  converter's defaults for keys a legacy snapshot does not carry.
+
+  `FtreeSnapshotManager` keeps only what is genuinely FileTreeKG-specific: the
+  `package_name` resolution, the `capture()` that accepts the legacy
+  `stats_dict` alias and adds `total_files`, `total_dirs` and `dir_node_counts`,
+  `files_delta` and `dirs_delta` in `_compute_delta_from_metrics`, a
+  `diff_snapshots` adding `dir_node_counts_delta`, and
+  `_collect_dir_node_counts()`.
+
 ## [0.14.0] - 2026-08-22
 
 ### Added

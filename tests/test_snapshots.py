@@ -6,8 +6,8 @@ Tests for FileTreeKG temporal snapshots:
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
-from typing import cast
 
 import pytest
 
@@ -127,15 +127,22 @@ def test_delta_from_dict_none_returns_none() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_capture_hydrates_metrics_as_dataclass(
+def test_capture_stores_metrics_as_a_plain_dict(
     kg: FileTreeKG, snapshots_dir: Path, tmp_path: Path
 ) -> None:
-    """capture() must return Snapshot.metrics as a SnapshotMetrics instance."""
+    """capture() returns the dict the shared manager reads and writes.
+
+    This module used to overwrite the three structured fields with dataclass
+    instances after every load and convert them back before every save, which
+    forced overrides of load_snapshot, save_snapshot and diff_snapshots. The
+    equivalent save_snapshot override in two sibling repos dropped the
+    snapshot key on the way to disk.
+    """
     mgr = SnapshotManager(snapshots_dir, db_path=tmp_path / ".filetreekg" / "graph.sqlite")
     snap = mgr.capture(version="0.0.0-test", branch="test", stats_dict=kg.stats())
 
-    assert isinstance(snap.metrics, SnapshotMetrics)
-    m = cast(SnapshotMetrics, snap.metrics)
+    assert isinstance(snap.metrics, dict)
+    m = metrics_from_dict(snap.metrics)
     assert m.total_nodes > 0
     assert m.total_files >= 0
     assert m.total_dirs >= 0
@@ -147,7 +154,7 @@ def test_capture_accepts_legacy_stats_dict_kwarg(
     """``stats_dict`` is the FileTreeKG-specific legacy alias for ``graph_stats_dict``."""
     mgr = SnapshotManager(snapshots_dir, db_path=tmp_path / ".filetreekg" / "graph.sqlite")
     snap = mgr.capture(version="v", branch="b", stats_dict=kg.stats())
-    m = cast(SnapshotMetrics, snap.metrics)
+    m = metrics_from_dict(snap.metrics)
     assert m.total_nodes == kg.stats()["total_nodes"]
 
 
@@ -159,9 +166,9 @@ def test_save_and_load_round_trip(kg: FileTreeKG, snapshots_dir: Path, tmp_path:
 
     loaded = mgr.load_snapshot(snap.key)
     assert loaded is not None
-    assert isinstance(loaded.metrics, SnapshotMetrics)
-    lm = cast(SnapshotMetrics, loaded.metrics)
-    om = cast(SnapshotMetrics, snap.metrics)
+    assert isinstance(loaded.metrics, dict)
+    lm = metrics_from_dict(loaded.metrics)
+    om = metrics_from_dict(snap.metrics)
     assert lm.total_nodes == om.total_nodes
     assert lm.total_edges == om.total_edges
 
@@ -202,12 +209,16 @@ def test_diff_snapshots_zero_delta_for_identical_stats(
     mgr = SnapshotManager(snapshots_dir, db_path=tmp_path / ".filetreekg" / "graph.sqlite")
     stats = kg.stats()
 
-    snap_a = mgr.capture(version="0.0.0-a", branch="test", stats_dict=stats, tree_hash="aaaa")
-    snap_b = mgr.capture(version="0.0.0-b", branch="test", stats_dict=stats, tree_hash="bbbb")
+    snap_a = mgr.capture(
+        version="0.0.0-a", branch="test", stats_dict=stats, tree_hash="aaaa", key="v0.0.0-a"
+    )
+    snap_b = mgr.capture(
+        version="0.0.0-b", branch="test", stats_dict=stats, tree_hash="bbbb", key="v0.0.0-b"
+    )
     mgr.save_snapshot(snap_a)
     mgr.save_snapshot(snap_b)
 
-    result = mgr.diff_snapshots("aaaa", "bbbb")
+    result = mgr.diff_snapshots("v0.0.0-a", "v0.0.0-b")
     assert "error" not in result
     assert result["delta"]["nodes"] == 0
     assert result["delta"]["files_delta"] == 0
@@ -231,12 +242,12 @@ def test_diff_snapshots_includes_filesystem_deltas(snapshots_dir: Path, tmp_path
         "edge_counts": {"CONTAINS": 7},
     }
 
-    snap_a = mgr.capture(version="a", branch="t", stats_dict=stats_a, tree_hash="aaaa")
-    snap_b = mgr.capture(version="b", branch="t", stats_dict=stats_b, tree_hash="bbbb")
+    snap_a = mgr.capture(version="a", branch="t", stats_dict=stats_a, tree_hash="aaaa", key="va")
+    snap_b = mgr.capture(version="b", branch="t", stats_dict=stats_b, tree_hash="bbbb", key="vb")
     mgr.save_snapshot(snap_a)
     mgr.save_snapshot(snap_b)
 
-    result = mgr.diff_snapshots("aaaa", "bbbb")
+    result = mgr.diff_snapshots("va", "vb")
     assert result["delta"]["files_delta"] == 2
     assert result["delta"]["dirs_delta"] == 1
 
@@ -261,3 +272,67 @@ def test_snapshot_re_export_origin() -> None:
     assert ReExportedSnapshot.__module__.startswith("kg_utils.")
     assert ReExportedManifest.__module__.startswith("kg_utils.")
     assert isinstance(Snapshot, type)
+
+
+# ---------------------------------------------------------------------------
+# Key scheme (kgmodule-utils >= 0.19.0)
+# ---------------------------------------------------------------------------
+
+
+def test_snapshot_is_the_shared_class() -> None:
+    """Hydrating the structured fields is what forced the removed overrides.
+
+    A Snapshot that carries dataclasses instead of dicts breaks every shared
+    manager method that reads those fields, and each one then needs a
+    hand-written copy. One such copy dropped the key in two sibling repos.
+    """
+    from kg_utils.snapshots import Snapshot as SharedSnapshot
+
+    assert Snapshot is SharedSnapshot
+
+
+def test_save_snapshot_persists_key_subject_and_tool(snapshots_dir: Path, tmp_path: Path) -> None:
+    """The key, subject and tool provenance survive the trip to disk."""
+    mgr = SnapshotManager(snapshots_dir, db_path=tmp_path / ".filetreekg" / "graph.sqlite")
+    tree_hash = "c" * 40
+    snap = mgr.capture(
+        version="0.15.0",
+        branch="main",
+        stats_dict={
+            "total_nodes": 10,
+            "total_edges": 5,
+            "node_counts": {"file": 6, "directory": 4},
+            "edge_counts": {"CONTAINS": 5},
+        },
+        tree_hash=tree_hash,
+        key="v0.15.0",
+        subject="repo:ftree-kg",
+    )
+    assert snap.key == "v0.15.0"
+
+    saved = mgr.save_snapshot(snap)
+    assert saved is not None and saved.name == "v0.15.0.json"
+
+    on_disk = json.loads(saved.read_text(encoding="utf-8"))
+    assert on_disk["key"] == "v0.15.0"
+    assert on_disk["subject"] == "repo:ftree-kg"
+    assert on_disk["tree_hash"] == tree_hash
+    assert on_disk["tool"] in {"ftree-kg", "filetreekg"}
+    assert on_disk["tool_version"]
+
+    entry = json.loads(mgr.manifest_path.read_text(encoding="utf-8"))["snapshots"][0]
+    assert entry["key"] == "v0.15.0"
+    assert entry["subject"] == "repo:ftree-kg"
+
+
+def test_capture_without_a_key_does_not_use_the_tree_hash(snapshots_dir: Path) -> None:
+    """The tree hash names a tree that is never committed, so it cannot be the key."""
+    mgr = SnapshotManager(snapshots_dir)
+    snap = mgr.capture(
+        version="0.15.0",
+        branch="main",
+        stats_dict={"total_nodes": 3, "total_edges": 2},
+        tree_hash="d" * 40,
+    )
+    assert snap.key != "d" * 40
+    assert snap.tree_hash == "d" * 40
