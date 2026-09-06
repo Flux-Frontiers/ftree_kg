@@ -50,6 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `diff_snapshots` adding `dir_node_counts_delta`, and
   `_collect_dir_node_counts()`.
 
+## [0.15.0] - 2026-09-06
+
 ## [0.14.0] - 2026-08-22
 
 ### Added

@@ -1,0 +1,135 @@
+{
+  "key": "0.15.0",
+  "branch": "main",
+  "timestamp": "2026-09-06T22:57:45.831402+00:00",
+  "version": "0.15.0",
+  "subject": "repo:ftree-kg",
+  "tool": "pycode-kg",
+  "tool_version": "0.26.0",
+  "tree_hash": "948c5b66c04e57376f2dfdaef46ca19c43153082",
+  "metrics": {
+    "db_path": ".pycodekg/graph.sqlite",
+    "total_nodes": 1379,
+    "meaningful_nodes": 103,
+    "total_edges": 1245,
+    "node_counts": {
+      "class": 6,
+      "function": 45,
+      "method": 33,
+      "module": 19,
+      "symbol": 1276
+    },
+    "edge_counts": {
+      "ATTR_ACCESS": 333,
+      "CALLS": 490,
+      "CONTAINS": 84,
+      "IMPORTS": 155,
+      "INHERITS": 4,
+      "RESOLVES_TO": 179
+    },
+    "module_count": 19,
+    "class_count": 6,
+    "function_count": 45,
+    "method_count": 33,
+    "docstring_coverage": 0.932,
+    "snapshot_count": 24,
+    "coverage_documented": 96,
+    "coverage_total": 103,
+    "critical_issues": 2,
+    "complexity_median": 4,
+    "module_node_counts": {
+      "src/ftree_kg/__init__.py": 3,
+      "src/ftree_kg/adapter.py": 52,
+      "src/ftree_kg/cli/__init__.py": 2,
+      "src/ftree_kg/cli/__main__.py": 1,
+      "src/ftree_kg/cli/cmd_analyze.py": 21,
+      "src/ftree_kg/cli/cmd_build.py": 28,
+      "src/ftree_kg/cli/cmd_hooks.py": 22,
+      "src/ftree_kg/cli/cmd_query.py": 51,
+      "src/ftree_kg/cli/cmd_snapshot.py": 151,
+      "src/ftree_kg/cli/cmd_status.py": 89,
+      "src/ftree_kg/cli/group.py": 2,
+      "src/ftree_kg/cli/main.py": 1,
+      "src/ftree_kg/cli/options.py": 13,
+      "src/ftree_kg/config.py": 22,
+      "src/ftree_kg/extractor.py": 59,
+      "src/ftree_kg/mcp_server.py": 42,
+      "src/ftree_kg/metadata.py": 99,
+      "src/ftree_kg/module.py": 357,
+      "src/ftree_kg/snapshots.py": 81
+    }
+  },
+  "hotspots": [
+    {
+      "name": "cls:src/ftree_kg/module.py:FileTreeKG",
+      "callers": 8,
+      "callees": 0,
+      "risk_level": "low"
+    },
+    {
+      "name": "m:src/ftree_kg/module.py:FileTreeKG.stats",
+      "callers": 6,
+      "callees": 0,
+      "risk_level": "low"
+    },
+    {
+      "name": "m:src/ftree_kg/adapter.py:FileTreeKGAdapter._load",
+      "callers": 4,
+      "callees": 1,
+      "risk_level": "low"
+    },
+    {
+      "name": "fn:src/ftree_kg/mcp_server.py:_get_kg",
+      "callers": 4,
+      "callees": 0,
+      "risk_level": "low"
+    },
+    {
+      "name": "m:src/ftree_kg/adapter.py:FileTreeKGAdapter.stats",
+      "callers": 4,
+      "callees": 1,
+      "risk_level": "low"
+    },
+    {
+      "name": "fn:src/ftree_kg/config.py:load_exclude_dirs",
+      "callers": 4,
+      "callees": 1,
+      "risk_level": "low"
+    },
+    {
+      "name": "fn:src/ftree_kg/config.py:load_include_dirs",
+      "callers": 4,
+      "callees": 1,
+      "risk_level": "low"
+    },
+    {
+      "name": "m:src/ftree_kg/module.py:FileTreeKG.close",
+      "callers": 4,
+      "callees": 0,
+      "risk_level": "low"
+    },
+    {
+      "name": "fn:src/ftree_kg/module.py:_decode_metadata",
+      "callers": 3,
+      "callees": 0,
+      "risk_level": "low"
+    },
+    {
+      "name": "fn:src/ftree_kg/module.py:_fmt_size",
+      "callers": 3,
+      "callees": 0,
+      "risk_level": "low"
+    }
+  ],
+  "issues": [
+    "[WARN] 1 dead-code candidates found (`adapter.py:FileTreeKGAdapter`) -- no callers in code or tests; verify against downstream consumers, then remove or archive",
+    "[INFO] 1 definitions are unused in production code but exercised by tests -- likely public API for downstream packages; not counted against the quality grade"
+  ],
+  "vs_previous": null,
+  "vs_baseline": {
+    "nodes": 420,
+    "edges": 216,
+    "coverage_delta": 0.18500000000000005,
+    "critical_issues_delta": 0
+  }
+}
