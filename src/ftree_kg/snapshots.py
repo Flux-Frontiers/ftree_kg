@@ -12,8 +12,8 @@ This module adds:
     ``metrics_from_dict`` / ``metrics_to_dict`` and ``delta_from_dict`` /
     ``delta_to_dict``; a ``Snapshot`` never holds one.
   - ``FtreeSnapshotManager``, which defaults ``package_name`` to ``"ftree-kg"``
-    (falling back to ``"filetreekg"``), accepts the legacy ``stats_dict``
-    keyword in ``capture()``, adds ``total_files``, ``total_dirs`` and
+    (falling back to ``"filetreekg"``), still accepts the legacy ``stats_dict``
+    keyword via ``capture_aliases``, adds ``total_files``, ``total_dirs`` and
     ``dir_node_counts`` to the metrics, adds ``files_delta`` and ``dirs_delta``
     to deltas, and extends a diff with ``dir_node_counts_delta``.
 
@@ -174,11 +174,15 @@ class FtreeSnapshotManager(_BaseSnapshotManager):
     Extends the shared SnapshotManager with:
 
     - Default package name "ftree-kg" (fallback "filetreekg").
-    - The legacy ``stats_dict`` parameter in ``capture()`` (mapped to the
-      base class's ``graph_stats_dict``), plus ``total_files``,
-      ``total_dirs`` and ``dir_node_counts`` in the metrics.
+    - The legacy ``stats_dict`` keyword, declared in ``capture_aliases`` and
+      routed to the base class's ``graph_stats_dict`` with a
+      ``DeprecationWarning``. It was a named parameter on a ``capture()``
+      override until 0.16.0; that override is gone.
+    - ``total_files``, ``total_dirs`` and ``dir_node_counts`` in the metrics,
+      collected by ``_domain_metrics()``.
     - ``files_delta`` and ``dirs_delta`` in delta computation.
-    - ``dir_node_counts_delta`` in a diff.
+    - ``dir_node_counts_delta`` in a diff, via the ``dict_metric_deltas``
+      class attribute.
     - Per-directory node counts via ``_collect_dir_node_counts()``.
 
     Everything else -- saving, loading, listing, pruning, key handling -- is
@@ -186,6 +190,18 @@ class FtreeSnapshotManager(_BaseSnapshotManager):
     dataclasses is what this module used to do, and it is the same pattern
     that dropped the snapshot key in two sibling repos.
     """
+
+    #: ``diff_snapshots`` emits ``dir_node_counts_delta`` from this, holding
+    #: only the top-level directories whose node count actually changed.
+    #: Replaces a hand-rolled loop over the same dict.
+    dict_metric_deltas = ("dir_node_counts",)
+
+    #: ``stats_dict`` is this repo's own legacy alias for ``graph_stats_dict``.
+    #: It used to be a named parameter on a ``capture()`` override; that
+    #: override is gone. Declared here so the old keyword still routes to the
+    #: graph stats and warns, rather than being silently recorded as a metric
+    #: named "stats_dict" while the stats themselves go missing.
+    capture_aliases = {"stats_dict": "graph_stats_dict"}
 
     def __init__(
         self,
@@ -218,64 +234,24 @@ class FtreeSnapshotManager(_BaseSnapshotManager):
     # capture — accept legacy stats_dict kwarg, add filesystem metrics
     # ------------------------------------------------------------------
 
-    def capture(
-        self,
-        version: str | None = None,
-        branch: str | None = None,
-        graph_stats_dict: dict[str, Any] | None = None,
-        tree_hash: str = "",
-        hotspots: list[dict[str, Any]] | None = None,
-        issues: list[str] | None = None,
-        key: str = "",
-        subject: str = "",
-        *,
-        stats_dict: dict[str, Any] | None = None,
-        **extra_metrics: Any,
-    ) -> Snapshot:
-        """Capture a snapshot.
+    def _domain_metrics(self, stats: dict[str, Any]) -> dict[str, Any]:
+        """Derive the filesystem metrics and collect per-directory counts.
 
-        Accepts the legacy ``stats_dict`` keyword (mapped to the base class's
-        ``graph_stats_dict``) and extends the metrics dict with
-        ``total_files``, ``total_dirs``, and ``dir_node_counts`` before
-        delegating to the base implementation.
+        Called by the inherited ``capture()``. Overriding this rather than
+        ``capture()`` is deliberate: a ``capture()`` override has to restate the
+        base signature, and restating it is how an unnamed ``key=`` fell into
+        ``**extra_metrics`` and shipped sibling packages keyed on a tree hash.
 
-        :param version: Version string; auto-detected from the package if None.
-        :param branch: Git branch name; auto-detected if None.
-        :param graph_stats_dict: Output from ``FileTreeKG.stats()``.
-        :param tree_hash: Git tree hash, recorded as provenance; auto-detected
-            if not provided. It is not the snapshot's key.
-        :param hotspots: Top hotspot entries.
-        :param issues: Issue description strings.
-        :param key: Snapshot identifier. Pass the release tag at release time;
-            omit it and the base assigns a UTC timestamp. Named explicitly
-            rather than left to ``**extra_metrics``, which would silently
-            record it as a metric instead of passing it to the base.
-        :param subject: What was measured, e.g. ``repo:ftree-kg`` or
-            ``tree:/some/path``. Explicit for the same reason.
-        :param stats_dict: Legacy alias for ``graph_stats_dict``.
-        :param extra_metrics: Additional domain-specific metric fields.
-        :return: New :class:`~kg_utils.snapshots.Snapshot` (not yet persisted).
+        :param stats: Graph stats passed to ``capture()``.
+        :return: ``total_files`` and ``total_dirs`` read off the node counts,
+                 plus per-directory node counts from SQLite.
         """
-        # Prefer explicit graph_stats_dict over legacy stats_dict.
-        effective_stats = graph_stats_dict if graph_stats_dict is not None else stats_dict or {}
-        node_counts: dict[str, int] = effective_stats.get("node_counts", {})
-
-        return super().capture(
-            version=version,
-            branch=branch,
-            graph_stats_dict={
-                **effective_stats,
-                "total_files": node_counts.get("file", 0),
-                "total_dirs": node_counts.get("directory", 0),
-                "dir_node_counts": self._collect_dir_node_counts(),
-            },
-            tree_hash=tree_hash,
-            hotspots=hotspots,
-            issues=issues,
-            key=key,
-            subject=subject,
-            **extra_metrics,
-        )
+        node_counts: dict[str, int] = stats.get("node_counts", {})
+        return {
+            "total_files": node_counts.get("file", 0),
+            "total_dirs": node_counts.get("directory", 0),
+            "dir_node_counts": self._collect_dir_node_counts(),
+        }
 
     # ------------------------------------------------------------------
     # Delta computation — add files_delta and dirs_delta
@@ -289,31 +265,6 @@ class FtreeSnapshotManager(_BaseSnapshotManager):
         base["files_delta"] = new_m.get("total_files", 0) - old_m.get("total_files", 0)
         base["dirs_delta"] = new_m.get("total_dirs", 0) - old_m.get("total_dirs", 0)
         return base
-
-    # ------------------------------------------------------------------
-    # diff_snapshots — add dir_node_counts_delta for the CLI display
-    # ------------------------------------------------------------------
-
-    def diff_snapshots(self, key_a: str, key_b: str) -> dict[str, Any]:
-        """Compare two snapshots; extends the base result with dir_node_counts_delta.
-
-        :param key_a: Earlier snapshot key.
-        :param key_b: Later snapshot key.
-        :return: The shared diff result plus ``dir_node_counts_delta``, which
-            lists only the top-level directories whose node count changed.
-        """
-        result = super().diff_snapshots(key_a, key_b)
-        if "error" in result:
-            return result
-
-        dnc_a: dict[str, int] = result["a"]["metrics"].get("dir_node_counts", {})
-        dnc_b: dict[str, int] = result["b"]["metrics"].get("dir_node_counts", {})
-        result["dir_node_counts_delta"] = {
-            d: dnc_b.get(d, 0) - dnc_a.get(d, 0)
-            for d in set(dnc_a) | set(dnc_b)
-            if dnc_b.get(d, 0) != dnc_a.get(d, 0)
-        }
-        return result
 
     # ------------------------------------------------------------------
     # Per-directory node counts (SQLite query)

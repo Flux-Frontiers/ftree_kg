@@ -139,7 +139,7 @@ def test_capture_stores_metrics_as_a_plain_dict(
     snapshot key on the way to disk.
     """
     mgr = SnapshotManager(snapshots_dir, db_path=tmp_path / ".filetreekg" / "graph.sqlite")
-    snap = mgr.capture(version="0.0.0-test", branch="test", stats_dict=kg.stats())
+    snap = mgr.capture(version="0.0.0-test", branch="test", graph_stats_dict=kg.stats())
 
     assert isinstance(snap.metrics, dict)
     m = metrics_from_dict(snap.metrics)
@@ -148,19 +148,9 @@ def test_capture_stores_metrics_as_a_plain_dict(
     assert m.total_dirs >= 0
 
 
-def test_capture_accepts_legacy_stats_dict_kwarg(
-    kg: FileTreeKG, snapshots_dir: Path, tmp_path: Path
-) -> None:
-    """``stats_dict`` is the FileTreeKG-specific legacy alias for ``graph_stats_dict``."""
-    mgr = SnapshotManager(snapshots_dir, db_path=tmp_path / ".filetreekg" / "graph.sqlite")
-    snap = mgr.capture(version="v", branch="b", stats_dict=kg.stats())
-    m = metrics_from_dict(snap.metrics)
-    assert m.total_nodes == kg.stats()["total_nodes"]
-
-
 def test_save_and_load_round_trip(kg: FileTreeKG, snapshots_dir: Path, tmp_path: Path) -> None:
     mgr = SnapshotManager(snapshots_dir, db_path=tmp_path / ".filetreekg" / "graph.sqlite")
-    snap = mgr.capture(version="0.0.0-test", branch="test", stats_dict=kg.stats())
+    snap = mgr.capture(version="0.0.0-test", branch="test", graph_stats_dict=kg.stats())
     saved = mgr.save_snapshot(snap)
     assert saved is not None and saved.exists()
 
@@ -175,7 +165,7 @@ def test_save_and_load_round_trip(kg: FileTreeKG, snapshots_dir: Path, tmp_path:
 
 def test_load_snapshot_latest_alias(kg: FileTreeKG, snapshots_dir: Path, tmp_path: Path) -> None:
     mgr = SnapshotManager(snapshots_dir, db_path=tmp_path / ".filetreekg" / "graph.sqlite")
-    snap = mgr.capture(version="0.0.0-test", branch="test", stats_dict=kg.stats())
+    snap = mgr.capture(version="0.0.0-test", branch="test", graph_stats_dict=kg.stats())
     mgr.save_snapshot(snap)
 
     latest = mgr.load_snapshot("latest")
@@ -195,7 +185,7 @@ def test_load_missing_snapshot_returns_none(snapshots_dir: Path) -> None:
 
 def test_list_snapshots(kg: FileTreeKG, snapshots_dir: Path, tmp_path: Path) -> None:
     mgr = SnapshotManager(snapshots_dir, db_path=tmp_path / ".filetreekg" / "graph.sqlite")
-    snap = mgr.capture(version="0.0.0-test", branch="test", stats_dict=kg.stats())
+    snap = mgr.capture(version="0.0.0-test", branch="test", graph_stats_dict=kg.stats())
     mgr.save_snapshot(snap)
 
     snaps = mgr.list_snapshots()
@@ -210,10 +200,10 @@ def test_diff_snapshots_zero_delta_for_identical_stats(
     stats = kg.stats()
 
     snap_a = mgr.capture(
-        version="0.0.0-a", branch="test", stats_dict=stats, tree_hash="aaaa", key="v0.0.0-a"
+        version="0.0.0-a", branch="test", graph_stats_dict=stats, tree_hash="aaaa", key="v0.0.0-a"
     )
     snap_b = mgr.capture(
-        version="0.0.0-b", branch="test", stats_dict=stats, tree_hash="bbbb", key="v0.0.0-b"
+        version="0.0.0-b", branch="test", graph_stats_dict=stats, tree_hash="bbbb", key="v0.0.0-b"
     )
     mgr.save_snapshot(snap_a)
     mgr.save_snapshot(snap_b)
@@ -242,8 +232,12 @@ def test_diff_snapshots_includes_filesystem_deltas(snapshots_dir: Path, tmp_path
         "edge_counts": {"CONTAINS": 7},
     }
 
-    snap_a = mgr.capture(version="a", branch="t", stats_dict=stats_a, tree_hash="aaaa", key="va")
-    snap_b = mgr.capture(version="b", branch="t", stats_dict=stats_b, tree_hash="bbbb", key="vb")
+    snap_a = mgr.capture(
+        version="a", branch="t", graph_stats_dict=stats_a, tree_hash="aaaa", key="va"
+    )
+    snap_b = mgr.capture(
+        version="b", branch="t", graph_stats_dict=stats_b, tree_hash="bbbb", key="vb"
+    )
     mgr.save_snapshot(snap_a)
     mgr.save_snapshot(snap_b)
 
@@ -298,7 +292,7 @@ def test_save_snapshot_persists_key_subject_and_tool(snapshots_dir: Path, tmp_pa
     snap = mgr.capture(
         version="0.15.0",
         branch="main",
-        stats_dict={
+        graph_stats_dict={
             "total_nodes": 10,
             "total_edges": 5,
             "node_counts": {"file": 6, "directory": 4},
@@ -331,8 +325,113 @@ def test_capture_without_a_key_does_not_use_the_tree_hash(snapshots_dir: Path) -
     snap = mgr.capture(
         version="0.15.0",
         branch="main",
-        stats_dict={"total_nodes": 3, "total_edges": 2},
+        graph_stats_dict={"total_nodes": 3, "total_edges": 2},
         tree_hash="d" * 40,
     )
     assert snap.key != "d" * 40
     assert snap.tree_hash == "d" * 40
+
+
+# ---------------------------------------------------------------------------
+# The deleted overrides: each behaviour now comes from a base extension point
+#
+# 0.16.0 removed capture and diff_snapshots from this module. These tests pin
+# the behaviour those overrides provided, so a regression in the shared SDK
+# surfaces here rather than in a shipped snapshot file.
+# ---------------------------------------------------------------------------
+
+
+def test_save_and_reload_persists_key_subject_and_tool(snapshots_dir: Path) -> None:
+    """The round trip this repo could not have passed before 0.15.0.
+
+    Its kgmodule-utils floor was >=0.18.0 until then, where Snapshot.key still
+    returned the tree hash, so a release tag never reached disk as the key.
+    """
+    mgr = SnapshotManager(snapshots_dir)
+    snap = mgr.capture(
+        version="9.9.9",
+        branch="main",
+        graph_stats_dict={"total_nodes": 3, "total_edges": 2},
+        tree_hash="e" * 40,
+        key="v9.9.9",
+        subject="repo:ftree-kg",
+    )
+    saved = mgr.save_snapshot(snap)
+    assert saved is not None and saved.name == "v9.9.9.json"
+
+    on_disk = json.loads(saved.read_text(encoding="utf-8"))
+    assert on_disk["key"] == "v9.9.9"
+    assert on_disk["subject"] == "repo:ftree-kg"
+    assert on_disk["tree_hash"] == "e" * 40
+    assert on_disk["tool"] in {"ftree-kg", "filetreekg"}
+    assert on_disk["tool_version"]
+
+    reloaded = mgr.load_snapshot("v9.9.9")
+    assert reloaded is not None
+    assert reloaded.key == "v9.9.9"
+    assert reloaded.subject == "repo:ftree-kg"
+
+
+def test_capture_signature_is_the_base_signature(snapshots_dir: Path) -> None:
+    """The trap the _domain_metrics hook exists to close."""
+    mgr = SnapshotManager(snapshots_dir)
+    snap = mgr.capture(graph_stats_dict={"total_nodes": 1}, key="v1.2.3", subject="tree:/tmp")
+    assert snap.key == "v1.2.3"
+    assert snap.subject == "tree:/tmp"
+    assert "key" not in snap.metrics
+    assert "subject" not in snap.metrics
+
+
+def test_domain_metrics_derives_file_and_dir_totals(snapshots_dir: Path) -> None:
+    """Replaces the derivation the deleted capture() did inline."""
+    mgr = SnapshotManager(snapshots_dir)
+    snap = mgr.capture(
+        graph_stats_dict={
+            "total_nodes": 10,
+            "node_counts": {"file": 7, "directory": 3},
+        },
+        key="k",
+    )
+    assert snap.metrics["total_files"] == 7
+    assert snap.metrics["total_dirs"] == 3
+    assert snap.metrics["dir_node_counts"] == {}
+
+
+def test_diff_carries_dir_node_counts_delta(snapshots_dir: Path) -> None:
+    """Replaces the deleted diff_snapshots: only changed directories appear."""
+    mgr = SnapshotManager(snapshots_dir)
+    for key, counts in (
+        ("dl_a", {"src": 5, "same": 2, "gone": 4}),
+        ("dl_b", {"src": 8, "same": 2, "new": 1}),
+    ):
+        mgr.save_snapshot(mgr.capture(key=key, total_nodes=1, dir_node_counts=counts), force=True)
+    result = mgr.diff_snapshots("dl_a", "dl_b")
+    assert result["dir_node_counts_delta"] == {"src": 3, "gone": -4, "new": 1}
+
+
+def test_diff_carries_timestamp_and_issues_delta(snapshots_dir: Path) -> None:
+    """Both now come from the base rather than a module override."""
+    mgr = SnapshotManager(snapshots_dir)
+    for key, nodes, issues in (("dl_a", 1, ["kept", "gone"]), ("dl_b", 2, ["kept", "new"])):
+        mgr.save_snapshot(
+            mgr.capture(graph_stats_dict={"total_nodes": nodes}, key=key, issues=issues),
+            force=True,
+        )
+    result = mgr.diff_snapshots("dl_a", "dl_b")
+    assert result["a"]["timestamp"] and result["b"]["timestamp"]
+    assert result["issues_delta"] == {"introduced": ["new"], "resolved": ["gone"]}
+
+
+def test_legacy_stats_dict_keyword_still_works_and_warns(snapshots_dir: Path) -> None:
+    """``stats_dict`` was this repo's legacy alias for ``graph_stats_dict``.
+
+    It was a named parameter on the capture() override removed in 0.16.0.
+    Without capture_aliases the old name would be recorded as a metric called
+    "stats_dict" and the graph stats would be missing entirely.
+    """
+    mgr = SnapshotManager(snapshots_dir)
+    with pytest.warns(DeprecationWarning, match="graph_stats_dict"):
+        snap = mgr.capture(key="k", stats_dict={"total_nodes": 7, "node_counts": {"file": 7}})
+    assert snap.metrics["total_nodes"] == 7
+    assert snap.metrics["total_files"] == 7
+    assert "stats_dict" not in snap.metrics
