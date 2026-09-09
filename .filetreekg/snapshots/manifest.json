@@ -1,6 +1,6 @@
 {
   "format": "1.0",
-  "last_update": "2026-09-06T22:57:27.413004+00:00",
+  "last_update": "2026-09-09T02:13:22.424798+00:00",
   "snapshots": [
     {
       "key": "571bc8512ac3aacad037cf6603cba748f3e38a49",
@@ -824,6 +824,71 @@
           "src": 117786,
           "docs": 66356,
           "tests": 62790,
+          "analysis": 15167,
+          "scripts": 2950,
+          "examples": 1966
+        },
+        "total_files": 52,
+        "total_dirs": 8,
+        "dir_node_counts": {
+          "CHANGELOG.md": 1,
+          "CITATION.cff": 1,
+          "FTreeKG.code-workspace": 1,
+          "LICENSE": 1,
+          "Makefile": 1,
+          "README.md": 1,
+          "analysis": 3,
+          "commit.txt": 1,
+          "conftest.py": 1,
+          "docs": 7,
+          "examples": 2,
+          "ftree_kg.code-workspace": 1,
+          "poetry.lock": 1,
+          "poetry.toml": 1,
+          "py.typed": 1,
+          "pyproject.toml": 1,
+          "pytest.ini": 1,
+          "release-notes.md": 1,
+          "scripts": 2,
+          "src": 22,
+          "tests": 9
+        }
+      },
+      "deltas": {
+        "vs_previous": null,
+        "vs_baseline": {
+          "nodes": -481,
+          "edges": -481,
+          "files_delta": -304,
+          "dirs_delta": -177
+        }
+      }
+    },
+    {
+      "key": "0.16.0",
+      "branch": "main",
+      "timestamp": "2026-09-09T02:13:22.420850+00:00",
+      "version": "0.16.0",
+      "subject": "repo:ftree-kg",
+      "tool": "ftree-kg",
+      "tool_version": "0.16.0",
+      "file": "0.16.0.json",
+      "metrics": {
+        "total_nodes": 60,
+        "total_edges": 60,
+        "node_counts": {
+          "directory": 8,
+          "file": 52
+        },
+        "edge_counts": {
+          "CONTAINS": 60
+        },
+        "total_size_bytes": 689357,
+        "size_by_top_dir": {
+          ".": 420169,
+          "src": 115920,
+          "tests": 66829,
+          "docs": 66356,
           "analysis": 15167,
           "scripts": 2950,
           "examples": 1966

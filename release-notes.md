@@ -1,44 +1,53 @@
-# Release Notes — v0.15.0
+# Release Notes -- v0.16.0
 
-> Released: 2026-09-06
+> Released: 2026-09-08
 
-FTreeKG finally receives the fleet's snapshot key fix, and drops a layer of
-hand-rolled type conversion that had been standing in the way of it.
+FTreeKG's snapshot module now leans on the shared `SnapshotManager` for the
+work it used to duplicate, and the tooling pins that had fallen several
+releases behind are caught up.
 
 ## What changed
 
-**Snapshots are keyed on a release tag or timestamp, not a git tree hash —
-for real, this time.** The floor on `kgmodule-utils` had read `>=0.19.0`
-since the fleet's key-scheme change, but the lock was still resolving
-0.18.0, so this repo never actually received the fix even though it was
-believed to have inherited it for free. A tree hash is read before `git
-add` stages the snapshot, so it names a tree that is never committed and
-cannot be resolved afterward — the root cause behind only 63 of 605 fleet
-snapshot keys ever resolving. With the floor now genuinely enforced,
-`ftreekg snapshot save VERSION` keys the snapshot on VERSION, which the
-command accepted and silently ignored before. A new `--subject` option
-records what was measured (`repo:ftree-kg`, or a tree path for a non-repo
-corpus), separate from the version, which names the measuring tool.
+**`snapshots.py` no longer overrides `capture()` or `diff_snapshots()`.**
+Both overrides existed only to bend the shared manager around this module's
+two filesystem-specific metrics. `kgmodule-utils` 0.20.0 supplies extension
+points that make them unnecessary: a `_domain_metrics(stats)` hook derives
+`total_files` and `total_dirs` from the node counts and collects the
+per-directory counts from SQLite, and a `dict_metric_deltas` class attribute
+names `dir_node_counts` so the base emits `dir_node_counts_delta` containing
+only the directories whose count changed. The module shrinks from about 400
+lines to about 290, and the delta logic is now the same code every other KG
+module runs. The `__init__` override stays, because it is the one in the
+fleet with a real job: it probes `importlib.metadata` for the installed
+version and falls back from `ftree-kg` to the legacy `filetreekg` name.
 
-**The hydrate/dehydrate layer is gone.** FTreeKG used to overwrite a
-snapshot's `metrics`, `vs_previous`, and `vs_baseline` with typed dataclass
-instances after every load and convert them back before every save, so
-that callers could use attribute access. That forced overrides of
-`load_snapshot`, `save_snapshot`, and `diff_snapshots` that had nothing to
-do with filesystem trees — the same shape of problem that, in three
-sibling repos, hid a real bug where the snapshot key silently got dropped
-on save. A snapshot's structured fields are now plain dicts, matching
-every other KG module; `SnapshotMetrics` and `SnapshotDelta` remain
-available as converters for code that wants attribute access.
+**The floor on `kgmodule-utils` is now a hard `>=0.20.0`.** Against 0.19.x
+the manager has no `_domain_metrics` hook, so `total_files`, `total_dirs`
+and `dir_node_counts` would silently vanish from every new snapshot. The
+lock already resolves 0.20.0; the pin makes it a requirement rather than a
+coincidence.
+
+**`capture(stats_dict=...)` is deprecated.** It was this repo's private alias
+for `graph_stats_dict` and lived on the removed `capture()` override. It
+still routes correctly, and now raises a `DeprecationWarning`, declared
+through the base's `capture_aliases`. That declaration matters: the base
+signature ends in `**extra_metrics`, so without it an old caller's
+`stats_dict` would have been quietly recorded as a metric of that name while
+the real graph stats went missing.
+
+**The `doc-kg` and `pycode-kg` tooling pins were four and five releases
+behind.** They now floor on doc-kg 0.26.0 and pycode-kg 0.27.0, the releases
+in which those packages retired their own snapshot overrides, so
+`poetry install --with kg` cannot resolve a dockg or pycodekg that predates
+the shared extension points into an environment that depends on them. The
+`kg-rag` floor is unchanged; it has not taken this SDK bump yet.
 
 ## Upgrading
 
-Existing snapshots keyed on a tree hash stay addressable by that key — the
-manifest loader reads both shapes. New snapshots from a release should
-pass the tag explicitly: `ftreekg snapshot save 0.15.0 --subject
-repo:ftree-kg`. If your code accessed `snapshot.metrics.total_nodes` as an
-attribute, switch to `snapshot.metrics["total_nodes"]` or convert with
-`metrics_from_dict(snapshot.metrics)`.
+Nothing to rebuild. `poetry install` picks up the `kgmodule-utils` floor. If
+any of your code calls `capture(stats_dict=...)`, rename the argument to
+`graph_stats_dict`; the old name keeps working for now but warns. Existing
+snapshots are unaffected, and new ones carry the same fields as before.
 
 ---
 
