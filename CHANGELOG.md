@@ -9,6 +9,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`snapshots.py` no longer overrides `capture()` or `diff_snapshots()`.**
+  Both existed to adapt this module to the shared `SnapshotManager`, and
+  `kgmodule-utils` 0.20.0 supplies the extension points that replace them:
+  `_domain_metrics(stats)` derives `total_files` and `total_dirs` from the node
+  counts and collects the per-directory counts from SQLite, and the
+  `dict_metric_deltas` class attribute names `dir_node_counts` so the base
+  emits `dir_node_counts_delta` with only the directories whose count changed.
+  400 lines to 290.
+
+  `__init__` stays, and is the only one in the fleet that does: its body is not
+  a bare `super()` call but a probe of `importlib.metadata` that falls back from
+  `ftree-kg` to `filetreekg`. `_compute_delta_from_metrics` and
+  `_collect_dir_node_counts()` stay too.
+
+- **The floor on `kgmodule-utils` moves to `>=0.20.0`**, a hard requirement
+  rather than a preference: against 0.19.x the manager loses `total_files`,
+  `total_dirs` and `dir_node_counts` entirely.
+
+### Deprecated
+
+- **`capture(stats_dict=...)`**, this repo's legacy alias for
+  `graph_stats_dict`. It was a named parameter on the removed `capture()`
+  override; no `src` caller used it. It still routes correctly and now raises a
+  `DeprecationWarning`, declared through the base's `capture_aliases`. Without
+  that declaration the old name would not have raised at all -- the base ends
+  in `**extra_metrics`, so `stats_dict` would have been recorded as a metric of
+  that name while the graph stats went missing.
+
+### Fixed
+
+- **The `doc-kg` and `pycode-kg` tooling pins were four and five releases
+  behind** at `>=0.22.0` and `>=0.23.1`. Both now floor on the releases that
+  retired those packages' own snapshot overrides -- doc-kg 0.26.0 and
+  pycode-kg 0.27.0 -- so `poetry install --with kg` cannot resolve a dockg or
+  pycodekg predating the shared extension points into an environment that
+  depends on them. The `kg-rag` floor is deliberately unchanged; it has not
+  taken this SDK bump yet.
+
+## [0.15.0] - 2026-09-06
+
+### Changed
+
 - **Snapshots are keyed on a release tag or timestamp, not a git tree hash.**
   The floor on `kgmodule-utils` moves from `>=0.19.0`, where the key scheme
   changed; the lock was resolving 0.18.0, so this repo had not received the fix
@@ -49,8 +91,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `files_delta` and `dirs_delta` in `_compute_delta_from_metrics`, a
   `diff_snapshots` adding `dir_node_counts_delta`, and
   `_collect_dir_node_counts()`.
-
-## [0.15.0] - 2026-09-06
 
 ## [0.14.0] - 2026-08-22
 
