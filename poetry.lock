@@ -1085,20 +1085,20 @@ referencing = ">=0.31.0"
 
 [[package]]
 name = "kg-rag"
-version = "0.15.0"
+version = "0.16.0"
 description = "Orchestration layer for the KGRAG(tm) components."
 optional = true
 python-versions = "<3.14,>=3.12"
 groups = ["main"]
 markers = "extra == \"adapter\""
 files = [
-    {file = "kg_rag-0.15.0-py3-none-any.whl", hash = "sha256:13f92378ca806276e1cec4aab8836fe4ec36f681c17cd3ea19e79376f9ed0f7c"},
-    {file = "kg_rag-0.15.0.tar.gz", hash = "sha256:61298f631ede2faaa8ab3a2bf73a6dae96a05089c59b1ea9d026a38d2e24fa5b"},
+    {file = "kg_rag-0.16.0-py3-none-any.whl", hash = "sha256:8a62de2c3b321c98e11a422302938057062276de0069dbbd6914465236e64e91"},
+    {file = "kg_rag-0.16.0.tar.gz", hash = "sha256:e5c215a8f0a285cee393cd4f641734e68ce7c5c2d6761e15cc81f9db68cefea0"},
 ]
 
 [package.dependencies]
 click = ">=8.1.0"
-kgmodule-utils = ">=0.18.0"
+kgmodule-utils = ">=0.22.0"
 mcp = ">=1.0.0,<2"
 numpy = ">=1.24.0"
 pandas = ">=2.0.0"
@@ -1109,11 +1109,12 @@ torch = ">=2.5.1"
 transformers = ">=5.5.0,<6"
 
 [package.extras]
-all = ["PyQt5 (>=5.15.0)", "diary-kg (>=0.97.0)", "doc-kg (>=0.22.0)", "firecrawl-anydoc (>=0.1.9)", "ftree-kg (>=0.14.0)", "markdown (>=3.6)", "memory-kg (>=0.7.0)", "param (>=2.0.0)", "plotly (>=5.14.0)", "pycode-kg (>=0.23.1)", "pyvis (>=0.3.2)", "pyvista (>=0.44.0)", "pyvistaqt (>=0.11.0)", "streamlit (>=1.35.0)", "trame-vtk (>=2.0.0)"]
-diary = ["diary-kg (>=0.97.0)"]
+all = ["PyQt5 (>=5.15.0)", "connectome-kg (>=0.3.1)", "diary-kg (>=0.99.0)", "doc-kg (>=0.26.0)", "firecrawl-anydoc (>=0.1.9)", "ftree-kg (>=0.14.0)", "markdown (>=3.6)", "memory-kg (>=0.11.0)", "param (>=2.0.0)", "plotly (>=5.14.0)", "pycode-kg (>=0.27.1)", "pyvis (>=0.3.2)", "pyvista (>=0.44.0)", "pyvistaqt (>=0.11.0)", "streamlit (>=1.35.0)", "trame-vtk (>=2.0.0)"]
+connectome = ["connectome-kg (>=0.3.1)"]
+diary = ["diary-kg (>=0.99.0)"]
 filetree = ["ftree-kg (>=0.14.0)"]
 ingest = ["firecrawl-anydoc (>=0.1.9)"]
-kg = ["doc-kg (>=0.22.0)", "memory-kg (>=0.7.0)", "pycode-kg (>=0.23.1)"]
+kg = ["doc-kg (>=0.26.0)", "memory-kg (>=0.11.0)", "pycode-kg (>=0.27.1)"]
 pi = ["llama-cpp-python (>=0.3.0)"]
 qt = ["PyQt5 (>=5.15.0)"]
 viz = ["plotly (>=5.14.0)", "pyvis (>=0.3.2)", "streamlit (>=1.35.0)"]
@@ -1277,14 +1278,14 @@ files = [
 
 [[package]]
 name = "mcp"
-version = "1.29.1"
+version = "1.30.0"
 description = "Model Context Protocol SDK"
 optional = false
 python-versions = ">=3.10"
 groups = ["main", "kg"]
 files = [
-    {file = "mcp-1.29.1-py3-none-any.whl", hash = "sha256:b6310eeb59153300c4ab8b9aec4c52f4819a2d6a8e429eb43d908bed7c783648"},
-    {file = "mcp-1.29.1.tar.gz", hash = "sha256:1967ba4c315f7a375146209949f45950d18b0efd2f913d7cf3400bc723ee5f04"},
+    {file = "mcp-1.30.0-py3-none-any.whl", hash = "sha256:666edb5009503e1047c9d60346a756f94b261f05cc2625f23d41c728ffc484d0"},
+    {file = "mcp-1.30.0.tar.gz", hash = "sha256:445414625fce5c295faa505bb11bacece661ab6f4028d57c935db57820b7a3e4"},
 ]
 
 [package.dependencies]
@@ -3669,4 +3670,4 @@ adapter = ["kg-rag"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "265f66e4effc497e0da70043cb2a7c150c6d59a17e820d8fc72874bdf9e0526d"
+content-hash = "735a25c7b705ba59e679c106451b3147f7468438bbeb2b1fcf363fd6b53c321f"
