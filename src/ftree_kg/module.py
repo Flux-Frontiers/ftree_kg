@@ -852,6 +852,3 @@ class FileTreeKG(KGModule):
 
         except Exception as exc:  # pylint: disable=broad-exception-caught
             return f"# FileTreeKG Analysis\n\nAnalysis failed: {exc}\n"
-
-    def close(self) -> None:
-        """No persistent connections to release."""
