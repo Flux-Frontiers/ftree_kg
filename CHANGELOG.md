@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **The MCP server closes the graph on shutdown** (`kgrag_priv` sweep item 5),
+  via `FastMCP(lifespan=...)` -- the resource-cleanup pattern `genealogy_kg`
+  set and the fleet standards record. One hook covers both the stdio and SSE
+  transports, since both route through the same underlying `Server.run()`.
+  Verified through `mcp.shared.memory`'s in-process transport: a real
+  `Server.run()`/lifespan cycle, not a mocked `close`.
+
+### Removed
+
+- **`FileTreeKG.close()`'s no-op override.** Its docstring read "No persistent
+  connections to release", which was true of `FileTreeKG`'s own methods --
+  every one opens a short-lived `sqlite3` connection in a `with` -- but not of
+  the `GraphStore` the `KGModule` base opens lazily. The override also
+  disarmed the base `close()`, so any path that did reach `.store` stranded
+  its handle until process exit. The base implementation now runs, which is
+  what makes the new lifespan hook mean anything here.
+
 ### Changed
 
 - **Fleet dependency floors raised and relocked** (`kgrag_priv` sweep item 46):
