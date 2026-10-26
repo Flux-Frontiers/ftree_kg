@@ -51,7 +51,7 @@ def kg_embedded(tmp_path: Path) -> FileTreeKG:
 
 def test_build_produces_nodes(kg: FileTreeKG) -> None:
     s = kg.stats()
-    assert s["total_nodes"] > 0, "build should produce at least one node"
+    assert s["nodes"]["total"] > 0, "build should produce at least one node"
 
 
 def test_query_returns_results(kg: FileTreeKG) -> None:
@@ -281,7 +281,7 @@ def test_build_populates_vector_store(kg_embedded: FileTreeKG) -> None:
     backend = SqliteVecBackend(kg_embedded.vectors_path, meta_columns=_META_COLUMNS)
     backend.open()
     try:
-        assert backend.count() == kg_embedded.stats()["total_nodes"]
+        assert backend.count() == kg_embedded.stats()["nodes"]["total"]
     finally:
         backend.close()
 

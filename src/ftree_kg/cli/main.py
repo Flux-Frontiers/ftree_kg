@@ -13,6 +13,7 @@ License: Elastic 2.0
 import ftree_kg.cli.cmd_analyze  # noqa: F401  # pylint: disable=unused-import
 import ftree_kg.cli.cmd_build  # noqa: F401  # pylint: disable=unused-import
 import ftree_kg.cli.cmd_hooks  # noqa: F401  # pylint: disable=unused-import
+import ftree_kg.cli.cmd_mcp  # noqa: F401  # pylint: disable=unused-import
 import ftree_kg.cli.cmd_query  # noqa: F401  # pylint: disable=unused-import
 import ftree_kg.cli.cmd_snapshot  # noqa: F401  # pylint: disable=unused-import
 import ftree_kg.cli.cmd_status  # noqa: F401  # pylint: disable=unused-import

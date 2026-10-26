@@ -14,6 +14,7 @@ import importlib.metadata
 from datetime import UTC, datetime
 from pathlib import Path
 
+from kg_utils.stats import flat_stats
 from rich.columns import Columns
 from rich.console import Console
 from rich.rule import Rule
@@ -84,7 +85,7 @@ def status(repo: str, db: str) -> None:
     )
 
     kg = FileTreeKG(repo_root=repo_root, db_path=db_path, vectors_path=vectors_path)
-    s = kg.stats()
+    s = flat_stats(kg.stats())
     kg.close()
 
     nc: dict[str, int] = s.get("node_counts", {})

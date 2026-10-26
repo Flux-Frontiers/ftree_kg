@@ -13,6 +13,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import click
+from kg_utils.stats import flat_stats
 
 from ftree_kg.cli.group import cli
 from ftree_kg.cli.options import (
@@ -79,7 +80,7 @@ def build(
             exclude_dirs=exclude_dirs,
         )
         kg.build(wipe=not no_wipe)
-        stats = kg.stats()
+        stats = flat_stats(kg.stats())
 
         click.echo("✅ Build complete")
         click.echo(f"   Nodes: {stats['total_nodes']}")

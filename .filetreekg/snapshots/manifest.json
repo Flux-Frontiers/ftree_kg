@@ -1,6 +1,6 @@
 {
   "format": "1.0",
-  "last_update": "2026-09-21T15:35:54.116240+00:00",
+  "last_update": "2026-10-26T04:30:34.130520+00:00",
   "snapshots": [
     {
       "key": "571bc8512ac3aacad037cf6603cba748f3e38a49",
@@ -278,6 +278,71 @@
           "nodes": -481,
           "edges": -481,
           "files_delta": -304,
+          "dirs_delta": -177
+        }
+      }
+    },
+    {
+      "key": "0.18.0",
+      "branch": "feat/mcp-server-base",
+      "timestamp": "2026-10-26T04:30:34.128859+00:00",
+      "version": "0.18.0",
+      "subject": "repo:ftree-kg",
+      "tool": "ftree-kg",
+      "tool_version": "0.18.0",
+      "file": "0.18.0.json",
+      "metrics": {
+        "total_size_bytes": 692638,
+        "size_by_top_dir": {
+          ".": 405882,
+          "src": 124485,
+          "tests": 75008,
+          "docs": 67180,
+          "analysis": 15167,
+          "scripts": 2950,
+          "examples": 1966
+        },
+        "total_nodes": 62,
+        "node_counts": {
+          "directory": 8,
+          "file": 54
+        },
+        "total_edges": 62,
+        "edge_counts": {
+          "CONTAINS": 62
+        },
+        "total_files": 54,
+        "total_dirs": 8,
+        "dir_node_counts": {
+          "CHANGELOG.md": 1,
+          "CITATION.cff": 1,
+          "FTreeKG.code-workspace": 1,
+          "LICENSE": 1,
+          "Makefile": 1,
+          "README.md": 1,
+          "analysis": 3,
+          "commit.txt": 1,
+          "conftest.py": 1,
+          "docs": 7,
+          "examples": 2,
+          "ftree_kg.code-workspace": 1,
+          "poetry.lock": 1,
+          "poetry.toml": 1,
+          "py.typed": 1,
+          "pyproject.toml": 1,
+          "pytest.ini": 1,
+          "release-notes.md": 1,
+          "scripts": 2,
+          "src": 23,
+          "tests": 10
+        }
+      },
+      "deltas": {
+        "vs_previous": null,
+        "vs_baseline": {
+          "nodes": -479,
+          "edges": -479,
+          "files_delta": -302,
           "dirs_delta": -177
         }
       }

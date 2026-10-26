@@ -22,8 +22,9 @@
       }
     },
     "ftreekg": {
-      "command": ".venv/bin/ftreekg-mcp",
+      "command": ".venv/bin/ftreekg",
       "args": [
+        "mcp",
         "--repo",
         "."
       ],
