@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **BREAKING: the MCP server is built on `kg_utils.mcp`**, the fleet's shared
+  server base (`kgrag_priv` MCP centralization plan, step 2). Needs
+  kgmodule-utils 0.29.0, unreleased; developed against its local wheel, with
+  the floor and lock left for the release pass. Tools take the canonical names
+  every fleet KG server shares, with no aliases: `graph_stats` -> `stats`,
+  `query_tree` -> `query`, `pack_tree` -> `pack`, plus the new `get_node` and
+  `neighbors`; `analyze_tree` is unchanged. Six tools, the canonical five
+  first.
+- **`ftreekg mcp`** is the standard command (`--repo`, `--db`, `--vectors`,
+  `--model`, `--transport stdio|streamable-http`, `--host`, `--port`,
+  `--manifest`). `sse` is gone. `ftreekg-mcp` stays and is the same command.
+  The graph is opened per session and closed after, and a tree with no graph
+  is refused instead of served empty.
+- **BREAKING: `FileTreeKG.stats()` returns the fleet stats shape**:
+  `{"kind", "nodes": {"total", "by_kind"}, "edges": {"total", "by_rel"}}` plus
+  `total_size_bytes` and `size_by_top_dir`. Readers of `total_nodes` /
+  `node_counts` move to `stats()["nodes"]`, or call
+  `kg_utils.stats.flat_stats()`. Snapshots record the same keys as before.
+
+### Added
+
+- **`FileTreeKG.node()` and `FileTreeKG.neighbors()`** over FileTreeKG's own
+  schema, which the inherited `GraphStore` lookups cannot read. They back the
+  `get_node` and `neighbors` tools.
+- **`hop`, `rels` and `max_nodes` on `FileTreeKG.query()` and `pack()`.**
+  `hop` (default 0, so existing calls are unchanged) expands the matches
+  through the graph's edges, so `hop=1` on a directory brings its entries.
+
 ## [0.17.0] - 2026-09-21
 
 ### Added

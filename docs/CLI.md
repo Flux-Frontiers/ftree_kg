@@ -31,8 +31,8 @@ aliases — useful for shell scripts, Makefiles, and CI pipelines with no
 Subcommands without a dedicated alias (`status`, `install-hooks`) are only
 reachable via the `ftreekg <command>` form.
 
-`ftreekg-mcp` is a script with no `ftreekg` subcommand behind it — it starts
-the MCP server rather than running a one-shot command. See
+`ftreekg mcp` starts the MCP server rather than running a one-shot
+command; `ftreekg-mcp` is the same command under its older name. See
 [MCP.md](MCP.md).
 
 ---
@@ -251,6 +251,21 @@ Skip for a single commit:
 ```bash
 FTREEKG_SKIP_SNAPSHOT=1 git commit -m "wip"
 ```
+
+---
+
+## `ftreekg mcp` — MCP server
+
+```bash
+ftreekg mcp [--repo DIR] [--db FILE] [--vectors FILE] [--model NAME]
+            [--transport stdio|streamable-http] [--host H] [--port N]
+            [--manifest]
+```
+
+Serves the graph to an AI agent over MCP: the fleet's canonical `stats`,
+`query`, `pack`, `get_node` and `neighbors`, plus `analyze_tree`.
+`--manifest` prints the tools as JSON without opening the graph. Tools and
+client setup: [MCP.md](MCP.md).
 
 ---
 

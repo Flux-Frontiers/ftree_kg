@@ -82,7 +82,7 @@ poetry publish
 - **FileTreeKGExtractor** (`src/ftree_kg/extractor.py`) — walks filesystem, yields NodeSpec/EdgeSpec
 - **FileTreeKG** (`src/ftree_kg/module.py`) — KGModule (build, query, pack, analyze)
 - **FileTreeKGAdapter** (`src/ftree_kg/adapter.py`) — KGRAG integration (kind="filetree", `KGKind.FILETREE`)
-- **MCP server** (`src/ftree_kg/mcp_server.py`) — `ftreekg-mcp`; tools: `query_tree`, `pack_tree`, `graph_stats`, `analyze_tree`
+- **MCP server** (`src/ftree_kg/mcp_server.py`) — `ftreekg mcp`, built on `kg_utils.mcp`; tools: the canonical `stats`, `query`, `pack`, `get_node`, `neighbors`, then `analyze_tree`. `ftreekg mcp --manifest` is the authoritative list
 
 ### Node ID Format
 

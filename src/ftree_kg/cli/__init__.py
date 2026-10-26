@@ -15,6 +15,7 @@ from ftree_kg.cli import (
     cmd_analyze,  # noqa: F401  — registers analyze
     cmd_build,  # noqa: F401  — registers build
     cmd_hooks,  # noqa: F401  — registers install-hooks
+    cmd_mcp,  # noqa: F401  — registers mcp
     cmd_query,  # noqa: F401  — registers query, pack
     cmd_snapshot,  # noqa: F401  — registers snapshot
     cmd_status,  # noqa: F401  — registers status

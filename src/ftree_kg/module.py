@@ -16,6 +16,8 @@ from typing import Any
 
 from kg_utils.pipeline import KGModule
 from kg_utils.specs import BuildStats, EdgeSpec, NodeSpec, QueryResult, SnippetPack
+from kg_utils.stats import flat_stats, kg_stats
+from kg_utils.validation import bounded_int
 
 from ftree_kg.config import load_exclude_dirs, load_include_dirs
 from ftree_kg.extractor import FileTreeKGExtractor
@@ -155,6 +157,27 @@ def _decode_metadata(blob: str | None) -> dict[str, Any]:
     except (TypeError, ValueError):
         return {}
     return loaded if isinstance(loaded, dict) else {}
+
+
+def _node_dict(row: tuple[Any, ...]) -> dict[str, Any]:
+    """Turn a ``nodes`` row into the node dict :meth:`FileTreeKG.node` returns.
+
+    :param row: ``(node_id, kind, name, qualname, source_path, docstring,
+                size_bytes, metadata)``.
+    :return: The node, with ``id`` (the kg_utils contract) beside ``node_id``.
+    """
+    node_id, kind, name, qualname, source_path, docstring, size_bytes, metadata = row
+    return {
+        "id": node_id,
+        "node_id": node_id,
+        "kind": kind,
+        "name": name,
+        "qualname": qualname,
+        "source_path": source_path,
+        "docstring": docstring,
+        "size_bytes": size_bytes,
+        "metadata": _decode_metadata(metadata),
+    }
 
 
 def _embed_text(row: tuple[Any, ...]) -> str:
@@ -383,7 +406,7 @@ class FileTreeKG(KGModule):
         if embed:
             indexed_rows, index_dim = self._embed_nodes(wipe=wipe)
 
-        s = self.stats()
+        s = flat_stats(self.stats())
         return BuildStats(
             repo_root=str(self.repo_root),
             db_path=str(self.db_path),
@@ -530,15 +553,14 @@ class FileTreeKG(KGModule):
         return len(records), (len(vectors[0]) if vectors else None)
 
     def stats(self) -> dict[str, Any]:
-        """Return statistics about the knowledge graph.
+        """Return statistics about the knowledge graph, in the fleet shape.
 
-        :return: Dict with total_nodes, total_edges, node_counts, edge_counts,
-                 total_size_bytes, size_by_top_dir.
+        :return: ``{"kind", "nodes": {"total", "by_kind"}, "edges": {"total",
+                 "by_rel"}}`` (:func:`kg_utils.stats.kg_stats`) plus
+                 ``total_size_bytes`` and ``size_by_top_dir``.
         """
         assert self.db_path is not None
         with sqlite3.connect(self.db_path) as conn:
-            total_nodes: int = conn.execute("SELECT COUNT(*) FROM nodes").fetchone()[0]
-            total_edges: int = conn.execute("SELECT COUNT(*) FROM edges").fetchone()[0]
             node_counts: dict[str, int] = dict(
                 conn.execute("SELECT kind, COUNT(*) FROM nodes GROUP BY kind").fetchall()
             )
@@ -559,14 +581,89 @@ class FileTreeKG(KGModule):
             top = parts[0] if len(parts) > 1 else "."
             size_by_dir[top] = size_by_dir.get(top, 0) + size
 
-        return {
-            "total_nodes": total_nodes,
-            "total_edges": total_edges,
-            "node_counts": node_counts,
-            "edge_counts": edge_counts,
-            "total_size_bytes": total_size,
-            "size_by_top_dir": dict(sorted(size_by_dir.items(), key=lambda x: x[1], reverse=True)),
-        }
+        return kg_stats(
+            self.kind(),
+            node_counts,
+            edge_counts,
+            total_size_bytes=total_size,
+            size_by_top_dir=dict(sorted(size_by_dir.items(), key=lambda x: x[1], reverse=True)),
+        )
+
+    def node(self, node_id: str) -> dict[str, Any] | None:
+        """Fetch a single node by ID.
+
+        FileTreeKG keeps its own schema, so the inherited
+        :class:`~kg_utils.store.GraphStore` lookup cannot read it.
+
+        :param node_id: Stable node identifier.
+        :return: Node dict (both ``id`` and ``node_id``, ``size_bytes`` and the
+                 decoded ``metadata``), or ``None`` if not found.
+        """
+        assert self.db_path is not None
+        with sqlite3.connect(self.db_path) as conn:
+            row = conn.execute(
+                "SELECT node_id, kind, name, qualname, source_path, docstring,"
+                " size_bytes, metadata FROM nodes WHERE node_id = ?",
+                (node_id,),
+            ).fetchone()
+        return _node_dict(row) if row else None
+
+    def neighbors(
+        self,
+        node_id: str,
+        *,
+        rels: tuple[str, ...] | list[str] | None = None,
+        direction: str = "both",
+        limit: int = 50,
+    ) -> dict[str, Any] | None:
+        """Return a node's one-hop neighbourhood over FileTreeKG's own schema.
+
+        Same contract as :meth:`kg_utils.pipeline.KGModule.neighbors`: edges
+        come back as ``{"src", "rel", "dst"}``.
+
+        :param node_id: The node whose neighbours to return.
+        :param rels: Relation types to follow, or ``None`` for all of them.
+        :param direction: ``"out"``, ``"in"`` or ``"both"``.
+        :param limit: Maximum number of edges, between 1 and
+            :attr:`max_max_nodes`.
+        :return: ``{"node": ..., "edges": [...], "nodes": [...]}``, or ``None``
+                 if *node_id* is not in the graph.
+        :raises ValueError: On an empty *node_id*, an unknown *direction* or an
+            out-of-range *limit*.
+        """
+        if not isinstance(node_id, str) or not node_id.strip():
+            raise ValueError("node_id must be a non-empty string")
+        bounded_int("limit", limit, 1, self.max_max_nodes)
+        if direction not in ("out", "in", "both"):
+            raise ValueError(f"direction must be 'out', 'in' or 'both', got {direction!r}")
+        node = self.node(node_id)
+        if node is None:
+            return None
+        sides = {"out": ["source_id"], "in": ["target_id"], "both": ["source_id", "target_id"]}
+        where = " OR ".join(f"{col} = ?" for col in sides[direction])
+        params: list[Any] = [node_id] * len(sides[direction])
+        if rels:
+            where = f"({where}) AND relation IN ({','.join('?' * len(rels))})"
+            params.extend(rels)
+        assert self.db_path is not None
+        with sqlite3.connect(self.db_path) as conn:
+            edge_rows = conn.execute(
+                f"SELECT source_id, relation, target_id FROM edges WHERE {where}"
+                " ORDER BY relation, source_id, target_id LIMIT ?",
+                [*params, limit],
+            ).fetchall()
+        edges = [{"src": s, "rel": r, "dst": d} for s, r, d in edge_rows]
+        nodes: list[dict[str, Any]] = []
+        seen: set[str] = set()
+        for e in edges:
+            other = e["dst"] if e["src"] == node_id else e["src"]
+            if other in seen:
+                continue
+            seen.add(other)
+            far = self.node(other)
+            if far is not None:
+                nodes.append(far)
+        return {"node": node, "edges": edges, "nodes": nodes}
 
     def query(self, q: str, k: int = 8, **kwargs: Any) -> QueryResult:
         """Semantic query against the sqlite-vec vector index, with LIKE fallback.
@@ -577,14 +674,78 @@ class FileTreeKG(KGModule):
         against ``qualname``, ``kind``, and ``docstring`` so the method always
         returns something useful.
 
+        With ``hop`` above 0 the seeds are expanded through the graph's edges
+        (CONTAINS for a tree), so a matched directory brings its entries.
+
         :param q: Query string.
-        :param k: Maximum number of results.
-        :return: QueryResult with matched node dicts ranked by score.
+        :param k: Maximum number of seeds.
+        :param hop: Graph hops to expand from the seeds (0-5, default 0).
+        :param rels: Relation types to follow when expanding; ``None`` for all.
+        :param max_nodes: Most nodes to return; ``None`` for no cap.
+        :return: QueryResult with the seeds ranked by score, then expanded
+                 nodes in the order reached, and the edges among them.
         """
+        hop: int = kwargs.get("hop", 0)
+        rels: list[str] | None = list(kwargs["rels"]) if kwargs.get("rels") else None
+        max_nodes: int | None = kwargs.get("max_nodes")
+        bounded_int("hop", hop, 0, 5)
         nodes = self._semantic_query(q, k)
         if not nodes:
             nodes = self._lexical_query(q, k)
-        return QueryResult(nodes=nodes, seeds=len(nodes), returned_nodes=len(nodes))
+        seeds = len(nodes)
+        edges: list[dict[str, Any]] = []
+        if hop:
+            nodes, edges = self._expand(nodes, hop, rels)
+        expanded = len(nodes)
+        if max_nodes is not None:
+            nodes = nodes[:max_nodes]
+            kept = {n["id"] for n in nodes}
+            edges = [e for e in edges if e["src"] in kept and e["dst"] in kept]
+        return QueryResult(
+            query=q,
+            nodes=nodes,
+            edges=edges,
+            seeds=seeds,
+            expanded_nodes=expanded,
+            returned_nodes=len(nodes),
+            hop=hop,
+            rels=rels or [],
+        )
+
+    def _expand(
+        self, seeds: list[dict[str, Any]], hop: int, rels: list[str] | None
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        """Breadth-first expansion of *seeds* through :meth:`neighbors`.
+
+        :param seeds: Seed node dicts, kept first and in order.
+        :param hop: Number of hops.
+        :param rels: Relation types to follow; ``None`` for all.
+        :return: ``(nodes, edges)``; reached nodes carry ``score`` 0.0 and the
+                 ``hop`` they were reached at.
+        """
+        nodes = list(seeds)
+        seen = {n["id"] for n in nodes}
+        edges: list[dict[str, Any]] = []
+        edge_keys: set[tuple[str, str, str]] = set()
+        frontier = [n["id"] for n in nodes]
+        for depth in range(1, hop + 1):
+            reached: list[str] = []
+            for nid in frontier:
+                near = self.neighbors(nid, rels=rels, limit=self.max_max_nodes)
+                if near is None:
+                    continue
+                for e in near["edges"]:
+                    key = (e["src"], e["rel"], e["dst"])
+                    if key not in edge_keys:
+                        edge_keys.add(key)
+                        edges.append(e)
+                for far in near["nodes"]:
+                    if far["id"] not in seen:
+                        seen.add(far["id"])
+                        nodes.append({**far, "score": 0.0, "hop": depth})
+                        reached.append(far["id"])
+            frontier = reached
+        return nodes, edges
 
     def _semantic_query(self, q: str, k: int) -> list[dict[str, Any]]:
         """Vector search over the sqlite-vec store; returns [] if unavailable."""
@@ -707,14 +868,16 @@ class FileTreeKG(KGModule):
         ``SnippetPack.snippets`` are populated; consumers of either will work.
 
         :param q: Query string.
-        :param k: Number of results.
+        :param k: Number of seeds.
+        :param hop: Graph hops to expand, as in :meth:`query` (default 0).
+        :param rels: Relation types to follow when expanding.
         :param max_nodes: Max nodes in pack.
         :return: SnippetPack with snippet dicts (node_id, source_path, content,
             score, kind, name, metadata).
         """
         k: int = kwargs.get("k", 8)
         max_nodes: int = kwargs.get("max_nodes", 15)
-        qresult = self.query(q, k=k)
+        qresult = self.query(q, k=k, hop=kwargs.get("hop", 0), rels=kwargs.get("rels"))
 
         # Scoped to the nodes this pack will actually render. This read used to
         # be `SELECT ... FROM nodes` with no WHERE, pulling every row in the
@@ -782,7 +945,7 @@ class FileTreeKG(KGModule):
         :return: Markdown-formatted analysis report.
         """
         try:
-            s = self.stats()
+            s = flat_stats(self.stats())
             total_size = s.get("total_size_bytes", 0)
             size_by_dir: dict[str, int] = s.get("size_by_top_dir", {})
             node_counts: dict[str, int] = s.get("node_counts", {})

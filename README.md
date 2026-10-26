@@ -54,7 +54,7 @@ The technical reading list:
 - **[docs/pipeline.md](docs/pipeline.md)** — the build and query
   pipelines as flowing prose, with diagram hints suitable for
   PaperBanana or any other generator.
-- **[docs/MCP.md](docs/MCP.md)** — the `ftreekg-mcp` server and its four
+- **[docs/MCP.md](docs/MCP.md)** — the `ftreekg mcp` server and its
   tools, plus how the local `.mcp.json` wires FTreeKG, PyCodeKG, and
   DocKG into AI agents working on this repo.
 
@@ -256,7 +256,7 @@ result = kgrag.query("how do we ship releases",
 ```
 
 For working with the repo through MCP-compatible AI agents — the
-`ftreekg-mcp` server, the `.mcp.json` shipped in this checkout, and the
+`ftreekg mcp` server, the `.mcp.json` shipped in this checkout, and the
 federated KGRAG alternative — see [docs/MCP.md](docs/MCP.md).
 
 ---

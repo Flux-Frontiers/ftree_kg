@@ -1,6 +1,6 @@
 ---
 name: ftreekg
-description: Expert knowledge for installing, configuring, and using FTreeKG — a knowledge graph over filesystem hierarchies (files, directories, symlinks) with filesystem stat and image EXIF metadata. Use this skill when the user asks about: setting up FTreeKG in a project, adding ftree-kg as a Poetry dependency, building the SQLite or sqlite-vec index over a directory tree, configuring .mcp.json for the ftreekg MCP server, using the ftreekg CLI (ftreekg build, ftreekg query, ftreekg pack, ftreekg analyze, ftreekg status, ftreekg snapshot, ftreekg install-hooks), using the query_tree / pack_tree / graph_stats / analyze_tree MCP tools, the FileTreeKG Python API, the FileTreeKGAdapter KGRAG integration (kind="filetree"), configuring [tool.filetreekg] include/exclude, or troubleshooting FTreeKG errors.
+description: Expert knowledge for installing, configuring, and using FTreeKG — a knowledge graph over filesystem hierarchies (files, directories, symlinks) with filesystem stat and image EXIF metadata. Use this skill when the user asks about: setting up FTreeKG in a project, adding ftree-kg as a Poetry dependency, building the SQLite or sqlite-vec index over a directory tree, configuring .mcp.json for the ftreekg MCP server, using the ftreekg CLI (ftreekg build, ftreekg query, ftreekg pack, ftreekg analyze, ftreekg status, ftreekg snapshot, ftreekg install-hooks), running the ftreekg mcp server, using the stats / query / pack / get_node / neighbors / analyze_tree MCP tools, the FileTreeKG Python API, the FileTreeKGAdapter KGRAG integration (kind="filetree"), configuring [tool.filetreekg] include/exclude, or troubleshooting FTreeKG errors.
 ---
 
 # FTreeKG — Filesystem Tree Knowledge Graph
@@ -71,7 +71,8 @@ always returns something, embeddings or not.
 ## MCP server
 
 ```bash
-ftreekg-mcp --repo /path/to/repo     # stdio (default) or --transport sse
+ftreekg mcp --repo /path/to/repo     # stdio (default) or --transport streamable-http
+ftreekg mcp --manifest               # the tool list as JSON, no graph needed
 ```
 
 `.mcp.json` for Claude Code:
@@ -81,7 +82,7 @@ ftreekg-mcp --repo /path/to/repo     # stdio (default) or --transport sse
   "mcpServers": {
     "ftreekg": {
       "command": "poetry",
-      "args": ["run", "ftreekg-mcp", "--repo", "/abs/path/to/repo"],
+      "args": ["run", "ftreekg", "mcp", "--repo", "/abs/path/to/repo"],
       "env": { "POETRY_VIRTUALENVS_IN_PROJECT": "false" }
     }
   }
@@ -90,13 +91,18 @@ ftreekg-mcp --repo /path/to/repo     # stdio (default) or --transport sse
 
 | Tool | Returns |
 |------|---------|
-| `query_tree(q, k)` | Ranked nodes as JSON |
-| `pack_tree(q, k, max_nodes)` | Markdown metadata blocks (size, stat, EXIF) |
-| `graph_stats()` | JSON counts, `total_size_bytes`, `size_by_top_dir` |
+| `stats()` | Fleet-shape counts (`nodes.by_kind`, `edges.by_rel`), `total_size_bytes`, `size_by_top_dir` |
+| `query(q, k, hop, max_nodes, rels)` | Ranked nodes and the edges among them; `hop=1` adds a directory's entries |
+| `pack(q, k, hop, max_nodes, rels)` | Markdown metadata blocks (size, stat, EXIF) |
+| `get_node(node_id)` | One node with size and decoded metadata |
+| `neighbors(node_id, rels, direction, limit)` | A directory's entries (`out`) or a file's parent (`in`) |
 | `analyze_tree()` | Full Markdown analysis report |
 
-The server warns on stderr and still starts when the graph is missing — run
-`ftreekg build` first or every tool returns empty.
+The first five are the canonical tools every fleet KG server shares
+(`kg_utils.mcp`). In ftree-kg 0.17.0 and earlier they were `graph_stats`,
+`query_tree` and `pack_tree`. A tree with no graph is refused at session
+start, so run `ftreekg build` first. `ftreekg-mcp` is the same command
+under its older name.
 
 > **Availability:** the MCP server ships in ftree-kg 0.13.0 and later. On 0.12.0
 > or earlier, `ftreekg-mcp` does not exist.
