@@ -3430,4 +3430,4 @@ adapter = ["kg-rag"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "7592568c6ba5c366cc3fd090ad6f79a57abed02aac58924a158caab179454b13"
+content-hash = "67f1af4bc82716bb370b328e81d922dfbd1b8ef851e5410df0d7cf42e0aec439"
