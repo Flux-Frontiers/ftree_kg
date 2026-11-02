@@ -47,7 +47,7 @@ packages = [{ include = "ftree_kg", from = "src" }]
 # ---------------------------------------------------------------------------
 [project]
 name = "ftree-kg"
-version = "0.18.0"
+version = "0.18.1"
 description = "KGModule for file tree knowledge graphs"
 readme = "README.md"
 license = "Elastic-2.0"
@@ -78,7 +78,7 @@ dependencies = [
     # 0.29.0: the MCP server is kg_utils.mcp's ([mcp] brings mcp itself),
     # stats() is the fleet stats shape, and LanceDB is gone.
     "kgmodule-utils[semantic,sqlite-vec,mcp]>=0.29.0",
-    "pillow>=10.0.0",
+    "pillow>=13.0.0",
     "rich>=13.0.0,<15.0.0",
 ]
 
