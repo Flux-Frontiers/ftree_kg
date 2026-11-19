@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **An Art Techno logo.** The listing: a directory listing drawn as traces,
+  with the root as a die, one rail, and right-angle branches to folders and
+  files, and the tagline EVERY FILE A NODE. `scripts/build_logo.py` draws the
+  mark, a 64 px icon and a banner as SVG under `assets/` and writes the PNGs.
+  The README shows the banner at the top, by absolute raw URL so PyPI shows it
+  too.
+
 ## [0.18.1] - 2026-11-02
 
 ### Security
