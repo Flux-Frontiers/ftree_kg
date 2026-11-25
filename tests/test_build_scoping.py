@@ -93,7 +93,7 @@ def test_cli_build_passes_both_flags_to_the_module(tmp_path: Path, monkeypatch) 
         def __init__(self, **kwargs: object) -> None:
             captured.update(kwargs)
 
-        def build(self, wipe: bool = True) -> None:
+        def build(self, wipe: bool = True, progress: bool = False) -> None:
             captured["built"] = True
 
         def stats(self) -> dict[str, object]:

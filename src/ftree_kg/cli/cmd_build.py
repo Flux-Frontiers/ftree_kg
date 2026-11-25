@@ -79,7 +79,7 @@ def build(
             include_dirs=include_dirs,
             exclude_dirs=exclude_dirs,
         )
-        kg.build(wipe=not no_wipe)
+        kg.build(wipe=not no_wipe, progress=True)
         stats = flat_stats(kg.stats())
 
         click.echo("✅ Build complete")
