@@ -1,6 +1,6 @@
 {
   "format": "1.0",
-  "last_update": "2026-09-06T22:57:45.832974+00:00",
+  "last_update": "2026-11-25T13:48:56.865619+00:00",
   "snapshots": [
     {
       "key": "098fda4eb0a656529747f6d5b66be56aa2777602",
@@ -256,6 +256,78 @@
           "nodes": 420,
           "edges": 216,
           "coverage_delta": 0.18500000000000005,
+          "critical_issues_delta": 0
+        }
+      }
+    },
+    {
+      "key": "0.19.0",
+      "branch": "release/0.19.0",
+      "timestamp": "2026-11-25T13:48:56.864371+00:00",
+      "version": "0.19.0",
+      "subject": "",
+      "tool": "pycode-kg",
+      "tool_version": "0.30.0",
+      "file": "0.19.0.json",
+      "metrics": {
+        "db_path": ".pycodekg/graph.sqlite",
+        "total_nodes": 1496,
+        "meaningful_nodes": 107,
+        "total_edges": 1164,
+        "node_counts": {
+          "class": 6,
+          "function": 47,
+          "method": 34,
+          "module": 20,
+          "symbol": 1389
+        },
+        "edge_counts": {
+          "ATTR_ACCESS": 345,
+          "CALLS": 524,
+          "CONTAINS": 87,
+          "IMPORTS": 172,
+          "INHERITS": 4,
+          "RESOLVES_TO": 32
+        },
+        "module_count": 20,
+        "class_count": 6,
+        "function_count": 47,
+        "method_count": 34,
+        "docstring_coverage": 0.9159999999999999,
+        "snapshot_count": 4,
+        "module_node_counts": {
+          "src/ftree_kg/__init__.py": 3,
+          "src/ftree_kg/adapter.py": 51,
+          "src/ftree_kg/cli/__init__.py": 2,
+          "src/ftree_kg/cli/__main__.py": 1,
+          "src/ftree_kg/cli/cmd_analyze.py": 21,
+          "src/ftree_kg/cli/cmd_build.py": 29,
+          "src/ftree_kg/cli/cmd_hooks.py": 22,
+          "src/ftree_kg/cli/cmd_mcp.py": 9,
+          "src/ftree_kg/cli/cmd_query.py": 51,
+          "src/ftree_kg/cli/cmd_snapshot.py": 151,
+          "src/ftree_kg/cli/cmd_status.py": 90,
+          "src/ftree_kg/cli/group.py": 2,
+          "src/ftree_kg/cli/main.py": 1,
+          "src/ftree_kg/cli/options.py": 13,
+          "src/ftree_kg/config.py": 22,
+          "src/ftree_kg/extractor.py": 59,
+          "src/ftree_kg/mcp_server.py": 40,
+          "src/ftree_kg/metadata.py": 99,
+          "src/ftree_kg/module.py": 465,
+          "src/ftree_kg/snapshots.py": 64
+        },
+        "coverage_documented": 98,
+        "coverage_total": 107,
+        "critical_issues": 2,
+        "complexity_median": 2
+      },
+      "deltas": {
+        "vs_previous": null,
+        "vs_baseline": {
+          "nodes": 537,
+          "edges": 135,
+          "coverage_delta": 0.16899999999999993,
           "critical_issues_delta": 0
         }
       }

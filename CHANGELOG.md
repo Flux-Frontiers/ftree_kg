@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-11-25
+
 ### Added
 
 - **An Art Techno logo.** The listing: a directory listing drawn as traces,
@@ -22,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   takes `progress=True` for this; it stays quiet by default. Embedding now
   goes to the embedder in chunks of 4,096 texts so the bar can move; the
   vectors are the same.
+
+### Changed
+
+- The lock now carries kgmodule-utils 0.32.0 and kg-rag 0.20.0.
 
 ## [0.18.1] - 2026-11-02
 

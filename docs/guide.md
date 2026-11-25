@@ -28,7 +28,8 @@ FTreeKG (FileTreeKG) is a KGModule that transforms filesystem hierarchies into q
 from filetreekg import FileTreeKG
 
 kg = FileTreeKG(repo_root="/path/to/analyze")
-kg.build(wipe=True)
+kg.build(wipe=True)                 # quiet
+kg.build(wipe=True, progress=True)  # a progress bar for each pass
 ```
 
 ### Querying

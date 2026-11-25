@@ -70,6 +70,9 @@ Wipes any existing index and runs the full three-pass pipeline:
 3. **Pass 2.5** — extract per-format metadata (EXIF for images, etc.)
 4. **Pass 3** — embed canonical text per node, write to sqlite-vec
 
+Each pass draws a progress bar: Scanning, Sizing files, Reading metadata
+and Embedding.
+
 ### Incremental build
 
 ```bash

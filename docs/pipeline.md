@@ -1,6 +1,6 @@
 FTreeKG Pipeline - A Knowledge Graph for Filesystem Hierarchies
 
-Version: 0.18.1
+Version: 0.19.0
 Author: Eric G. Suchanek, PhD
 
 OVERVIEW
@@ -37,7 +37,7 @@ LAYER 4 - ORCHESTRATOR (module.py)
 
 FileTreeKG subclasses kg_utils.types.KGModule. It owns the SQLite database path (default <repo>/.filetreekg/graph.sqlite) and the sqlite-vec store path (default <repo>/.filetreekg/vectors.sqlite). The kind() method returns "filetree" (KGKind.FILETREE), classifying it as a filesystem-tree knowledge graph in the KGRAG taxonomy — distinct from "code", "doc", "diary", "memory", and "agent".
 
-Methods: build(wipe=True, embed=True, metadata=True) for the full pipeline, stats() returning a dict with total_nodes, total_edges, node_counts, edge_counts, total_size_bytes, and size_by_top_dir, query(q, k=8) returning a QueryResult of ranked nodes, pack(q, k=8, max_nodes=15) returning a SnippetPack with per-node metadata blocks, analyze() returning a Markdown report, close() to release any resources.
+Methods: build(wipe=True, embed=True, metadata=True, progress=False) for the full pipeline (progress=True draws a bar per pass; embedding runs in chunks of 4,096 texts), stats() returning a dict with total_nodes, total_edges, node_counts, edge_counts, total_size_bytes, and size_by_top_dir, query(q, k=8) returning a QueryResult of ranked nodes, pack(q, k=8, max_nodes=15) returning a SnippetPack with per-node metadata blocks, analyze() returning a Markdown report, close() to release any resources.
 
 LAYER 5 - SNAPSHOTS (snapshots.py)
 
@@ -121,7 +121,7 @@ CLI ENTRY POINTS
 
 Primary interface: ftreekg (the main Click CLI). Five subcommands also ship as standalone script aliases.
 
-ftreekg build (alias: ftreekg-build): full pipeline (filesystem walk + SQLite + metadata + sqlite-vec), wipes by default.
+ftreekg build (alias: ftreekg-build): full pipeline (filesystem walk + SQLite + metadata + sqlite-vec), wipes by default, and draws a progress bar for each pass.
 ftreekg query (alias: ftreekg-query): semantic query, formatted text output.
 ftreekg pack (alias: ftreekg-pack): metadata snippet pack.
 ftreekg analyze (alias: ftreekg-analyze): Markdown analysis report.
