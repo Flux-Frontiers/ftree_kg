@@ -11,6 +11,8 @@ from __future__ import annotations
 import json
 import re
 import sqlite3
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -37,6 +39,43 @@ _META_COLUMNS = ("kind", "name", "qualname", "module_path", "text")
 # Fallback embedding width, used only when a build produces no vectors to
 # measure (BAAI/bge-small-en-v1.5 is 384-dimensional).
 _EMBED_DIM = 384
+
+#: Texts handed to the embedder per call, so the progress bar can move between
+#: calls; the embedder still batches each call internally.
+_EMBED_CHUNK = 4096
+
+
+@contextmanager
+def _progress(enabled: bool, label: str, total: int | None) -> Iterator[Callable[[int], None]]:
+    """Yield an ``advance(n)`` callable that drives a progress bar when *enabled*.
+
+    :param enabled: Draw a bar on the terminal; when False, ``advance`` does nothing.
+    :param label: The bar's label.
+    :param total: Units of work, or None when unknown (the bar counts up).
+    :return: A context manager yielding ``advance``.
+    """
+    if not enabled:
+        yield lambda n=1: None
+        return
+    from rich.progress import (  # pylint: disable=import-outside-toplevel
+        BarColumn,
+        MofNCompleteColumn,
+        Progress,
+        TextColumn,
+        TimeElapsedColumn,
+        TimeRemainingColumn,
+    )
+
+    with Progress(
+        TextColumn("  {task.description}"),
+        BarColumn(),
+        MofNCompleteColumn(),
+        TimeElapsedColumn(),
+        TimeRemainingColumn(),
+    ) as bar:
+        task = bar.add_task(label, total=total)
+        yield lambda n=1: bar.advance(task, n)
+
 
 # Dropping is deliberately *not* part of _SCHEMA. It used to be, which made
 # `build(wipe=False)` a no-op promise: the file survived and both tables were
@@ -317,7 +356,13 @@ class FileTreeKG(KGModule):
         """
         return "filetree"
 
-    def build(self, wipe: bool = True, embed: bool = True, metadata: bool = True) -> BuildStats:
+    def build(
+        self,
+        wipe: bool = True,
+        embed: bool = True,
+        metadata: bool = True,
+        progress: bool = False,
+    ) -> BuildStats:
         """Build the SQLite graph index and (optionally) the sqlite-vec vector index.
 
         FileTreeKG predates kgmodule-utils 0.4's GraphStore/SemanticIndex-based
@@ -343,6 +388,8 @@ class FileTreeKG(KGModule):
         :param metadata: If True, extract per-format metadata (image EXIF, etc.)
             for each file node.  Cheap — the dispatcher returns immediately
             for files outside the supported extension set.
+        :param progress: If True, draw a progress bar on the terminal for each
+            pass. Off by default, so library callers and tests stay quiet.
         :return: :class:`~kg_utils.specs.BuildStats` for this build.
         """
         assert self.db_path is not None
@@ -357,27 +404,29 @@ class FileTreeKG(KGModule):
             if wipe:
                 conn.executescript(_DROP_SQL)
             conn.executescript(_SCHEMA)
-            for spec in extractor.extract():
-                if isinstance(spec, NodeSpec):
-                    conn.execute(
-                        "INSERT OR REPLACE INTO nodes "
-                        "(node_id, kind, name, qualname, source_path, docstring,"
-                        " size_bytes, metadata) "
-                        "VALUES (?,?,?,?,?,?,0,NULL)",
-                        (
-                            spec.node_id,
-                            spec.kind,
-                            spec.name,
-                            spec.qualname,
-                            spec.source_path,
-                            spec.docstring,
-                        ),
-                    )
-                elif isinstance(spec, EdgeSpec):
-                    conn.execute(
-                        "INSERT OR REPLACE INTO edges VALUES (?,?,?)",
-                        (spec.source_id, spec.target_id, spec.relation),
-                    )
+            with _progress(progress, "Scanning", None) as advance:
+                for spec in extractor.extract():
+                    if isinstance(spec, NodeSpec):
+                        conn.execute(
+                            "INSERT OR REPLACE INTO nodes "
+                            "(node_id, kind, name, qualname, source_path, docstring,"
+                            " size_bytes, metadata) "
+                            "VALUES (?,?,?,?,?,?,0,NULL)",
+                            (
+                                spec.node_id,
+                                spec.kind,
+                                spec.name,
+                                spec.qualname,
+                                spec.source_path,
+                                spec.docstring,
+                            ),
+                        )
+                        advance(1)
+                    elif isinstance(spec, EdgeSpec):
+                        conn.execute(
+                            "INSERT OR REPLACE INTO edges VALUES (?,?,?)",
+                            (spec.source_id, spec.target_id, spec.relation),
+                        )
             conn.commit()
 
         # Pass 2: populate size_bytes for file nodes
@@ -386,25 +435,27 @@ class FileTreeKG(KGModule):
                 "SELECT node_id, source_path FROM nodes WHERE kind = 'file'"
             ).fetchall()
             updates = []
-            for node_id, source_path in rows:
-                full_path = self.repo_root / source_path
-                try:
-                    size = full_path.stat().st_size
-                except OSError:
-                    size = 0
-                updates.append((size, node_id))
+            with _progress(progress, "Sizing files", len(rows)) as advance:
+                for node_id, source_path in rows:
+                    full_path = self.repo_root / source_path
+                    try:
+                        size = full_path.stat().st_size
+                    except OSError:
+                        size = 0
+                    updates.append((size, node_id))
+                    advance(1)
             conn.executemany("UPDATE nodes SET size_bytes = ? WHERE node_id = ?", updates)
             conn.commit()
 
         # Pass 2.5: extract per-format metadata (EXIF for images, etc.)
         if metadata:
-            self._extract_node_metadata()
+            self._extract_node_metadata(progress=progress)
 
         # Pass 3: embed nodes into the sqlite-vec store
         indexed_rows: int | None = None
         index_dim: int | None = None
         if embed:
-            indexed_rows, index_dim = self._embed_nodes(wipe=wipe)
+            indexed_rows, index_dim = self._embed_nodes(wipe=wipe, progress=progress)
 
         s = flat_stats(self.stats())
         return BuildStats(
@@ -418,7 +469,7 @@ class FileTreeKG(KGModule):
             index_dim=index_dim,
         )
 
-    def _extract_node_metadata(self) -> None:
+    def _extract_node_metadata(self, progress: bool = False) -> None:
         """Walk every file node, run :func:`extract_metadata`, persist as JSON.
 
         Directories and symlinks are skipped (no per-format metadata applies).
@@ -431,6 +482,8 @@ class FileTreeKG(KGModule):
         not just the ones with EXIF: the modification time is always available,
         and a tree where only photographs are dated would answer "what changed
         in April" with photographs alone.
+
+        :param progress: If True, draw a progress bar on the terminal.
         """
         assert self.db_path is not None
         with sqlite3.connect(self.db_path) as conn:
@@ -438,23 +491,27 @@ class FileTreeKG(KGModule):
                 "SELECT node_id, source_path FROM nodes WHERE kind = 'file'"
             ).fetchall()
             updates: list[tuple[str | None, str]] = []
-            for node_id, source_path in rows:
-                full_path = self.repo_root / source_path
-                try:
-                    meta = extract_metadata(full_path)
-                except Exception:  # pylint: disable=broad-exception-caught
-                    meta = None
-                try:
-                    temporal = temporal_keys(full_path, meta)
-                except Exception:  # pylint: disable=broad-exception-caught
-                    temporal = {}
-                merged = {**(meta or {}), **temporal}
-                blob = json.dumps(merged) if merged else None
-                updates.append((blob, node_id))
+            with _progress(progress, "Reading metadata", len(rows)) as advance:
+                for node_id, source_path in rows:
+                    full_path = self.repo_root / source_path
+                    try:
+                        meta = extract_metadata(full_path)
+                    except Exception:  # pylint: disable=broad-exception-caught
+                        meta = None
+                    try:
+                        temporal = temporal_keys(full_path, meta)
+                    except Exception:  # pylint: disable=broad-exception-caught
+                        temporal = {}
+                    merged = {**(meta or {}), **temporal}
+                    blob = json.dumps(merged) if merged else None
+                    updates.append((blob, node_id))
+                    advance(1)
             conn.executemany("UPDATE nodes SET metadata = ? WHERE node_id = ?", updates)
             conn.commit()
 
-    def _embed_nodes(self, wipe: bool = True) -> tuple[int | None, int | None]:
+    def _embed_nodes(
+        self, wipe: bool = True, progress: bool = False
+    ) -> tuple[int | None, int | None]:
         """Embed every node into the sqlite-vec store at ``self.vectors_path``.
 
         Builds a canonical text document per node (kind, name, qualname, source
@@ -473,6 +530,8 @@ class FileTreeKG(KGModule):
         build.
 
         :param wipe: If True, wipe and recreate the store; if False, upsert.
+        :param progress: If True, draw a progress bar on the terminal; the
+            texts are embedded in chunks of ``_EMBED_CHUNK`` so it can move.
         :return: ``(indexed_rows, index_dim)``, both ``None`` if the pass was
             skipped or no nodes were embedded.
         """
@@ -513,7 +572,12 @@ class FileTreeKG(KGModule):
             return None, None
 
         texts = [_embed_text(r) for r in rows]
-        vectors = embedder.embed_texts(texts)
+        vectors: list[Any] = []
+        with _progress(progress, "Embedding", len(texts)) as advance:
+            for start in range(0, len(texts), _EMBED_CHUNK):
+                chunk = texts[start : start + _EMBED_CHUNK]
+                vectors.extend(embedder.embed_texts(chunk))
+                advance(len(chunk))
 
         records: list[dict[str, Any]] = []
         for (

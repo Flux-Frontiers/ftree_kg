@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   mark, a 64 px icon and a banner as SVG under `assets/` and writes the PNGs.
   The README shows the banner at the top, by absolute raw URL so PyPI shows it
   too.
+- **`ftreekg build` shows its progress.** Each pass draws a bar: Scanning
+  (counting nodes), Sizing files, Reading metadata and Embedding, with
+  elapsed and remaining time. A tree as large as `~/repos` (about 471,000
+  nodes) used to run for many minutes with no output. `FileTreeKG.build()`
+  takes `progress=True` for this; it stays quiet by default. Embedding now
+  goes to the embedder in chunks of 4,096 texts so the bar can move; the
+  vectors are the same.
 
 ## [0.18.1] - 2026-11-02
 
