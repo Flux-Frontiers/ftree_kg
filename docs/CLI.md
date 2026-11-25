@@ -61,7 +61,9 @@ ftreekg build [OPTIONS]
 
 Walks the filesystem, extracts nodes (files, directories, symlinks), populates
 sizes and per-format metadata (EXIF, etc.), and embeds canonical text into
-sqlite-vec. Wipes existing data by default.
+sqlite-vec. Wipes existing data by default. Each pass draws a progress bar
+(Scanning, Sizing files, Reading metadata, Embedding) with elapsed and
+remaining time.
 
 | Option          | Default                              | Description                                              |
 |-----------------|--------------------------------------|----------------------------------------------------------|

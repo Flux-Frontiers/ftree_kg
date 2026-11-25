@@ -1048,21 +1048,20 @@ referencing = ">=0.31.0"
 
 [[package]]
 name = "kg-rag"
-version = "0.17.1"
+version = "0.20.0"
 description = "Orchestration layer for the KGRAG(tm) components."
 optional = true
 python-versions = "<3.14,>=3.12"
 groups = ["main"]
 markers = "extra == \"adapter\""
 files = [
-    {file = "kg_rag-0.17.1-py3-none-any.whl", hash = "sha256:d76f795ca920e944568523de28b59af9c87e9f661613c39b1779a19840de9294"},
-    {file = "kg_rag-0.17.1.tar.gz", hash = "sha256:7a5418eaa203198d1ae19bef357cbbf0afc9f915512598daf205af8c7b3c9ad1"},
+    {file = "kg_rag-0.20.0-py3-none-any.whl", hash = "sha256:34634fb4776b6a0a9dc19da0a25da0d88043c6451e3757b27c561c2c6392ca5f"},
+    {file = "kg_rag-0.20.0.tar.gz", hash = "sha256:c731c3239e37cd5bb4d47c65ddbf793c48868725bb36774565d0a3f783857c34"},
 ]
 
 [package.dependencies]
 click = ">=8.1.0"
-kgmodule-utils = ">=0.27.0"
-mcp = ">=1.0.0,<2"
+kgmodule-utils = {version = ">=0.30.2", extras = ["mcp"]}
 numpy = ">=1.24.0"
 pandas = ">=2.0.0"
 rich = ">=14.3.3,<15"
@@ -1072,28 +1071,30 @@ torch = ">=2.5.1"
 transformers = ">=5.5.0,<6"
 
 [package.extras]
-all = ["PyQt5 (>=5.15.0)", "connectome-kg (>=0.8.1)", "diary-kg (>=0.100.0)", "doc-kg (>=0.27.0)", "firecrawl-anydoc (>=0.1.9)", "ftree-kg (>=0.17.0)", "markdown (>=3.6)", "memory-kg (>=0.12.0)", "param (>=2.0.0)", "plotly (>=5.14.0)", "pycode-kg (>=0.28.1)", "pymupdf4llm (>=1.28.2)", "pyvis (>=0.3.2)", "pyvista (>=0.44.0)", "pyvistaqt (>=0.11.0)", "streamlit (>=1.35.0)", "trame-vtk (>=2.0.0)", "vault-kg (>=0.3.0)"]
-connectome = ["connectome-kg (>=0.8.1)"]
-diary = ["diary-kg (>=0.100.0)"]
-filetree = ["ftree-kg (>=0.17.0)"]
-ingest = ["kgmodule-utils[ingest] (>=0.27.0)"]
-kg = ["doc-kg (>=0.27.0)", "memory-kg (>=0.12.0)", "pycode-kg (>=0.28.1)"]
+all = ["PyQt5 (>=5.15.0)", "anthropic (>=2.0.0)", "connectome-kg (>=0.10.1)", "diary-kg (>=0.101.0)", "doc-kg (>=0.30.0)", "firecrawl-anydoc (>=0.1.9)", "ftree-kg (>=0.18.1)", "httpx (>=0.27.0)", "imagewright (>=0.2.0)", "markdown (>=3.6)", "memory-kg (>=0.13.0)", "openai (>=1.30.0)", "param (>=2.0.0)", "pillow (>=13.0.0)", "plotly (>=5.14.0)", "pycode-kg (>=0.29.3)", "pymupdf (>=2.0)", "pyvis (>=0.3.2)", "pyvista (>=0.44.0)", "pyvistaqt (>=0.11.0)", "streamlit (>=1.35.0)", "trame-vtk (>=2.0.0)", "vault-kg (>=0.6.1)"]
+connectome = ["connectome-kg (>=0.10.1)"]
+diary = ["diary-kg (>=0.101.0)"]
+filetree = ["ftree-kg (>=0.18.1)"]
+imagine = ["imagewright (>=0.2.0)", "kgmodule-utils[synthesis] (>=0.31.0)"]
+imagine-local = ["imagewright (>=0.2.0)", "mflux (>=0.24.0)"]
+ingest = ["kgmodule-utils[ingest] (>=0.30.2)"]
+kg = ["doc-kg (>=0.30.0)", "memory-kg (>=0.13.0)", "pycode-kg (>=0.29.3)"]
 qt = ["PyQt5 (>=5.15.0)"]
-vault = ["vault-kg (>=0.3.0)"]
+vault = ["vault-kg (>=0.6.1)"]
 viz = ["plotly (>=5.14.0)", "pyvis (>=0.3.2)", "streamlit (>=1.35.0)"]
 viz2d = ["PyQt5 (>=5.15.0)"]
 viz3d = ["PyQt5 (>=5.15.0)", "markdown (>=3.6)", "param (>=2.0.0)", "pyvista (>=0.44.0)", "pyvistaqt (>=0.11.0)", "trame-vtk (>=2.0.0)"]
 
 [[package]]
 name = "kgmodule-utils"
-version = "0.31.0"
+version = "0.32.0"
 description = "Shared types, graph store, semantic index, and pipeline base for the KGModule SDK"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main"]
 files = [
-    {file = "kgmodule_utils-0.31.0-py3-none-any.whl", hash = "sha256:81011c2ea5b9f5821753ce1198ce265e195dfb1fc9e6fc09b22d8e8625c3e3ff"},
-    {file = "kgmodule_utils-0.31.0.tar.gz", hash = "sha256:c398733ec30631f2ce711094e9f367dda43f797b679701d10d01df447996b903"},
+    {file = "kgmodule_utils-0.32.0-py3-none-any.whl", hash = "sha256:bfdf44b3d381f34da7252886ad491bb09917ce0f1d9d42b655b97ad05d954c7d"},
+    {file = "kgmodule_utils-0.32.0.tar.gz", hash = "sha256:df18c0b974c5471efea5cf28c0271c9059e0d4bd9d58fcde94197ceb9a0df032"},
 ]
 
 [package.dependencies]
@@ -1113,7 +1114,6 @@ pdf = ["pymupdf (>=2.0)"]
 semantic = ["numpy (>=1.24.0)", "rich (>=13.0.0,<15.0.0)", "sentence-transformers (>=5.4.1)", "sqlite-vec (==0.1.9)", "torch (>=2.5.1)", "transformers (>=5.5.0,<6)"]
 sqlite-vec = ["sqlite-vec (==0.1.9)"]
 synthesis = ["anthropic (>=2.0.0)", "httpx (>=0.27.0)", "openai (>=1.30.0)", "pillow (>=13.0.0)"]
-synthesis-mflux = ["anthropic (>=2.0.0)", "httpx (>=0.27.0)", "mflux (>=0.9.0)", "openai (>=1.30.0)", "pillow (>=13.0.0)"]
 viz = ["pyvis (>=0.3.2)"]
 viz3d = ["numpy (>=1.24.0)"]
 viz3d-qt = ["PyQt5 (>=5.15.0)", "numpy (>=1.24.0)", "pyvista (>=0.44.0)", "quiltwright (>=0.17.0)"]
